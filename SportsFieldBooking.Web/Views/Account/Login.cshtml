@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="card-title text-center mb-4"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập</h4>
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input name="email" type="email" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input name="password" type="password" class="form-control" required />
+                    </div>
+                    <button class="btn btn-success w-100">Đăng nhập</button>
+                </form>
+                <hr />
+                <p class="text-center mb-0">Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a></p>
+                <div class="alert alert-info mt-3 small mb-0">
+                    <strong>Tài khoản demo</strong> (mật khẩu: 123456)<br />
+                    Admin: admin@sfb.com<br />
+                    Chủ sân: staff@sfb.com<br />
+                    Khách: customer@sfb.com
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

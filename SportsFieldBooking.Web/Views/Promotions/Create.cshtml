@@ -1,0 +1,50 @@
+@model Promotion
+@{
+    ViewData["Title"] = "Thêm khuyến mãi";
+}
+<h3 class="mb-4"><i class="bi bi-plus-circle"></i> Thêm khuyến mãi</h3>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-md-4">
+                <label class="form-label">Mã (VD: SUMMER26) *</label>
+                <input name="Code" value="@Model?.Code" class="form-control text-uppercase" required />
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Mô tả</label>
+                <input name="Description" value="@Model?.Description" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giảm (%) *</label>
+                <input name="DiscountPercent" value="@(Model?.DiscountPercent ?? 10)" type="number" min="1" max="100" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giảm tối đa (đ, 0 = không giới hạn)</label>
+                <input name="MaxDiscount" value="@(Model?.MaxDiscount ?? 0)" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày *</label>
+                <input name="StartDate" value="@Model?.StartDate.ToString("yyyy-MM-dd")" type="date" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày *</label>
+                <input name="EndDate" value="@Model?.EndDate.ToString("yyyy-MM-dd")" type="date" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Số lượt *</label>
+                <input name="Quantity" value="@(Model?.Quantity ?? 100)" type="number" min="1" class="form-control" required />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-success">Lưu</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

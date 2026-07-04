@@ -1,0 +1,130 @@
+@model Booking
+@{
+    ViewData["Title"] = "Chi tiết booking #" + Model.BookingId;
+    var paid = Model.Payments.Any(p => p.Status == "Paid");
+    var payment = Model.Payments.OrderByDescending(p => p.PaymentId).FirstOrDefault();
+}
+<h3 class="mb-4"><i class="bi bi-receipt"></i> Booking #@Model.BookingId</h3>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Thông tin đặt sân</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr><th>Sân</th><th>Ngày</th><th>Khung giờ</th><th class="text-end">Giá</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
+                        {
+                            <tr>
+                                <td>@d.Field.FieldName</td>
+                                <td>@d.BookingDate.ToString("dd/MM/yyyy")</td>
+                                <td>@d.TimeSlot.StartTime.ToString("HH:mm") - @d.TimeSlot.EndTime.ToString("HH:mm")</td>
+                                <td class="text-end">@d.Price.ToString("N0")đ</td>
+                                <td>
+                                    @if (d.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-danger">Hủy</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <hr />
+                @if (Model.Promotion != null)
+                {
+                    <p class="mb-1">Khuyến mãi: <span class="badge bg-info">@Model.Promotion.Code (-@Model.Promotion.DiscountPercent%)</span></p>
+                }
+                <h5>Tổng tiền: <span class="text-success">@Model.TotalAmount.ToString("N0")đ</span></h5>
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    <p class="text-muted mb-0">Ghi chú: @Model.Note</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong>Trạng thái &amp; Thanh toán</strong></div>
+            <div class="card-body">
+                <p>Trạng thái:
+                    @switch (Model.Status)
+                    {
+                        case "Pending": <span class="badge bg-warning text-dark">Chờ xác nhận</span>; break;
+                        case "Confirmed": <span class="badge bg-primary">Đã xác nhận</span>; break;
+                        case "Completed": <span class="badge bg-success">Hoàn thành</span>; break;
+                        case "Cancelled": <span class="badge bg-danger">Đã hủy</span>; break;
+                    }
+                </p>
+                @if (payment != null)
+                {
+                    <p class="mb-1">Phương thức: <strong>@payment.Method</strong> (@payment.Status)</p>
+                    <p class="mb-1">Mã giao dịch: <code>@payment.TransactionCode</code></p>
+                    if (payment.PaidAt != null)
+                    {
+                        <p class="mb-0">Thời gian: @payment.PaidAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                    }
+                }
+
+                @if (!paid && Model.Status is "Pending" or "Confirmed")
+                {
+                    <a asp-action="Pay" asp-route-id="@Model.BookingId" class="btn btn-success w-100 mt-2">
+                        <i class="bi bi-credit-card"></i> Thanh toán ngay
+                    </a>
+                }
+                @if (Model.Status is "Pending" or "Confirmed")
+                {
+                    <form method="post" asp-action="Cancel" asp-route-id="@Model.BookingId" class="mt-2"
+                          onsubmit="return confirm('Bạn chắc chắn muốn hủy booking này?')">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger w-100"><i class="bi bi-x-circle"></i> Hủy booking</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (Model.Status == "Completed" && Model.Review == null)
+        {
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><strong><i class="bi bi-star"></i> Đánh giá sân</strong></div>
+                <div class="card-body">
+                    <form method="post" asp-action="Review" asp-route-id="@Model.BookingId">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <select name="rating" class="form-select">
+                                <option value="5">5 - Tuyệt vời</option>
+                                <option value="4">4 - Tốt</option>
+                                <option value="3">3 - Bình thường</option>
+                                <option value="2">2 - Tệ</option>
+                                <option value="1">1 - Rất tệ</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                        </div>
+                        <button class="btn btn-warning w-100">Gửi đánh giá</button>
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.Review != null)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <strong>Đánh giá của bạn:</strong>
+                    <span class="text-warning">
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= Model.Review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                        }
+                    </span>
+                    <p class="mb-0">@Model.Review.Comment</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

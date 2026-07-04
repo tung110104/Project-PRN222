@@ -1,0 +1,52 @@
+@model Promotion
+@{
+    ViewData["Title"] = "Sửa khuyến mãi";
+}
+<h3 class="mb-4"><i class="bi bi-pencil-square"></i> Sửa khuyến mãi: @Model.Code</h3>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="PromotionId" value="@Model.PromotionId" />
+            <input type="hidden" name="IsActive" value="@Model.IsActive" />
+            <div class="col-md-4">
+                <label class="form-label">Mã *</label>
+                <input name="Code" value="@Model.Code" class="form-control text-uppercase" required />
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Mô tả</label>
+                <input name="Description" value="@Model.Description" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giảm (%) *</label>
+                <input name="DiscountPercent" value="@Model.DiscountPercent" type="number" min="1" max="100" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giảm tối đa (đ)</label>
+                <input name="MaxDiscount" value="@Model.MaxDiscount" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày *</label>
+                <input name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" type="date" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày *</label>
+                <input name="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" type="date" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Số lượt còn lại *</label>
+                <input name="Quantity" value="@Model.Quantity" type="number" min="0" class="form-control" required />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-success">Cập nhật</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

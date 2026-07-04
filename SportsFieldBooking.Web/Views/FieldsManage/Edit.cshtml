@@ -1,0 +1,64 @@
+@model Field
+@{
+    ViewData["Title"] = "Sửa sân";
+    var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
+}
+<h3 class="mb-4"><i class="bi bi-pencil-square"></i> Sửa sân: @Model.FieldName</h3>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="FieldId" value="@Model.FieldId" />
+            <div class="col-md-6">
+                <label class="form-label">Tên sân *</label>
+                <input name="FieldName" value="@Model.FieldName" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Loại sân *</label>
+                <select name="FieldTypeId" class="form-select">
+                    @foreach (var t in fieldTypes)
+                    {
+                        <option value="@t.FieldTypeId" selected="@(Model.FieldTypeId == t.FieldTypeId)">@t.TypeName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Địa chỉ *</label>
+                <input name="Address" value="@Model.Address" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Quận/Huyện *</label>
+                <input name="District" value="@Model.District" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Thành phố *</label>
+                <input name="City" value="@Model.City" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Giá giờ thường (đ) *</label>
+                <input name="PricePerHour" value="@Model.PricePerHour" type="number" min="1000" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Giá giờ cao điểm (đ)</label>
+                <input name="PeakPricePerHour" value="@Model.PeakPricePerHour" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Trạng thái</label>
+                <select name="Status" class="form-select">
+                    <option value="Active" selected="@(Model.Status == "Active")">Hoạt động</option>
+                    <option value="Maintenance" selected="@(Model.Status == "Maintenance")">Bảo trì</option>
+                    <option value="Closed" selected="@(Model.Status == "Closed")">Đóng</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Mô tả</label>
+                <textarea name="Description" class="form-control" rows="3">@Model.Description</textarea>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-success">Cập nhật</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
