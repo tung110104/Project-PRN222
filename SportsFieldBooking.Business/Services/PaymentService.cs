@@ -6,7 +6,7 @@ namespace SportsFieldBooking.Business.Services;
 
 public interface IPaymentService
 {
-    /// <summary>Mo phong thanh toan VNPay/Momo/Cash. Tra ve ket qua ngay (sandbox).</summary>
+    /// <summary>Mo phong thanh toan Momo/Cash. Tra ve ket qua ngay (sandbox).</summary>
     Task<(bool Success, string Message)> PayAsync(int bookingId, int userId, string method);
 }
 
@@ -25,23 +25,27 @@ public class PaymentService : IPaymentService
         if (booking.Status == "Cancelled") return (false, "Booking đã bị hủy.");
         if (booking.Status == "Completed") return (false, "Booking đã hoàn thành.");
         if (booking.Payments.Any(p => p.Status == "Paid")) return (false, "Booking đã được thanh toán.");
-        if (method is not ("VNPay" or "Momo" or "Cash")) return (false, "Phương thức thanh toán không hợp lệ.");
+        if (booking.Payments.Any(p => p.Status == "Pending"))
+            return (false, "Bạn đã gửi yêu cầu thanh toán, vui lòng chờ chủ sân xác nhận.");
+        if (method is not ("Momo" or "Cash")) return (false, "Phương thức thanh toán không hợp lệ.");
 
+        // Khach bao da chuyen khoan -> tao ban ghi thanh toan trang thai CHO XAC NHAN (Pending).
+        // He thong KHONG tu danh dau da thanh toan. Chu san/Admin kiem tra tien thuc te
+        // roi moi xac nhan -> Paid (xem BookingService.ConfirmAsync).
         await _uow.Payments.AddAsync(new Payment
         {
             BookingId = bookingId,
             Amount = booking.TotalAmount,
             Method = method,
-            Status = "Paid",
+            Status = "Pending",
             TransactionCode = $"{method.ToUpper()}-{DateTime.Now:yyyyMMddHHmmss}-{bookingId}",
-            PaidAt = DateTime.Now
+            PaidAt = null
         });
-
-        // Thanh toan xong -> tu dong xac nhan booking (neu dang cho)
-        if (booking.Status == "Pending") booking.Status = "Confirmed";
-        _uow.Bookings.Update(booking);
         await _uow.SaveChangesAsync();
 
-        return (true, $"Thanh toán {method} thành công! Booking đã được xác nhận.");
+        var msg = method == "Momo"
+            ? "Đã ghi nhận yêu cầu thanh toán. Vui lòng chờ chủ sân kiểm tra chuyển khoản và xác nhận."
+            : "Đã ghi nhận. Vui lòng thanh toán tiền mặt tại sân, chủ sân sẽ xác nhận.";
+        return (true, msg);
     }
 }

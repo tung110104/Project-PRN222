@@ -230,13 +230,26 @@ public class BookingService : IBookingService
 
     public async Task<(bool Success, string Message)> ConfirmAsync(int bookingId)
     {
-        var booking = await _uow.Bookings.GetByIdAsync(bookingId);
+        var booking = await _uow.Bookings.Query()
+            .Include(b => b.Payments)
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         if (booking == null) return (false, "Không tìm thấy booking.");
         if (booking.Status != "Pending") return (false, "Chỉ xác nhận được booking đang chờ.");
+
+        // Chu san/Admin xac nhan da nhan duoc tien -> danh dau thanh toan Paid.
+        var pendingPayment = booking.Payments.FirstOrDefault(p => p.Status == "Pending");
+        if (pendingPayment != null)
+        {
+            pendingPayment.Status = "Paid";
+            pendingPayment.PaidAt = DateTime.Now;
+        }
+
         booking.Status = "Confirmed";
         _uow.Bookings.Update(booking);
         await _uow.SaveChangesAsync();
-        return (true, "Đã xác nhận booking.");
+        return (true, pendingPayment != null
+            ? "Đã xác nhận booking và ghi nhận đã nhận thanh toán."
+            : "Đã xác nhận booking.");
     }
 
     /// <summary>Danh dau Completed cho cac booking da qua ngay da (goi khi xem lich su).</summary>

@@ -9,7 +9,12 @@ namespace SportsFieldBooking.Web.Controllers;
 public class StaffBookingsController : Controller
 {
     private readonly IBookingService _bookingService;
-    public StaffBookingsController(IBookingService bookingService) => _bookingService = bookingService;
+    private readonly IWebHostEnvironment _env;
+    public StaffBookingsController(IBookingService bookingService, IWebHostEnvironment env)
+    {
+        _bookingService = bookingService;
+        _env = env;
+    }
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -47,6 +52,38 @@ public class StaffBookingsController : Controller
         if (!await CanManageAsync(id)) return Forbid();
         var (success, message) = await _bookingService.CancelAsync(id, CurrentUserId, isStaff: true);
         TempData[success ? "Success" : "Error"] = message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>Chi Admin duoc upload anh QR Momo dung cho trang thanh toan.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UploadQr(IFormFile qrImage)
+    {
+        if (qrImage == null || qrImage.Length == 0)
+        {
+            TempData["Error"] = "Vui lòng chọn ảnh QR.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var ext = Path.GetExtension(qrImage.FileName).ToLowerInvariant();
+        if (ext is not (".png" or ".jpg" or ".jpeg"))
+        {
+            TempData["Error"] = "Chỉ chấp nhận ảnh PNG hoặc JPG.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var imagesDir = Path.Combine(_env.WebRootPath, "images");
+        Directory.CreateDirectory(imagesDir);
+        var savePath = Path.Combine(imagesDir, "momo-qr.png");
+
+        using (var stream = new FileStream(savePath, FileMode.Create))
+        {
+            await qrImage.CopyToAsync(stream);
+        }
+
+        TempData["Success"] = "Đã cập nhật ảnh QR Momo thanh toán.";
         return RedirectToAction(nameof(Index));
     }
 }

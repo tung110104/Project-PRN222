@@ -13,22 +13,37 @@
                     <input type="hidden" name="id" value="@Model.BookingId" />
                     <div class="list-group mb-3">
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input" type="radio" name="method" value="VNPay" checked />
-                            <span><strong>VNPay</strong> — Ví điện tử / thẻ ATM (sandbox)</span>
+                            <input class="form-check-input payment-method" type="radio" name="method" value="Momo" checked />
+                            <span><strong>Momo</strong> — Ví Momo (quét mã QR)</span>
                         </label>
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input" type="radio" name="method" value="Momo" />
-                            <span><strong>Momo</strong> — Ví Momo (sandbox)</span>
-                        </label>
-                        <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input" type="radio" name="method" value="Cash" />
+                            <input class="form-check-input payment-method" type="radio" name="method" value="Cash" />
                             <span><strong>Tiền mặt</strong> — Thanh toán tại sân</span>
                         </label>
                     </div>
-                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> Xác nhận thanh toán</button>
+                    <div id="momo-qr" class="text-center mb-3">
+                        <p class="mb-2">Quét mã QR bằng ứng dụng Momo để thanh toán:</p>
+                        <img src="~/images/momo-qr.png" alt="Mã QR Momo" class="img-fluid border rounded" style="max-width: 260px;" />
+                        <p class="text-muted small mt-2 mb-0">NGUYỄN MẠNH TÙNG — STK: *******014</p>
+                    </div>
+                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> <span id="pay-btn-text">Tôi đã chuyển khoản</span></button>
                 </form>
-                <p class="text-muted small text-center mt-3 mb-0">* Thanh toán mô phỏng phục vụ demo môn học.</p>
+                <p class="text-muted small text-center mt-3 mb-0">* Bấm nút sau khi bạn đã chuyển khoản. Chủ sân sẽ kiểm tra và xác nhận đặt sân.</p>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Chỉ hiện mã QR khi chọn Momo; đổi nhãn nút theo phương thức
+        function updatePayUi(method) {
+            document.getElementById('momo-qr').style.display = method === 'Momo' ? 'block' : 'none';
+            document.getElementById('pay-btn-text').textContent =
+                method === 'Momo' ? 'Tôi đã chuyển khoản' : 'Đặt sân, thanh toán tại sân';
+        }
+        document.querySelectorAll('.payment-method').forEach(function (r) {
+            r.addEventListener('change', function () { updatePayUi(this.value); });
+        });
+    </script>
+}
