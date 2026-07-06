@@ -1,0 +1,73 @@
+@model List<Booking>
+@{
+    ViewData["Title"] = "Lịch sử đặt sân";
+}
+<h3 class="mb-4"><i class="bi bi-clock-history"></i> Lịch sử đặt sân</h3>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Sân</th>
+                    <th>Ngày đá</th>
+                    <th>Khung giờ</th>
+                    <th>Tổng tiền</th>
+                    <th>Thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    var detail = b.BookingDetails.FirstOrDefault();
+                    var paid = b.Payments.Any(p => p.Status == "Paid");
+                    <tr>
+                        <td>@b.BookingId</td>
+                        <td>@detail?.Field.FieldName</td>
+                        <td>@detail?.BookingDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @foreach (var d in b.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
+                            {
+                                <span class="badge bg-light text-dark border">@d.TimeSlot.StartTime.ToString("HH:mm")</span>
+                            }
+                        </td>
+                        <td class="text-success fw-bold">@b.TotalAmount.ToString("N0")đ</td>
+                        <td>
+                            @if (paid)
+                            {
+                                <span class="badge bg-success">Đã thanh toán</span>
+                            }
+                            else if (b.Payments.Any(p => p.Status == "Refunded"))
+                            {
+                                <span class="badge bg-info">Đã hoàn tiền</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Chưa thanh toán</span>
+                            }
+                        </td>
+                        <td>
+                            @switch (b.Status)
+                            {
+                                case "Pending": <span class="badge bg-warning text-dark">Chờ xác nhận</span>; break;
+                                case "Confirmed": <span class="badge bg-primary">Đã xác nhận</span>; break;
+                                case "Completed": <span class="badge bg-success">Hoàn thành</span>; break;
+                                case "Cancelled": <span class="badge bg-danger">Đã hủy</span>; break;
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@b.BookingId" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Bạn chưa có booking nào. <a asp-controller="Home" asp-action="Index">Đặt sân ngay</a>!</div>
+    }
+</div>

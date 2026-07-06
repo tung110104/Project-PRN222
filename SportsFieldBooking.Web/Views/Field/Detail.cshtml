@@ -1,0 +1,271 @@
+@model Field
+@{
+    ViewData["Title"] = Model.FieldName;
+    var selectedDate = (DateOnly)ViewBag.SelectedDate;
+    var bookedIds = (List<int>)ViewBag.BookedSlotIds;
+    var avg = (double)ViewBag.AvgRating;
+    var today = DateOnly.FromDateTime(DateTime.Now);
+    var now = TimeOnly.FromDateTime(DateTime.Now);
+}
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <!-- Gallery ảnh sân -->
+        <div class="card shadow-sm mb-4 overflow-hidden">
+            @if (Model.FieldImages.Any())
+            {
+                var images = Model.FieldImages
+                .OrderByDescending(x => x.IsPrimary)
+                .ThenBy(x => x.ImageId)
+                .ToList();
+
+                <div id="fieldImagesCarousel"
+                     class="carousel slide"
+                     data-bs-ride="carousel">
+
+                    @if (images.Count > 1)
+                    {
+                        <div class="carousel-indicators">
+                            @for (var index = 0;
+                                                index < images.Count;
+                                                index++)
+                            {
+                                <button type="button"
+                                        data-bs-target="#fieldImagesCarousel"
+                                        data-bs-slide-to="@index"
+                                        class="@(index == 0 ? "active" : "")"
+                                        aria-current="@(index == 0 ? "true" : "false")"
+                                        aria-label="Ảnh @(index + 1)">
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <div class="carousel-inner">
+                        @for (var index = 0;
+                                            index < images.Count;
+                                            index++)
+                        {
+                            var image = images[index];
+
+                            <div class="carousel-item
+                                        @(index == 0 ? "active" : "")">
+
+                                <img src="@image.ImageUrl"
+                                     class="d-block w-100 object-fit-cover"
+                                     style="height: 330px;"
+                                     alt="@Model.FieldName - ảnh @(index + 1)" />
+
+                                @if (image.IsPrimary)
+                                {
+                                    <div class="position-absolute
+                                                    top-0 start-0 m-3">
+
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-image"></i>
+                                            Ảnh đại diện
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (images.Count > 1)
+                    {
+                        <button class="carousel-control-prev"
+                                type="button"
+                                data-bs-target="#fieldImagesCarousel"
+                                data-bs-slide="prev">
+
+                            <span class="carousel-control-prev-icon">
+                            </span>
+
+                            <span class="visually-hidden">
+                                Ảnh trước
+                            </span>
+                        </button>
+
+                        <button class="carousel-control-next"
+                                type="button"
+                                data-bs-target="#fieldImagesCarousel"
+                                data-bs-slide="next">
+
+                            <span class="carousel-control-next-icon">
+                            </span>
+
+                            <span class="visually-hidden">
+                                Ảnh tiếp theo
+                            </span>
+                        </button>
+                    }
+                </div>
+
+                <!-- Ảnh thu nhỏ -->
+                @if (images.Count > 1)
+                {
+                    <div class="card-body p-2">
+                        <div class="d-flex gap-2 overflow-auto">
+                            @for (var index = 0;
+                                                index < images.Count;
+                                                index++)
+                            {
+                                <button type="button"
+                                        class="btn p-0 border"
+                                        data-bs-target="#fieldImagesCarousel"
+                                        data-bs-slide-to="@index">
+
+                                    <img src="@images[index].ImageUrl"
+                                         class="object-fit-cover rounded"
+                                         style="width: 75px;
+                                                    height: 55px;"
+                                         alt="Ảnh nhỏ @(index + 1)" />
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="d-flex flex-column
+                        justify-content-center
+                        align-items-center
+                        bg-secondary-subtle text-muted"
+                     style="height: 280px;">
+
+                    <i class="bi bi-image"
+                       style="font-size: 60px;"></i>
+
+                    <p class="mt-2 mb-0">
+                        Sân chưa có hình ảnh
+                    </p>
+                </div>
+            }
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <span class="badge bg-success mb-2">@Model.FieldType.TypeName</span>
+                <h3>@Model.FieldName</h3>
+                @if (avg > 0)
+                {
+                    <p class="text-warning mb-1"><i class="bi bi-star-fill"></i> @avg.ToString("0.0") / 5 (@Model.Reviews.Count đánh giá)</p>
+                }
+                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.District, @Model.City</p>
+                <p>@Model.Description</p>
+                <hr />
+                <p class="mb-1">Giờ thường: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@Model.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-white"><strong><i class="bi bi-chat-left-text"></i> Đánh giá</strong></div>
+            <div class="card-body">
+                @if (!Model.Reviews.Any())
+                {
+                    <p class="text-muted mb-0">Chưa có đánh giá nào.</p>
+                }
+                @foreach (var r in Model.Reviews.OrderByDescending(x => x.CreatedAt))
+                {
+                    <div class="border-bottom pb-2 mb-2">
+                        <strong>@r.User.FullName</strong>
+                        <span class="text-warning ms-2">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="bi @(i <= r.Rating ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </span>
+                        <p class="mb-0">@r.Comment</p>
+                        <small class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy")</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong><i class="bi bi-calendar3"></i> Chọn khung giờ - @selectedDate.ToString("dd/MM/yyyy")</strong></div>
+            <div class="card-body">
+                <form method="get" class="row g-2 mb-3">
+                    <input type="hidden" name="id" value="@Model.FieldId" />
+                    <div class="col-auto">
+                        <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")"
+                               min="@today.ToString("yyyy-MM-dd")" class="form-control" onchange="this.form.submit()" />
+                    </div>
+                </form>
+
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div class="alert alert-warning">
+                        Vui lòng <a asp-controller="Account" asp-action="Login">đăng nhập</a> để đặt sân.
+                    </div>
+                }
+
+                <form method="post" asp-controller="Field" asp-action="Book">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="fieldId" value="@Model.FieldId" />
+                    <input type="hidden" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" />
+
+                    <div class="row row-cols-2 row-cols-lg-4 g-2 mb-3">
+                        @foreach (var slot in Model.TimeSlots.OrderBy(s => s.StartTime))
+                        {
+                            var isBooked = bookedIds.Contains(slot.TimeSlotId);
+                            var isPast = selectedDate == today && slot.StartTime <= now;
+                            var isPeak = slot.StartTime >= new TimeOnly(17, 0) && slot.StartTime < new TimeOnly(21, 0);
+                            var price = isPeak ? Model.PeakPricePerHour : Model.PricePerHour;
+                            <div class="col">
+                                @if (isBooked || isPast)
+                                {
+                                    <div class="border rounded p-2 text-center bg-secondary-subtle text-muted">
+                                        <div>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</div>
+                                        <small>@(isBooked ? "Đã đặt" : "Đã qua")</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <label class="border rounded p-2 text-center d-block slot-label" style="cursor:pointer">
+                                        <input type="checkbox" name="timeSlotIds" value="@slot.TimeSlotId"
+                                               class="form-check-input me-1" data-price="@price" />
+                                        <span>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
+                                        <div><small class="@(isPeak ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <input name="promoCode" class="form-control" placeholder="Mã giảm giá (nếu có)" />
+                        </div>
+                        <div class="col-md-6">
+                            <input name="note" class="form-control" placeholder="Ghi chú" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Tạm tính: <span id="total" class="text-success">0đ</span></h5>
+                        <button class="btn btn-success" @(User.Identity?.IsAuthenticated != true ? "disabled" : "")>
+                            <i class="bi bi-calendar-check"></i> Đặt sân
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('input[name="timeSlotIds"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                let total = 0;
+                document.querySelectorAll('input[name="timeSlotIds"]:checked')
+                    .forEach(c => total += parseFloat(c.dataset.price));
+                document.getElementById('total').textContent = total.toLocaleString('vi-VN') + 'đ';
+            });
+        });
+    </script>
+}

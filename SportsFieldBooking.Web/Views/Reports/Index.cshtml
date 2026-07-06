@@ -1,0 +1,106 @@
+@model SportsFieldBooking.Business.Services.ReportSummary
+@{
+    ViewData["Title"] = "Báo cáo doanh thu";
+    var from = (DateOnly)ViewBag.From;
+    var to = (DateOnly)ViewBag.To;
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0"><i class="bi bi-bar-chart"></i> Báo cáo thống kê</h3>
+    <form method="get" class="d-flex gap-2">
+        <input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control" />
+        <input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control" />
+        <button class="btn btn-success">Xem</button>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-bg-success shadow-sm">
+            <div class="card-body">
+                <h6>Doanh thu</h6>
+                <h4>@Model.TotalRevenue.ToString("N0")đ</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-primary shadow-sm">
+            <div class="card-body">
+                <h6>Lượt đặt (đã thanh toán)</h6>
+                <h4>@Model.TotalBookings</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-warning shadow-sm">
+            <div class="card-body">
+                <h6>Khách hàng</h6>
+                <h4>@Model.TotalCustomers</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-secondary shadow-sm">
+            <div class="card-body">
+                <h6>Tổng số sân</h6>
+                <h4>@Model.TotalFields</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Doanh thu theo ngày</strong></div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Top 5 sân được đặt nhiều nhất</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Sân</th><th>Lượt đặt</th><th class="text-end">Doanh thu</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.TopFields)
+                        {
+                            <tr>
+                                <td>@t.FieldName</td>
+                                <td>@t.BookingCount</td>
+                                <td class="text-end text-success">@t.Revenue.ToString("N0")đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (!Model.TopFields.Any())
+            {
+                <div class="card-body text-center text-muted">Chưa có dữ liệu.</div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const labels = [@Html.Raw(string.Join(",", Model.RevenueByDays.Select(r => $"'{r.Date:dd/MM}'")))];
+        const data = [@string.Join(",", Model.RevenueByDays.Select(r => r.Revenue))];
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (đ)',
+                    data: data,
+                    backgroundColor: 'rgba(25, 135, 84, 0.7)'
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+    </script>
+}

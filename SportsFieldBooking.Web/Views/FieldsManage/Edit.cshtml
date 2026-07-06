@@ -1,0 +1,324 @@
+@model Field
+
+@{
+    ViewData["Title"] = "Sửa sân";
+
+    var fieldTypes =
+        (List<FieldType>)ViewBag.FieldTypes;
+}
+
+<h3 class="mb-4">
+    <i class="bi bi-pencil-square"></i>
+    Sửa sân: @Model.FieldName
+</h3>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Error
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit"
+              method="post"
+              enctype="multipart/form-data"
+              class="row g-3">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="FieldId"
+                   value="@Model.FieldId" />
+
+            <div class="col-md-6">
+                <label class="form-label">
+                    Tên sân *
+                </label>
+
+                <input name="FieldName"
+                       value="@Model.FieldName"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                    Loại sân *
+                </label>
+
+                <select name="FieldTypeId"
+                        class="form-select">
+
+                    @foreach (var type in fieldTypes)
+                    {
+                        <option value="@type.FieldTypeId"
+                                selected="@(Model.FieldTypeId == type.FieldTypeId)">
+                            @type.TypeName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                    Địa chỉ *
+                </label>
+
+                <input name="Address"
+                       value="@Model.Address"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">
+                    Quận/Huyện *
+                </label>
+
+                <input name="District"
+                       value="@Model.District"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">
+                    Thành phố *
+                </label>
+
+                <input name="City"
+                       value="@Model.City"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">
+                    Giá giờ thường (đ) *
+                </label>
+
+                <input name="PricePerHour"
+                       value="@Model.PricePerHour"
+                       type="number"
+                       min="1000"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">
+                    Giá giờ cao điểm (đ)
+                </label>
+
+                <input name="PeakPricePerHour"
+                       value="@Model.PeakPricePerHour"
+                       type="number"
+                       min="0"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">
+                    Trạng thái
+                </label>
+
+                <select name="Status"
+                        class="form-select">
+
+                    <option value="Active"
+                            selected="@(Model.Status == "Active")">
+                        Hoạt động
+                    </option>
+
+                    <option value="Maintenance"
+                            selected="@(Model.Status == "Maintenance")">
+                        Bảo trì
+                    </option>
+
+                    <option value="Closed"
+                            selected="@(Model.Status == "Closed")">
+                        Đóng
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">
+                    Mô tả
+                </label>
+
+                <textarea name="Description"
+                          class="form-control"
+                          rows="3">@Model.Description</textarea>
+            </div>
+
+            <!-- Ảnh hiện tại -->
+            @if (Model.FieldImages.Any())
+            {
+                <div class="col-12">
+                    <label class="form-label fw-semibold">
+                        Ảnh hiện tại
+                    </label>
+
+                    <div class="row g-3">
+                        @foreach (var image in
+                                            Model.FieldImages
+                                            .OrderByDescending(x => x.IsPrimary)
+                                            .ThenBy(x => x.ImageId))
+                        {
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="card h-100 overflow-hidden">
+                                    <img src="@image.ImageUrl"
+                                         alt="@Model.FieldName"
+                                         class="card-img-top object-fit-cover"
+                                         style="width: 100%;
+                                                        height: 140px;" />
+
+                                    <div class="card-body p-2 text-center">
+                                        @if (image.IsPrimary)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-image"></i>
+                                                Ảnh đại diện
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">
+                                                Ảnh phụ
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="alert alert-secondary mb-0">
+                        Sân chưa có hình ảnh.
+                    </div>
+                </div>
+            }
+
+            <!-- Thêm ảnh mới -->
+            <div class="col-12">
+                <label for="images"
+                       class="form-label fw-semibold">
+                    Thêm ảnh mới
+                </label>
+
+                <input id="images"
+                       name="images"
+                       type="file"
+                       class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp"
+                       multiple />
+
+                <div class="form-text">
+                    Mỗi sân có tối đa 10 ảnh.
+                    Chấp nhận JPG, JPEG, PNG và WEBP.
+                    Mỗi ảnh tối đa 5 MB.
+                    Ảnh mới đầu tiên sẽ trở thành ảnh đại diện.
+                </div>
+            </div>
+
+            <!-- Xem trước ảnh mới -->
+            <div class="col-12">
+                <div id="imagePreview"
+                     class="row g-3">
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit"
+                        class="btn btn-success">
+                    <i class="bi bi-save"></i>
+                    Cập nhật
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const imageInput =
+            document.getElementById("images");
+
+        const imagePreview =
+            document.getElementById("imagePreview");
+
+        imageInput.addEventListener("change", function () {
+            imagePreview.innerHTML = "";
+
+            const files = Array.from(this.files);
+
+            if (files.length > 10) {
+                alert("Chỉ được chọn tối đa 10 ảnh.");
+                this.value = "";
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const column =
+                    document.createElement("div");
+
+                column.className =
+                    "col-6 col-md-4 col-lg-3";
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "card h-100 overflow-hidden";
+
+                const image =
+                    document.createElement("img");
+
+                image.src =
+                    URL.createObjectURL(file);
+
+                image.className =
+                    "card-img-top object-fit-cover";
+
+                image.style.width = "100%";
+                image.style.height = "140px";
+
+                const cardBody =
+                    document.createElement("div");
+
+                cardBody.className =
+                    "card-body p-2 text-center";
+
+                cardBody.innerHTML = index === 0
+                    ? `<span class="badge bg-success">
+                           <i class="bi bi-image"></i>
+                           Ảnh đại diện mới
+                       </span>`
+                    : `<span class="text-muted small">
+                           Ảnh phụ mới
+                       </span>`;
+
+                image.onload = function () {
+                    URL.revokeObjectURL(image.src);
+                };
+
+                card.appendChild(image);
+                card.appendChild(cardBody);
+                column.appendChild(card);
+                imagePreview.appendChild(column);
+            });
+        });
+    </script>
+}

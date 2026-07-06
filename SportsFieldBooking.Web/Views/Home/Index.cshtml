@@ -1,0 +1,88 @@
+@model List<Field>
+@{
+    ViewData["Title"] = "Tìm sân";
+    var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
+    var cities = (List<string>)ViewBag.Cities;
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tên sân, địa chỉ..." />
+            </div>
+            <div class="col-md-2">
+                <select name="fieldTypeId" class="form-select">
+                    <option value="">-- Loại sân --</option>
+                    @foreach (var t in fieldTypes)
+                    {
+                        <option value="@t.FieldTypeId" selected="@(ViewBag.FieldTypeId == t.FieldTypeId)">@t.TypeName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="city" class="form-select">
+                    <option value="">-- Khu vực --</option>
+                    @foreach (var c in cities)
+                    {
+                        <option value="@c" selected="@(ViewBag.City as string == c)">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input name="maxPrice" value="@ViewBag.MaxPrice" type="number" class="form-control" placeholder="Giá tối đa/giờ" />
+            </div>
+            <div class="col-md-2">
+                <select name="minRating" class="form-select">
+                    <option value="">-- Đánh giá --</option>
+                    @for (var i = 3; i <= 5; i++)
+                    {
+                        <option value="@i" selected="@(ViewBag.MinRating == i)">Từ @i sao</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-success w-100"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var f in Model)
+    {
+        var avg = f.Reviews.Any() ? f.Reviews.Average(r => r.Rating) : 0;
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-success mb-2">@f.FieldType.TypeName</span>
+                        @if (avg > 0)
+                        {
+                            <span class="text-warning"><i class="bi bi-star-fill"></i> @avg.ToString("0.0") (@f.Reviews.Count)</span>
+                        }
+                    </div>
+                    <h5 class="card-title">@f.FieldName</h5>
+                    <p class="card-text text-muted mb-1">
+                        <i class="bi bi-geo-alt"></i> @f.Address, @f.District, @f.City
+                    </p>
+                    <p class="mb-1">Giờ thường: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@f.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                </div>
+                <div class="card-footer bg-white">
+                    <a asp-controller="Field" asp-action="Detail" asp-route-id="@f.FieldId" class="btn btn-success w-100">
+                        <i class="bi bi-calendar-check"></i> Xem &amp; Đặt sân
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-emoji-frown fs-1"></i>
+        <p class="mt-2">Không tìm thấy sân phù hợp.</p>
+    </div>
+}

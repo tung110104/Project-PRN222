@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="card-title text-center mb-4"><i class="bi bi-person-plus"></i> Đăng ký tài khoản</h4>
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Họ tên</label>
+                        <input name="fullName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input name="email" type="email" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại</label>
+                        <input name="phone" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu (tối thiểu 6 ký tự)</label>
+                        <input name="password" type="password" class="form-control" minlength="6" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Xác nhận mật khẩu</label>
+                        <input name="confirmPassword" type="password" class="form-control" required />
+                    </div>
+                    <button class="btn btn-success w-100">Đăng ký</button>
+                </form>
+                <hr />
+                <p class="text-center mb-0">Đã có tài khoản? <a asp-action="Login">Đăng nhập</a></p>
+            </div>
+        </div>
+    </div>
+</div>
