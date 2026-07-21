@@ -69,9 +69,19 @@ public class UserService : IUserService
         int userId,
         int roleId)
     {
-        var user = await _uow.Users.GetByIdAsync(userId);
+        var user = await _uow.Users.Query()
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
 
         if (user == null)
+            return;
+
+        // Khong duoc doi role cua Admin va khong duoc gan role Admin
+        if (user.Role.RoleName == "Admin")
+            return;
+
+        var newRole = await _uow.Roles.GetByIdAsync(roleId);
+        if (newRole == null || newRole.RoleName == "Admin")
             return;
 
         user.RoleId = roleId;

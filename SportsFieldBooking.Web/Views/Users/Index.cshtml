@@ -1,7 +1,9 @@
 @model List<User>
 @{
     ViewData["Title"] = "Quản lý người dùng";
-    var roles = (List<Role>)ViewBag.Roles;
+    var roles = ((List<Role>)ViewBag.Roles)
+        .Where(r => r.RoleName != "Admin")
+        .ToList();
 }
 <h3 class="mb-4"><i class="bi bi-people"></i> Quản lý người dùng</h3>
 
@@ -29,15 +31,22 @@
                         <td>@u.Email</td>
                         <td>@u.Phone</td>
                         <td>
-                            <form method="post" asp-action="ChangeRole" asp-route-id="@u.UserId" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <select name="roleId" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                    @foreach (var r in roles)
-                                    {
-                                        <option value="@r.RoleId" selected="@(u.RoleId == r.RoleId)">@r.RoleName</option>
-                                    }
-                                </select>
-                            </form>
+                            @if (u.Role.RoleName == "Admin")
+                            {
+                                <span class="badge bg-dark">Admin</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-action="ChangeRole" asp-route-id="@u.UserId" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <select name="roleId" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                                        @foreach (var r in roles)
+                                        {
+                                            <option value="@r.RoleId" selected="@(u.RoleId == r.RoleId)">@r.RoleName</option>
+                                        }
+                                    </select>
+                                </form>
+                            }
                         </td>
                         <td>
                             @if (u.IsActive)

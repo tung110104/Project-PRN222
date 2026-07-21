@@ -155,19 +155,20 @@ INSERT INTO Roles (RoleName) VALUES (N'Admin'), (N'Staff'), (N'Customer');
 
 -- SHA256('123456')
 DECLARE @pw NVARCHAR(256) = N'8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+-- Tai khoan Admin duoc seed tu dong tu appsettings.json khi chay app
 INSERT INTO Users (FullName, Email, PasswordHash, Phone, RoleId) VALUES
-(N'Quản trị viên',  N'admin@sfb.com',    @pw, N'0900000001', 1),
 (N'Nguyễn Chủ Sân', N'staff@sfb.com',    @pw, N'0900000002', 2),
 (N'Trần Văn Khách', N'customer@sfb.com', @pw, N'0900000003', 3),
 (N'Lê Thị Hoa',     N'hoa@gmail.com',    @pw, N'0900000004', 3);
 
 INSERT INTO FieldTypes (TypeName) VALUES (N'Bóng đá'), (N'Cầu lông'), (N'Tennis'), (N'Bóng rổ');
 
+-- OwnerId 1 = staff@sfb.com (nguoi dau tien trong bang Users)
 INSERT INTO Fields (FieldName, FieldTypeId, OwnerId, Address, District, City, PricePerHour, PeakPricePerHour, Description) VALUES
-(N'Sân bóng Thống Nhất', 1, 2, N'123 Lê Lợi',       N'Quận 1',     N'TP.HCM', 300000, 450000, N'Sân cỏ nhân tạo 7 người, có đèn chiếu sáng'),
-(N'Sân cầu lông Victory', 2, 2, N'45 Nguyễn Huệ',    N'Quận 3',     N'TP.HCM', 80000,  120000, N'4 sân thi đấu chuẩn, sàn gỗ'),
-(N'Sân tennis Sao Mai',   3, 2, N'78 Trần Hưng Đạo', N'Cầu Giấy',   N'Hà Nội', 200000, 300000, N'Sân cứng ngoài trời, có mái che'),
-(N'Sân bóng rổ Phoenix',  4, 2, N'12 Hai Bà Trưng',  N'Hoàn Kiếm',  N'Hà Nội', 150000, 220000, N'Sân trong nhà, điều hòa');
+(N'Sân bóng Thống Nhất', 1, 1, N'123 Lê Lợi',       N'Quận 1',     N'TP.HCM', 300000, 450000, N'Sân cỏ nhân tạo 7 người, có đèn chiếu sáng'),
+(N'Sân cầu lông Victory', 2, 1, N'45 Nguyễn Huệ',    N'Quận 3',     N'TP.HCM', 80000,  120000, N'4 sân thi đấu chuẩn, sàn gỗ'),
+(N'Sân tennis Sao Mai',   3, 1, N'78 Trần Hưng Đạo', N'Cầu Giấy',   N'Hà Nội', 200000, 300000, N'Sân cứng ngoài trời, có mái che'),
+(N'Sân bóng rổ Phoenix',  4, 1, N'12 Hai Bà Trưng',  N'Hoàn Kiếm',  N'Hà Nội', 150000, 220000, N'Sân trong nhà, điều hòa');
 
 INSERT INTO FieldImages (FieldId, ImageUrl, IsPrimary) VALUES
 (1, N'/images/field-football.jpg', 1),

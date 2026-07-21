@@ -25,9 +25,10 @@ Database/SportsFieldBookingDB.sql   → Script tạo DB + seed data (DB-First)
 
 | Vai trò | Email |
 |---|---|
-| Admin | admin@sfb.com |
 | Staff (chủ sân) | staff@sfb.com |
 | Customer | customer@sfb.com |
+
+Tài khoản **Admin** không nằm trong seed SQL — được tạo/đồng bộ tự động từ mục `AdminAccount` trong `appsettings.json` mỗi lần chạy app (đăng nhập tại `/Account/AdminLogin`).
 
 Mã giảm giá mẫu: `SUMMER26` (-20%), `NEWBIE10` (-10%).
 
