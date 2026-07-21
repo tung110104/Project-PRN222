@@ -3,3 +3,6 @@ obj/
 .vs/
 *.user
 appsettings.Development.json
+
+# Word temp/lock files
+~$*

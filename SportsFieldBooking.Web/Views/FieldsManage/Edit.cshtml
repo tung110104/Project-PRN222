@@ -7,10 +7,14 @@
         (List<FieldType>)ViewBag.FieldTypes;
 }
 
-<h3 class="mb-4">
+<h3 class="mb-1">
     <i class="bi bi-pencil-square"></i>
     Sửa sân: @Model.FieldName
 </h3>
+<p class="text-muted mb-4">
+    <i class="bi bi-calendar-plus"></i>
+    Ngày tạo sân: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+</p>
 
 @if (ViewBag.Error != null)
 {

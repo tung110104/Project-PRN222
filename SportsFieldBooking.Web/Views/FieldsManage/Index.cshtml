@@ -18,6 +18,7 @@
                     <th>Khu vực</th>
                     <th>Giá thường</th>
                     <th>Giá cao điểm</th>
+                    <th>Ngày tạo</th>
                     <th>Trạng thái</th>
                     <th></th>
                 </tr>
@@ -32,6 +33,7 @@
                         <td>@f.District, @f.City</td>
                         <td>@f.PricePerHour.ToString("N0")đ</td>
                         <td>@f.PeakPricePerHour.ToString("N0")đ</td>
+                        <td>@f.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td>
                             @switch (f.Status)
                             {

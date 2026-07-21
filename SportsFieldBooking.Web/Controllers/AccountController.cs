@@ -52,6 +52,70 @@ public class AccountController : Controller
             return View();
         }
 
+        if (user.Role.RoleName == "Admin")
+        {
+            ViewBag.Error =
+                "Tài khoản Admin vui lòng đăng nhập tại trang dành cho quản trị viên.";
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
+
+        await SignInUserAsync(user);
+
+        if (!string.IsNullOrEmpty(returnUrl) &&
+            Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return user.Role.RoleName switch
+        {
+            "Staff" => RedirectToAction("Index", "StaffBookings"),
+            _ => RedirectToAction("Index", "Home")
+        };
+    }
+
+    // =========================
+    // ĐĂNG NHẬP ADMIN
+    // =========================
+
+    [HttpGet]
+    public IActionResult AdminLogin(string? returnUrl = null)
+    {
+        ViewBag.ReturnUrl = returnUrl;
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminLogin(
+        string email,
+        string password,
+        string? returnUrl = null)
+    {
+        var user = await _authService.LoginAsync(email, password);
+
+        if (user == null || user.Role.RoleName != "Admin")
+        {
+            ViewBag.Error =
+                "Thông tin đăng nhập không đúng hoặc tài khoản không có quyền quản trị.";
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
+
+        await SignInUserAsync(user);
+
+        if (!string.IsNullOrEmpty(returnUrl) &&
+            Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction("Index", "Reports");
+    }
+
+    private async Task SignInUserAsync(User user)
+    {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
@@ -67,19 +131,6 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
-
-        if (!string.IsNullOrEmpty(returnUrl) &&
-            Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return user.Role.RoleName switch
-        {
-            "Admin" => RedirectToAction("Index", "Reports"),
-            "Staff" => RedirectToAction("Index", "StaffBookings"),
-            _ => RedirectToAction("Index", "Home")
-        };
     }
 
     [HttpGet]

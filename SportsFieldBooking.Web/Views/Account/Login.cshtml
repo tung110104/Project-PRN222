@@ -30,10 +30,14 @@
                     <button class="btn btn-success w-100">Đăng nhập</button>
                 </form>
                 <hr />
-                <p class="text-center mb-0">Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a></p>
+                <p class="text-center mb-2">Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a></p>
+                <p class="text-center mb-0">
+                    <a asp-action="AdminLogin" class="text-muted small">
+                        <i class="bi bi-shield-lock"></i> Đăng nhập dành cho quản trị viên
+                    </a>
+                </p>
                 <div class="alert alert-info mt-3 small mb-0">
                     <strong>Tài khoản demo</strong> (mật khẩu: 123456)<br />
-                    Admin: admin@sfb.com<br />
                     Chủ sân: staff@sfb.com<br />
                     Khách: customer@sfb.com
                 </div>
