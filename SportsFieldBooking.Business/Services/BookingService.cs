@@ -8,8 +8,13 @@ namespace SportsFieldBooking.Business.Services;
 public interface IBookingService
 {
     Task<List<int>> GetBookedSlotIdsAsync(int fieldId, DateOnly date);
-    Task<(bool Success, string Message, int BookingId)> CreateBookingAsync(
-        int userId, int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note);
+    /// <summary>
+    /// Tao booking: moi khung gio duoc chon = 1 booking (da bo BookingDetail).
+    /// createdById != null nghia la Staff/Admin/Owner dat ho khach (userId la khach duoc dat ho).
+    /// </summary>
+    Task<(bool Success, string Message, List<int> BookingIds)> CreateBookingAsync(
+        int userId, int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note,
+        int? createdById = null);
     Task<List<Booking>> GetByUserAsync(int userId);
     Task<Booking?> GetDetailAsync(int bookingId);
     Task<(bool Success, string Message)> CancelAsync(int bookingId, int userId, bool isStaff);
@@ -21,135 +26,169 @@ public interface IBookingService
 public class BookingService : IBookingService
 {
     private readonly IUnitOfWork _uow;
-    public BookingService(IUnitOfWork uow) => _uow = uow;
+    private readonly IPricingService _pricingService;
+    private readonly IPointService _pointService;
+    private readonly IWalletService _walletService;
+    private readonly IEmailService _emailService;
+
+    public BookingService(IUnitOfWork uow, IPricingService pricingService, IPointService pointService,
+        IWalletService walletService, IEmailService emailService)
+    {
+        _uow = uow;
+        _pricingService = pricingService;
+        _pointService = pointService;
+        _walletService = walletService;
+        _emailService = emailService;
+    }
 
     public async Task<List<int>> GetBookedSlotIdsAsync(int fieldId, DateOnly date)
-        => await _uow.BookingDetails.Query()
-            .Where(d => d.FieldId == fieldId && d.BookingDate == date && d.Status == "Active")
-            .Select(d => d.TimeSlotId)
+        => await _uow.Bookings.Query()
+            .Where(b => b.FieldId == fieldId && b.BookingDate == date && b.Status != "Cancelled")
+            .Select(b => b.TimeSlotId)
             .ToListAsync();
 
-    public async Task<(bool Success, string Message, int BookingId)> CreateBookingAsync(
-        int userId, int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note)
+    public async Task<(bool Success, string Message, List<int> BookingIds)> CreateBookingAsync(
+        int userId, int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note,
+        int? createdById = null)
     {
+        var none = new List<int>();
         if (timeSlotIds.Count == 0)
-            return (false, "Vui lòng chọn ít nhất một khung giờ.", 0);
+            return (false, "Vui lòng chọn ít nhất một khung giờ.", none);
 
         var today = DateOnly.FromDateTime(DateTime.Now);
         if (date < today)
-            return (false, "Không thể đặt sân cho ngày trong quá khứ.", 0);
+            return (false, "Không thể đặt sân cho ngày trong quá khứ.", none);
         if (date > today.AddDays(AppConfigSingleton.Instance.MaxAdvanceBookingDays))
-            return (false, $"Chỉ được đặt trước tối đa {AppConfigSingleton.Instance.MaxAdvanceBookingDays} ngày.", 0);
+            return (false, $"Chỉ được đặt trước tối đa {AppConfigSingleton.Instance.MaxAdvanceBookingDays} ngày.", none);
 
         var field = await _uow.Fields.Query()
             .Include(f => f.TimeSlots)
+            .Include(f => f.PricingRules)
             .FirstOrDefaultAsync(f => f.FieldId == fieldId && f.Status == "Active");
         if (field == null)
-            return (false, "Sân không tồn tại hoặc đang ngừng hoạt động.", 0);
+            return (false, "Sân không tồn tại hoặc đang ngừng hoạt động.", none);
+
+        // San dang trong khoang bao tri da duoc duyet -> khong cho dat ngay do
+        var inMaintenance = await _uow.MaintenanceRequests.Query()
+            .AnyAsync(m => m.FieldId == fieldId && m.Status == "Approved" &&
+                           m.StartDate <= date && m.EndDate >= date);
+        if (inMaintenance)
+            return (false, "Sân bảo trì trong ngày này, vui lòng chọn ngày khác.", none);
 
         var slots = field.TimeSlots.Where(t => timeSlotIds.Contains(t.TimeSlotId) && t.IsActive).ToList();
         if (slots.Count != timeSlotIds.Count)
-            return (false, "Khung giờ không hợp lệ.", 0);
+            return (false, "Khung giờ không hợp lệ.", none);
 
-        // Neu dat trong ngay hom nay, khong cho dat khung gio da qua
         if (date == today)
         {
             var now = TimeOnly.FromDateTime(DateTime.Now);
             if (slots.Any(s => s.StartTime <= now))
-                return (false, "Khung giờ đã qua, vui lòng chọn khung giờ khác.", 0);
+                return (false, "Khung giờ đã qua, vui lòng chọn khung giờ khác.", none);
         }
 
-        // Tinh tien theo Strategy Pattern (gio thuong / cao diem)
-        decimal total = slots.Sum(s => PricingContext.GetPrice(field, s));
+        // Gia tung slot theo bang gia da cap (gio / loai ngay / thang-mua) + he so ngay vang
+        var golden = await _pricingService.GetGoldenDayAsync(fieldId, date);
 
-        // Ap dung khuyen mai
+        // Khuyen mai: ma he thong (OwnerId null) dung cho moi san; ma cua chu san chi dung cho san cua ho
         Promotion? promo = null;
         if (!string.IsNullOrWhiteSpace(promoCode))
         {
             promo = await _uow.Promotions.Query().FirstOrDefaultAsync(p =>
-                p.Code == promoCode && p.IsActive && p.Quantity > 0 &&
+                p.Code == promoCode && p.IsActive && p.Quantity >= timeSlotIds.Count &&
                 p.StartDate <= date && p.EndDate >= date);
             if (promo == null)
-                return (false, "Mã giảm giá không hợp lệ hoặc đã hết hạn.", 0);
-
-            var discount = total * promo.DiscountPercent / 100m;
-            if (promo.MaxDiscount > 0 && discount > promo.MaxDiscount)
-                discount = promo.MaxDiscount;
-            total -= discount;
+                return (false, "Mã giảm giá không hợp lệ, hết lượt hoặc đã hết hạn.", none);
+            if (promo.OwnerId.HasValue && promo.OwnerId.Value != field.OwnerId)
+                return (false, "Mã giảm giá này không áp dụng cho sân bạn chọn.", none);
         }
 
-        // Transaction + kiem tra trung lich. Unique filtered index UX_BookingDetails_NoOverlap
-        // la lop bao ve cuoi cung neu 2 nguoi dat dong thoi.
+        // Giam gia theo hang thanh vien cua khach dat
+        var customer = await _uow.Users.GetByIdAsync(userId);
+        if (customer == null)
+            return (false, "Không tìm thấy khách hàng.", none);
+        var tier = MembershipTiers.GetTier(customer.LifetimePoints);
+
+        // Transaction + kiem tra trung lich; unique filtered index tren Bookings la lop chan cuoi
         await using var tx = await _uow.BeginTransactionAsync();
         try
         {
-            var conflict = await _uow.BookingDetails.Query()
-                .Where(d => d.FieldId == fieldId && d.BookingDate == date &&
-                            d.Status == "Active" && timeSlotIds.Contains(d.TimeSlotId))
+            var conflict = await _uow.Bookings.Query()
+                .Where(b => b.FieldId == fieldId && b.BookingDate == date &&
+                            b.Status != "Cancelled" && timeSlotIds.Contains(b.TimeSlotId))
                 .AnyAsync();
             if (conflict)
             {
                 await tx.RollbackAsync();
-                return (false, "Một hoặc nhiều khung giờ vừa được người khác đặt. Vui lòng chọn lại.", 0);
+                return (false, "Một hoặc nhiều khung giờ vừa được người khác đặt. Vui lòng chọn lại.", none);
             }
 
-            var booking = new Booking
-            {
-                UserId = userId,
-                PromotionId = promo?.PromotionId,
-                Status = "Pending",
-                TotalAmount = total,
-                Note = note,
-                CreatedAt = DateTime.Now
-            };
-            await _uow.Bookings.AddAsync(booking);
-            await _uow.SaveChangesAsync();
-
+            var bookingIds = new List<int>();
+            decimal grandTotal = 0;
             foreach (var slot in slots)
             {
-                await _uow.BookingDetails.AddAsync(new BookingDetail
+                var unitPrice = PricingEngine.GetPrice(field, slot, date, golden);
+                var discount = 0m;
+
+                if (promo != null)
                 {
-                    BookingId = booking.BookingId,
+                    var promoDiscount = unitPrice * promo.DiscountPercent / 100m;
+                    if (promo.MaxDiscount > 0 && promoDiscount > promo.MaxDiscount)
+                        promoDiscount = promo.MaxDiscount;
+                    discount += promoDiscount;
+                }
+                if (tier.DiscountPercent > 0)
+                    discount += (unitPrice - discount) * tier.DiscountPercent / 100m;
+
+                discount = Math.Round(discount);
+                var booking = new Booking
+                {
+                    UserId = userId,
                     FieldId = fieldId,
                     TimeSlotId = slot.TimeSlotId,
                     BookingDate = date,
-                    Price = PricingContext.GetPrice(field, slot),
-                    Status = "Active"
-                });
-            }
+                    PromotionId = promo?.PromotionId,
+                    Status = "Pending",
+                    UnitPrice = unitPrice,
+                    DiscountAmount = discount,
+                    TotalAmount = unitPrice - discount,
+                    Note = note,
+                    CreatedById = createdById,
+                    CreatedAt = DateTime.Now
+                };
+                await _uow.Bookings.AddAsync(booking);
+                await _uow.SaveChangesAsync();
+                bookingIds.Add(booking.BookingId);
+                grandTotal += booking.TotalAmount;
 
-            if (promo != null)
-            {
-                promo.Quantity -= 1;
-                _uow.Promotions.Update(promo);
+                if (promo != null)
+                {
+                    promo.Quantity -= 1;
+                    _uow.Promotions.Update(promo);
+                }
             }
 
             await _uow.SaveChangesAsync();
             await tx.CommitAsync();
 
-            // Factory Pattern: gui email xac nhan (demo)
-            var user = await _uow.Users.GetByIdAsync(userId);
-            if (user != null)
-            {
-                var sender = NotificationFactory.Create(NotificationType.Email);
-                await sender.SendAsync(user.Email, "Xác nhận đặt sân",
-                    $"Bạn đã đặt {slots.Count} khung giờ tại {field.FieldName} ngày {date:dd/MM/yyyy}. Tổng tiền: {total:N0}đ.");
-            }
+            var goldenNote = golden != null ? $" (Ngày vàng: {golden.Name})" : "";
+            var tierNote = tier.DiscountPercent > 0 ? $" Hạng {tier.Name} được giảm {tier.DiscountPercent}%." : "";
+            await _emailService.SendAsync(customer.Email, "Xác nhận đặt sân",
+                $"Bạn đã đặt {slots.Count} khung giờ tại {field.FieldName} ngày {date:dd/MM/yyyy}{goldenNote}. " +
+                $"Tổng tiền: {grandTotal:N0}đ.{tierNote} Vui lòng thanh toán để xác nhận.");
 
-            return (true, "Đặt sân thành công! Vui lòng thanh toán để xác nhận.", booking.BookingId);
+            return (true, $"Đặt sân thành công ({slots.Count} khung giờ, tổng {grandTotal:N0}đ){goldenNote}.{tierNote}", bookingIds);
         }
         catch (DbUpdateException)
         {
-            // Vi pham unique index -> nguoi khac vua dat cung slot (race condition)
             await tx.RollbackAsync();
-            return (false, "Khung giờ vừa được người khác đặt trước. Vui lòng chọn lại.", 0);
+            return (false, "Khung giờ vừa được người khác đặt trước. Vui lòng chọn lại.", none);
         }
     }
 
     public Task<List<Booking>> GetByUserAsync(int userId) =>
         _uow.Bookings.Query()
-            .Include(b => b.BookingDetails).ThenInclude(d => d.Field)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.TimeSlot)
+            .Include(b => b.Field)
+            .Include(b => b.TimeSlot)
             .Include(b => b.Payments)
             .Include(b => b.Review)
             .Where(b => b.UserId == userId)
@@ -160,10 +199,11 @@ public class BookingService : IBookingService
         _uow.Bookings.Query()
             .Include(b => b.User)
             .Include(b => b.Promotion)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.Field)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.TimeSlot)
+            .Include(b => b.Field)
+            .Include(b => b.TimeSlot)
             .Include(b => b.Payments)
             .Include(b => b.Review)
+            .Include(b => b.CreatedBy)
             .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
     public async Task<(bool Success, string Message)> CancelAsync(int bookingId, int userId, bool isStaff)
@@ -173,23 +213,17 @@ public class BookingService : IBookingService
         if (!isStaff && booking.UserId != userId) return (false, "Bạn không có quyền hủy booking này.");
         if (booking.Status is "Cancelled" or "Completed") return (false, "Booking không thể hủy.");
 
-        // Khach hang chi duoc huy truoc gio da toi thieu X gio (Singleton config)
         if (!isStaff)
         {
             var limit = AppConfigSingleton.Instance.CancelBeforeHours;
-            var earliest = booking.BookingDetails
-                .Where(d => d.Status == "Active")
-                .Select(d => d.BookingDate.ToDateTime(d.TimeSlot.StartTime))
-                .DefaultIfEmpty(DateTime.MaxValue)
-                .Min();
-            if (earliest < DateTime.Now.AddHours(limit))
+            var start = booking.BookingDate.ToDateTime(booking.TimeSlot.StartTime);
+            if (start < DateTime.Now.AddHours(limit))
                 return (false, $"Chỉ được hủy trước giờ đá ít nhất {limit} giờ.");
         }
 
         booking.Status = "Cancelled";
-        foreach (var d in booking.BookingDetails) d.Status = "Cancelled";
 
-        // Hoan lai luot khuyen mai neu co
+        // Hoan lai luot khuyen mai
         if (booking.PromotionId.HasValue)
         {
             var promo = await _uow.Promotions.GetByIdAsync(booking.PromotionId.Value);
@@ -200,27 +234,48 @@ public class BookingService : IBookingService
             }
         }
 
-        // Hoan tien neu da thanh toan (mo phong)
-        var paid = booking.Payments.FirstOrDefault(p => p.Status == "Paid");
-        if (paid != null) paid.Status = "Refunded";
-
         _uow.Bookings.Update(booking);
         await _uow.SaveChangesAsync();
-        return (true, "Đã hủy booking." + (paid != null ? " Tiền sẽ được hoàn trong 3-5 ngày làm việc." : ""));
+
+        // Hoan diem da dung (neu co)
+        await _pointService.ReturnUsedPointsAsync(booking, "hủy booking");
+
+        // Hoan tien: tra bang vi -> hoan ngay vao vi; phuong thuc khac -> danh dau cho hoan thu cong
+        var paid = booking.Payments.FirstOrDefault(p => p.Status == "Paid");
+        var refundNote = "";
+        if (paid != null)
+        {
+            paid.Status = "Refunded";
+            _uow.Payments.Update(paid);
+            await _uow.SaveChangesAsync();
+
+            if (paid.Method == "Wallet")
+            {
+                await _walletService.RefundAsync(booking.UserId, paid.Amount, booking.BookingId,
+                    $"Hoàn tiền hủy booking #{booking.BookingId}");
+                refundNote = $" {paid.Amount:N0}đ đã được hoàn vào ví.";
+            }
+            else
+            {
+                refundNote = " Tiền sẽ được hoàn trong 3-5 ngày làm việc.";
+            }
+        }
+
+        return (true, "Đã hủy booking." + refundNote);
     }
 
     public Task<List<Booking>> GetForStaffAsync(int? ownerId, string? status)
     {
         var query = _uow.Bookings.Query()
             .Include(b => b.User)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.Field)
-            .Include(b => b.BookingDetails).ThenInclude(d => d.TimeSlot)
+            .Include(b => b.Field)
+            .Include(b => b.TimeSlot)
             .Include(b => b.Payments)
             .AsQueryable();
 
-        // Staff chi thay booking cua san minh so huu; Admin (ownerId = null) thay tat ca
+        // Owner chi thay booking cua san minh; Admin/Staff (ownerId = null) thay tat ca
         if (ownerId.HasValue)
-            query = query.Where(b => b.BookingDetails.Any(d => d.Field.OwnerId == ownerId.Value));
+            query = query.Where(b => b.Field.OwnerId == ownerId.Value);
 
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(b => b.Status == status);
@@ -239,17 +294,21 @@ public class BookingService : IBookingService
         return (true, "Đã xác nhận booking.");
     }
 
-    /// <summary>Danh dau Completed cho cac booking da qua ngay da (goi khi xem lich su).</summary>
+    /// <summary>Danh dau Completed cho booking da qua ngay da + tich diem cho khach (goi khi xem danh sach).</summary>
     public async Task CompletePastBookingsAsync()
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
         var toComplete = await _uow.Bookings.Query()
-            .Include(b => b.BookingDetails)
-            .Where(b => b.Status == "Confirmed" &&
-                        b.BookingDetails.All(d => d.BookingDate < today))
+            .Include(b => b.Payments)
+            .Where(b => b.Status == "Confirmed" && b.BookingDate < today)
             .ToListAsync();
         if (toComplete.Count == 0) return;
+
         foreach (var b in toComplete) b.Status = "Completed";
         await _uow.SaveChangesAsync();
+
+        // Chi tich diem cho booking da thanh toan that (tranh cong diem cho booking chua thu tien)
+        foreach (var b in toComplete.Where(x => x.Payments.Any(p => p.Status == "Paid")))
+            await _pointService.EarnForBookingAsync(b);
     }
 }

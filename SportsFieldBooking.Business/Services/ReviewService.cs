@@ -12,14 +12,22 @@ public interface IReviewService
 public class ReviewService : IReviewService
 {
     private readonly IUnitOfWork _uow;
-    public ReviewService(IUnitOfWork uow) => _uow = uow;
+    private readonly IPointService _pointService;
 
+    public ReviewService(IUnitOfWork uow, IPointService pointService)
+    {
+        _uow = uow;
+        _pointService = pointService;
+    }
+
+    // View da an form khi chua du dieu kien, nhung o day van kiem tra lai toan bo
+    // (nguyen tac "khong tin client" - nguoi dung co the tu POST khong qua form).
     public async Task<(bool Success, string Message)> AddReviewAsync(int bookingId, int userId, int rating, string? comment)
     {
         if (rating is < 1 or > 5) return (false, "Điểm đánh giá phải từ 1 đến 5.");
 
+        // UserId trong query -> khong danh gia ho booking cua nguoi khac duoc
         var booking = await _uow.Bookings.Query()
-            .Include(b => b.BookingDetails)
             .Include(b => b.Review)
             .FirstOrDefaultAsync(b => b.BookingId == bookingId && b.UserId == userId);
 
@@ -27,17 +35,20 @@ public class ReviewService : IReviewService
         if (booking.Status != "Completed") return (false, "Chỉ đánh giá được sau khi đã sử dụng sân.");
         if (booking.Review != null) return (false, "Bạn đã đánh giá booking này rồi.");
 
-        var fieldId = booking.BookingDetails.First().FieldId;
         await _uow.Reviews.AddAsync(new Review
         {
             BookingId = bookingId,
             UserId = userId,
-            FieldId = fieldId,
+            FieldId = booking.FieldId, // Booking gan truc tiep FieldId (da bo BookingDetail)
             Rating = rating,
             Comment = comment,
             CreatedAt = DateTime.Now
         });
         await _uow.SaveChangesAsync();
-        return (true, "Cảm ơn bạn đã đánh giá!");
+
+        // Thuong diem khuyen khich khach review
+        await _pointService.EarnForReviewAsync(userId, bookingId);
+
+        return (true, "Cảm ơn bạn đã đánh giá! Bạn được cộng điểm thưởng.");
     }
 }

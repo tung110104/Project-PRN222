@@ -19,27 +19,43 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Tìm sân</a></li>
-                    @if (User.IsInRole("Customer"))
+                    @* Moi role deu dat duoc san -> ai dang nhap (tru SuperAdmin) cung co lich su & vi *@
+                    @if (User.IsInRole("Customer") || User.IsInRole("Staff") || User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index">Lịch sử đặt sân</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Index">Ví &amp; Điểm</a></li>
                     }
-                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="FieldsManage" asp-action="Index">Quản lý sân</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Maintenance" asp-action="Index">Bảo trì</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Owner"))
+                    {
                         <li class="nav-item"><a class="nav-link" asp-controller="StaffBookings" asp-action="Index">Quản lý đặt lịch</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Báo cáo</a></li>
                     }
                     @if (User.IsInRole("Admin"))
                     {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Manage">Quản lý ví</a></li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                    {
                         <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Người dùng</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
                     }
                 </ul>
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item">
-                            <span class="navbar-text me-3"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
+                            <span class="navbar-text me-3">
+                                <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                @if (User.IsInRole("SuperAdmin"))
+                                {
+                                    <span class="badge bg-danger ms-1">SUPER</span>
+                                }
+                            </span>
                         </li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Logout">Đăng xuất</a></li>
                     }

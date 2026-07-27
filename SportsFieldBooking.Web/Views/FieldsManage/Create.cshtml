@@ -27,26 +27,45 @@
                     }
                 </select>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Địa chỉ *</label>
-                <input name="Address" value="@Model?.Address" class="form-control" required />
+
+            @* Dia chi chi tiet: Tinh/Thanh -> Phuong/Xa do tu API hanh chinh VN, khong nhap tay *@
+            <div class="col-md-4">
+                <label class="form-label">Tỉnh/Thành phố *</label>
+                <select id="provinceSelect" class="form-select" required>
+                    <option value="">-- Đang tải... --</option>
+                </select>
+                <input type="hidden" name="Province" id="provinceInput" value="@Model?.Province" />
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Quận/Huyện *</label>
-                <input name="District" value="@Model?.District" class="form-control" required />
+            <div class="col-md-4">
+                <label class="form-label">Phường/Xã *</label>
+                <select id="wardSelect" class="form-select" required disabled>
+                    <option value="">-- Chọn Tỉnh/Thành trước --</option>
+                </select>
+                <input type="hidden" name="Ward" id="wardInput" value="@Model?.Ward" />
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Thành phố *</label>
-                <input name="City" value="@Model?.City" class="form-control" required />
+            <div class="col-md-4">
+                <label class="form-label">Số nhà, tên đường *</label>
+                <input name="Address" value="@Model?.Address" class="form-control" placeholder="VD: 123 Lê Lợi" required />
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Giá giờ thường (đ) *</label>
+
+            <div class="col-md-4">
+                <label class="form-label">Giá cơ bản (đ/giờ) *</label>
                 <input name="PricePerHour" value="@Model?.PricePerHour" type="number" min="1000" class="form-control" required />
+                <small class="text-muted">Bảng giá chi tiết theo giờ/ngày/mùa cấu hình sau khi tạo sân.</small>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Giá giờ cao điểm 17-21h (đ)</label>
-                <input name="PeakPricePerHour" value="@Model?.PeakPricePerHour" type="number" min="0" class="form-control" />
+            <div class="col-md-4">
+                <label class="form-label">Ví tiền ảo</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="AcceptWalletPayment" value="true"
+                           checked="@(Model?.AcceptWalletPayment == true)" />
+                    <label class="form-check-label">Chấp nhận thanh toán bằng ví</label>
+                </div>
             </div>
+            <div class="col-md-4">
+                <label class="form-label">Cashback khi trả bằng ví (%)</label>
+                <input name="CashbackPercent" value="@(Model?.CashbackPercent ?? 0)" type="number" min="0" max="50" class="form-control" />
+            </div>
+
             <div class="col-12">
                 <label class="form-label">Mô tả</label>
                 <textarea name="Description" class="form-control" rows="3">@Model?.Description</textarea>
@@ -58,3 +77,8 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/address-select.js"></script>
+    <script>initAddressSelect('@Model?.Province', '@Model?.Ward');</script>
+}
