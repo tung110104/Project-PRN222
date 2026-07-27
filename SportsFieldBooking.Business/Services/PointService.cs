@@ -78,6 +78,34 @@ public class PointService : IPointService
 
         var note = $"Tích điểm booking #{booking.BookingId}" + (golden != null ? $" (x{golden.PointsMultiplier} {golden.Name})" : "");
         await AddTransactionAsync(user, "Earn", points, note, booking.BookingId);
+
+        // Su kien: thuong lan dat dau tien (chi 1 lan duy nhat, kiem tra lich su de khong cong trung)
+        var firstBonusNote = "Thưởng hoàn thành booking đầu tiên";
+        var hadFirstBonus = await _uow.PointTransactions.Query()
+            .AnyAsync(t => t.UserId == user.UserId && t.Description == firstBonusNote);
+        if (!hadFirstBonus)
+        {
+            var completedCount = await _uow.Bookings.Query()
+                .CountAsync(b => b.UserId == user.UserId && b.Status == "Completed");
+            if (completedCount <= 1)
+                await AddTransactionAsync(user, "Earn", config.FirstBookingBonusPoints, firstBonusNote, booking.BookingId);
+        }
+
+        // Su kien: hoan thanh du N booking trong thang duong lich -> thuong (moi thang toi da 1 lan)
+        var monthStart = new DateOnly(booking.BookingDate.Year, booking.BookingDate.Month, 1);
+        var monthEnd = monthStart.AddMonths(1);
+        var monthlyNote = $"Thưởng hoàn thành đủ {config.MonthlyBookingTarget} booking trong tháng {booking.BookingDate:MM/yyyy}";
+        var hadMonthlyBonus = await _uow.PointTransactions.Query()
+            .AnyAsync(t => t.UserId == user.UserId && t.Description == monthlyNote);
+        if (!hadMonthlyBonus)
+        {
+            var monthCount = await _uow.Bookings.Query()
+                .CountAsync(b => b.UserId == user.UserId && b.Status == "Completed" &&
+                                 b.BookingDate >= monthStart && b.BookingDate < monthEnd);
+            if (monthCount >= config.MonthlyBookingTarget)
+                await AddTransactionAsync(user, "Earn", config.MonthlyBookingBonusPoints, monthlyNote, booking.BookingId);
+        }
+
         await _uow.SaveChangesAsync();
     }
 

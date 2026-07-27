@@ -4,3 +4,4 @@ obj/
 *.user
 appsettings.Development.json
 .claude/settings.local.json
+.claude/

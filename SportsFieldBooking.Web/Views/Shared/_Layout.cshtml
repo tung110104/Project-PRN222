@@ -39,6 +39,7 @@
                     @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Manage">Quản lý ví</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="GoldenDays" asp-action="Index">Ngày vàng</a></li>
                     }
                     @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
                     {

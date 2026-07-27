@@ -29,6 +29,15 @@ public sealed class AppConfigSingleton
     /// <summary>Diem thuong khi viet danh gia san.</summary>
     public int ReviewBonusPoints { get; } = 10;
 
+    /// <summary>Diem thuong khi hoan thanh booking dau tien (thuong lan dat dau).</summary>
+    public int FirstBookingBonusPoints { get; } = 20;
+
+    /// <summary>Hoan thanh du N booking trong 1 thang duong lich thi duoc thuong diem.</summary>
+    public int MonthlyBookingTarget { get; } = 5;
+
+    /// <summary>Diem thuong khi dat du MonthlyBookingTarget booking trong thang.</summary>
+    public int MonthlyBookingBonusPoints { get; } = 50;
+
     // ----- Cau hinh vi tien ao -----
     /// <summary>So tien nap toi thieu moi lan (VND).</summary>
     public decimal MinDepositAmount { get; } = 10_000m;

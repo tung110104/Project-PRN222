@@ -31,7 +31,7 @@ Database/SportsFieldBookingDB.sql   → Script tạo DB + seed data (DB-First)
 | Owner (chủ sân) | owner@sfb.com | Quản lý sân, bảng giá, khuyến mãi, request bảo trì |
 | Staff | staff@sfb.com | Quản lý đặt lịch, đặt hộ khách |
 | Customer | customer@sfb.com | Ví có sẵn 500.000đ để demo |
-| **Super Account** | super@sportbooking.vn / `Super@2026!` | **Tài khoản cứu hộ** — không có trong DB, cấu hình trong `appsettings.json`, dùng cấp/thu hồi Admin |
+| **Super Account** | *(ẩn — không công bố)* | **Tài khoản cứu hộ** — không tồn tại trong DB lẫn `appsettings.json`; chỉ lưu SHA-256 hash một chiều trong `AccountController.IsSuperAccount()`. Đăng nhập tại `/Account/AdminLogin` để cấp/thu hồi Admin |
 
 Mã giảm giá mẫu: `SUMMER26` (-20%, hệ thống), `NEWBIE10` (-10%, hệ thống), `OWNER15` (-15%, của chủ sân — gửi qua email).
 
@@ -40,7 +40,7 @@ Mã giảm giá mẫu: `SUMMER26` (-20%, hệ thống), `NEWBIE10` (-10%, hệ t
 1. **Giá đa cấp** — `FieldPricingRules`: mỗi sân một bảng giá theo khung giờ + loại ngày (thường/cuối tuần) + khoảng tháng (mùa, hỗ trợ vắt năm 11→2); rule khớp có Priority cao nhất thắng, không có rule → giá cơ bản. Chủ sân CRUD tại trang **Giá & Khung giờ**.
 2. **Ngày vàng** — `GoldenDays`: ngày lễ/sự kiện nhân hệ số giá + hệ số tích điểm; Admin tạo toàn hệ thống, Owner tạo riêng cho sân.
 3. **Ví tiền ảo** — `Wallets` + `WalletTransactions`: nạp qua cổng thanh toán, thanh toán, hoàn tiền khi hủy/bảo trì, cashback (chủ sân cấu hình %), admin khóa/điều chỉnh có lý do. **Chủ sân bật/tắt nhận ví theo từng sân** (`AcceptWalletPayment`). Tiền ví không rút được. **Khuyến mãi nạp**: nạp từ 200k tặng 15k, từ 500k tặng 50k (giao dịch `Bonus` riêng, cấu hình trong `AppConfigSingleton.DepositBonusTiers`).
-4. **Tích điểm + hạng thành viên** — `PointTransactions`: 10.000đ = 1 điểm khi booking hoàn thành (nhân hệ số ngày vàng), thưởng điểm khi review; dùng điểm trừ tiền khi thanh toán (1 điểm = 100đ, tối đa 50% booking). **Đổi điểm lấy voucher** tại trang Ví & Điểm (100đ→5%/tối đa 20k, 200đ→10%/50k, 500đ→15%/150k) — voucher là mã `Promotion` dùng 1 lần, **gửi về email** của khách. Hạng Thường/Bạc/Vàng/Kim cương theo điểm trọn đời → giảm 0/3/5/10% mọi booking.
+4. **Tích điểm + hạng thành viên** — `PointTransactions`: 10.000đ = 1 điểm khi booking hoàn thành (nhân hệ số ngày vàng), thưởng điểm khi review; **thưởng sự kiện**: +20 điểm hoàn thành booking đầu tiên, +50 điểm khi hoàn thành đủ 5 booking trong tháng (chống cộng trùng theo lịch sử điểm); dùng điểm trừ tiền khi thanh toán (1 điểm = 100đ, tối đa 50% booking). **Đổi điểm lấy voucher** tại trang Ví & Điểm (100đ→5%/tối đa 20k, 200đ→10%/50k, 500đ→15%/150k) — voucher là mã `Promotion` dùng 1 lần, **gửi về email** của khách. Hạng Thường/Bạc/Vàng/Kim cương theo điểm trọn đời → giảm 0/3/5/10% mọi booking.
 5. **Super account** — trong `appsettings.json`, kiểm tra trước khi query DB, role `SuperAdmin`, chỉ vào trang Người dùng để cấp/thu hồi Admin (cứu hộ).
 6. **Role nhiều luồng** — Customer / Owner / Staff / Admin / SuperAdmin, mỗi role menu + trang chủ riêng.
 7. **Địa chỉ chi tiết + API** — Fields tách `Province`/`Ward`/`Address`; form thêm/sửa sân đổ dropdown từ `provinces.open-api.vn` (v2, 2 cấp sau sáp nhập); bộ lọc tìm sân theo Tỉnh/Thành.

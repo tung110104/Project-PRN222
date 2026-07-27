@@ -221,7 +221,7 @@ GO
 
 /* =============================================================
    SEED DATA  (mat khau tat ca tai khoan: 123456)
-   Super account cuu ho: super@sportbooking.vn / Super@2026! (trong appsettings.json)
+   Super account cuu ho: khong nam trong DB/appsettings - chi luu SHA-256 hash trong AccountController
    ============================================================= */
 INSERT INTO Roles (RoleName) VALUES (N'Admin'), (N'Owner'), (N'Staff'), (N'Customer');
 
@@ -300,4 +300,4 @@ GO
 
 PRINT N'Tao database SportsFieldBookingDB (ban chinh sua) thanh cong!';
 PRINT N'Tai khoan: admin@sfb.com / owner@sfb.com / staff@sfb.com / customer@sfb.com - mat khau: 123456';
-PRINT N'Super account cuu ho: super@sportbooking.vn / Super@2026! (cau hinh trong appsettings.json)';
+PRINT N'Super account cuu ho: an hoan toan - chi ton tai duoi dang SHA-256 hash trong AccountController (dang nhap tai /Account/AdminLogin)';
