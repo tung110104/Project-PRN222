@@ -1,0 +1,96 @@
+@model List<GoldenDay>
+@{
+    ViewData["Title"] = "Ngày vàng";
+    var fields = (List<Field>)ViewBag.Fields;
+    var isAdmin = (bool)ViewBag.IsAdmin;
+    var today = DateOnly.FromDateTime(DateTime.Now);
+}
+<h3 class="mb-4"><i class="bi bi-stars"></i> Ngày vàng (ưu đãi &amp; nhân điểm)</h3>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white"><strong>Thêm ngày vàng</strong></div>
+    <div class="card-body">
+        <form method="post" asp-action="Create" class="row g-2">
+            @Html.AntiForgeryToken()
+            <div class="col-md-2">
+                <label class="form-label">Ngày *</label>
+                <input name="Date" type="date" class="form-control" required min="@today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tên (lễ, sự kiện) *</label>
+                <input name="Name" class="form-control" required placeholder="VD: Quốc khánh 2/9" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Nhân điểm (×)</label>
+                <input name="PointMultiplier" type="number" min="1" max="10" value="2" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ưu đãi giá (%)</label>
+                <input name="DiscountPercent" type="number" min="0" max="100" value="0" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Phạm vi</label>
+                <select name="FieldId" class="form-select">
+                    @if (isAdmin)
+                    {
+                        <option value="">Toàn hệ thống</option>
+                    }
+                    @foreach (var f in fields)
+                    {
+                        <option value="@f.FieldId">@f.FieldName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-success w-100">Thêm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Ngày</th><th>Tên</th><th>Nhân điểm</th><th>Ưu đãi giá</th><th>Phạm vi</th><th>Trạng thái</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model)
+                {
+                    <tr>
+                        <td>@g.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@g.Name</td>
+                        <td>×@g.PointMultiplier</td>
+                        <td>@(g.DiscountPercent > 0 ? $"−{g.DiscountPercent}%" : "—")</td>
+                        <td>@(g.Field != null ? g.Field.FieldName : "Toàn hệ thống")</td>
+                        <td>
+                            @if (g.IsActive)
+                            {
+                                <span class="badge bg-success">Bật</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Tắt</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <form method="post" asp-action="ToggleActive" asp-route-id="@g.GoldenDayId" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-secondary">@(g.IsActive ? "Tắt" : "Bật")</button>
+                            </form>
+                            <form method="post" asp-action="Delete" asp-route-id="@g.GoldenDayId" class="d-inline"
+                                  onsubmit="return confirm('Xóa ngày vàng này?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có ngày vàng nào.</div>
+    }
+</div>

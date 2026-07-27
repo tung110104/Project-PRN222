@@ -5,49 +5,30 @@
 }
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0"><i class="bi bi-calendar-week"></i> Quản lý đặt lịch</h3>
-    <form method="get">
-        <select name="status" class="form-select" onchange="this.form.submit()">
-            <option value="">Tất cả trạng thái</option>
-            <option value="Pending" selected="@(status == "Pending")">Chờ xác nhận</option>
-            <option value="Confirmed" selected="@(status == "Confirmed")">Đã xác nhận</option>
-            <option value="Completed" selected="@(status == "Completed")">Hoàn thành</option>
-            <option value="Cancelled" selected="@(status == "Cancelled")">Đã hủy</option>
-        </select>
-    </form>
+    <div class="d-flex gap-2">
+        <a asp-action="BookFor" class="btn btn-success"><i class="bi bi-person-plus"></i> Đặt hộ khách</a>
+        <form method="get">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Pending" selected="@(status == "Pending")">Chờ xác nhận</option>
+                <option value="Confirmed" selected="@(status == "Confirmed")">Đã xác nhận</option>
+                <option value="Completed" selected="@(status == "Completed")">Hoàn thành</option>
+                <option value="Cancelled" selected="@(status == "Cancelled")">Đã hủy</option>
+            </select>
+        </form>
+    </div>
 </div>
 
 @if (User.IsInRole("Admin"))
 {
-    var qrPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "momo-qr.png");
-    var hasQr = System.IO.File.Exists(qrPath);
-    <div class="card shadow-sm mb-4 border-success">
-        <div class="card-header bg-white"><strong><i class="bi bi-qr-code"></i> Ảnh QR Momo thanh toán (chỉ Admin)</strong></div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-3 text-center mb-3 mb-md-0">
-                    @if (hasQr)
-                    {
-                        <img src="~/images/momo-qr.png?v=@DateTime.Now.Ticks" alt="QR Momo hiện tại" class="img-fluid border rounded" style="max-width: 160px;" />
-                        <div class="small text-muted mt-1">Ảnh QR hiện tại</div>
-                    }
-                    else
-                    {
-                        <div class="text-muted small">Chưa có ảnh QR nào.</div>
-                    }
-                </div>
-                <div class="col-md-9">
-                    <form method="post" asp-action="UploadQr" enctype="multipart/form-data" class="row g-2 align-items-center">
-                        @Html.AntiForgeryToken()
-                        <div class="col-sm-8">
-                            <input type="file" name="qrImage" class="form-control" accept=".png,.jpg,.jpeg" required />
-                        </div>
-                        <div class="col-sm-4">
-                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-upload"></i> Tải ảnh QR lên</button>
-                        </div>
-                        <div class="col-12"><small class="text-muted">Chọn ảnh QR Momo (PNG/JPG). Ảnh sẽ tự động hiển thị ở trang thanh toán của khách.</small></div>
-                    </form>
-                </div>
-            </div>
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <form method="post" asp-action="UploadQr" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+                @Html.AntiForgeryToken()
+                <label class="form-label mb-0 small">Ảnh QR Momo thanh toán:</label>
+                <input type="file" name="qrImage" class="form-control form-control-sm w-auto" accept="image/*" />
+                <button class="btn btn-sm btn-outline-primary">Cập nhật QR</button>
+            </form>
         </div>
     </div>
 }
@@ -71,27 +52,45 @@
             <tbody>
                 @foreach (var b in Model)
                 {
-                    var detail = b.BookingDetails.FirstOrDefault();
                     <tr>
                         <td>@b.BookingId</td>
-                        <td>@b.User.FullName<br /><small class="text-muted">@b.User.Email</small></td>
-                        <td>@detail?.Field.FieldName</td>
-                        <td>@detail?.BookingDate.ToString("dd/MM/yyyy")</td>
                         <td>
-                            @foreach (var d in b.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
+                            @if (!string.IsNullOrEmpty(b.GuestName))
                             {
-                                <span class="badge bg-light text-dark border">@d.TimeSlot.StartTime.ToString("HH:mm")</span>
+                                <span>@b.GuestName <span class="badge bg-secondary">vãng lai</span></span>
+                                <br /><small class="text-muted">@b.GuestPhone</small>
                             }
+                            else
+                            {
+                                @b.User.FullName
+                                <br /><small class="text-muted">@b.User.Email</small>
+                            }
+                            @if (b.CreatedBy != null)
+                            {
+                                <br /><small class="text-info">đặt hộ bởi @b.CreatedBy.FullName</small>
+                            }
+                        </td>
+                        <td>@b.Field.FieldName</td>
+                        <td>@b.BookingDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @b.TimeSlot.StartTime.ToString("HH:mm") - @b.TimeSlot.EndTime.ToString("HH:mm")
+                            </span>
                         </td>
                         <td class="text-success fw-bold">@b.TotalAmount.ToString("N0")đ</td>
                         <td>
                             @if (b.Payments.Any(p => p.Status == "Paid"))
                             {
-                                <span class="badge bg-success">Đã TT</span>
+                                var pm = b.Payments.First(p => p.Status == "Paid");
+                                <span class="badge bg-success">Đã TT (@pm.Method)</span>
                             }
                             else if (b.Payments.Any(p => p.Status == "Pending"))
                             {
-                                <span class="badge bg-info text-dark" title="Khách báo đã chuyển khoản, chờ kiểm tra">Chờ xác nhận</span>
+                                <span class="badge bg-info">Chờ duyệt TT</span>
+                            }
+                            else if (b.Payments.Any(p => p.Status == "RefundPending"))
+                            {
+                                <span class="badge bg-warning text-dark">Chờ hoàn tiền</span>
                             }
                             else
                             {

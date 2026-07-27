@@ -16,9 +16,8 @@
                     <th>Tên sân</th>
                     <th>Loại</th>
                     <th>Khu vực</th>
-                    <th>Giá thường</th>
-                    <th>Giá cao điểm</th>
-                    <th>Ngày tạo</th>
+                    <th>Giá mặc định</th>
+                    <th>Ví / Cashback</th>
                     <th>Trạng thái</th>
                     <th></th>
                 </tr>
@@ -30,10 +29,18 @@
                         <td>@f.FieldId</td>
                         <td>@f.FieldName</td>
                         <td>@f.FieldType.TypeName</td>
-                        <td>@f.District, @f.City</td>
+                        <td>@f.WardName, @f.ProvinceName</td>
                         <td>@f.PricePerHour.ToString("N0")đ</td>
-                        <td>@f.PeakPricePerHour.ToString("N0")đ</td>
-                        <td>@f.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (f.AcceptWalletPayment)
+                            {
+                                <span class="badge bg-info">Nhận ví@(f.CashbackPercent > 0 ? $" · {f.CashbackPercent}%" : "")</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Tắt ví</span>
+                            }
+                        </td>
                         <td>
                             @switch (f.Status)
                             {
@@ -43,6 +50,7 @@
                             }
                         </td>
                         <td class="text-end">
+                            <a asp-action="Rules" asp-route-id="@f.FieldId" class="btn btn-sm btn-outline-success">Bảng giá</a>
                             <a asp-action="Edit" asp-route-id="@f.FieldId" class="btn btn-sm btn-outline-primary">Sửa</a>
                             <form method="post" asp-action="Delete" asp-route-id="@f.FieldId" class="d-inline"
                                   onsubmit="return confirm('Xóa/đóng sân này?')">

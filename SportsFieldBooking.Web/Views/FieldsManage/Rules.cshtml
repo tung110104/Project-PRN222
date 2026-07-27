@@ -1,0 +1,112 @@
+@model List<FieldPricingRule>
+@{
+    var field = (Field)ViewBag.Field;
+    ViewData["Title"] = "Bảng giá " + field.FieldName;
+    string[] dayNames = { "Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7" };
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0"><i class="bi bi-cash-stack"></i> Bảng giá: @field.FieldName</h3>
+    <a asp-action="Index" class="btn btn-outline-secondary">Về danh sách sân</a>
+</div>
+
+<div class="alert alert-info py-2 small">
+    Giá được chọn theo luật khớp có <strong>ưu tiên cao nhất</strong>; điều kiện bỏ trống nghĩa là "không xét".
+    Không luật nào khớp → dùng giá mặc định <strong>@field.PricePerHour.ToString("N0")đ/giờ</strong>.
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white"><strong>Thêm luật giá</strong></div>
+    <div class="card-body">
+        <form method="post" asp-action="AddRule" class="row g-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="FieldId" value="@field.FieldId" />
+            <div class="col-md-3">
+                <label class="form-label">Tên luật *</label>
+                <input name="RuleName" class="form-control" required placeholder="VD: Giờ cao điểm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Thứ trong tuần</label>
+                <select name="DayOfWeek" class="form-select">
+                    <option value="">-- Mọi thứ --</option>
+                    @for (var i = 0; i <= 6; i++)
+                    {
+                        <option value="@i">@dayNames[i]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Từ ngày (mùa)</label>
+                <input name="StartDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Đến ngày</label>
+                <input name="EndDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Từ giờ</label>
+                <input name="StartTime" type="time" class="form-control" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Đến giờ</label>
+                <input name="EndTime" type="time" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Giá (đ) *</label>
+                <input name="Price" type="number" min="1000" class="form-control" required />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ưu tiên</label>
+                <input name="Priority" type="number" value="0" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-success w-100">Thêm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên luật</th>
+                    <th>Thứ</th>
+                    <th>Khoảng ngày</th>
+                    <th>Khung giờ</th>
+                    <th>Giá</th>
+                    <th>Ưu tiên</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.RuleName</td>
+                        <td>@(r.DayOfWeek.HasValue ? dayNames[r.DayOfWeek.Value] : "Mọi thứ")</td>
+                        <td>@(r.StartDate.HasValue || r.EndDate.HasValue
+                            ? $"{r.StartDate:dd/MM/yyyy} → {r.EndDate:dd/MM/yyyy}" : "Quanh năm")</td>
+                        <td>@(r.StartTime.HasValue || r.EndTime.HasValue
+                            ? $"{r.StartTime:HH\\:mm} → {r.EndTime:HH\\:mm}" : "Cả ngày")</td>
+                        <td class="text-success fw-bold">@r.Price.ToString("N0")đ</td>
+                        <td>@r.Priority</td>
+                        <td class="text-end">
+                            <form method="post" asp-action="DeleteRule" class="d-inline"
+                                  onsubmit="return confirm('Xóa luật giá này?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@r.PricingRuleId" />
+                                <input type="hidden" name="fieldId" value="@field.FieldId" />
+                                <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có luật giá nào — sân đang dùng giá mặc định.</div>
+    }
+</div>

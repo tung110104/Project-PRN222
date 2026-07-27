@@ -1,0 +1,42 @@
+@startuml
+title Sơ đồ tuần tự – Thanh toán & duyệt thủ công
+
+actor "Khách hàng" as KH
+participant BookingController as BC
+participant PaymentService as PS
+participant "UnitOfWork / DB" as DB
+participant BookingService as BS
+participant StaffBookingsController as SC
+actor "Chủ sân (Staff)" as CS
+
+== Pha 1: Khách gửi yêu cầu thanh toán ==
+
+KH -> BC : 1. Gửi yêu cầu thanh toán (Momo/Cash)
+activate BC
+BC -> PS : 2. PayAsync(id, user, method)
+activate PS
+PS -> DB : 3. Truy vấn Booking + Payments
+activate DB
+DB --> PS : 4. hợp lệ (chưa Paid/Pending)
+PS -> DB : 5. Ghi Payment Pending + mã giao dịch
+PS --> BC : 6. (true, "chờ xác nhận")
+deactivate PS
+BC --> KH : 7. Thông báo chờ duyệt
+deactivate BC
+
+== Chủ sân kiểm tra tiền đã về tài khoản thật ==
+
+CS -> SC : 8. Bấm Xác nhận đơn
+activate SC
+SC -> BS : 9. CanManageAsync — sân của tôi?
+activate BS
+BS --> SC : 10. Được phép
+SC -> BS : 11. ConfirmAsync(id)
+BS -> DB : 12. Payment → Paid (ghi PaidAt), Booking → Confirmed
+DB --> BS : 13. Lưu thành công
+deactivate DB
+BS --> SC : 14. (true, "đã nhận tiền")
+deactivate BS
+SC --> CS : 15. Về danh sách
+deactivate SC
+@enduml

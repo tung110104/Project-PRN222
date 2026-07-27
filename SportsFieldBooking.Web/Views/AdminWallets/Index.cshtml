@@ -1,0 +1,64 @@
+@model List<Wallet>
+@{
+    ViewData["Title"] = "Quản trị ví";
+}
+<h3 class="mb-4"><i class="bi bi-safe"></i> Quản trị ví người dùng</h3>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th class="text-end">Số dư</th>
+                    <th>Trạng thái</th>
+                    <th>Điều chỉnh (± có lý do)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in Model)
+                {
+                    <tr>
+                        <td>@w.User.FullName</td>
+                        <td>@w.User.Email</td>
+                        <td class="text-end fw-bold">@w.Balance.ToString("N0")đ</td>
+                        <td>
+                            @if (w.IsLocked)
+                            {
+                                <span class="badge bg-danger">Khóa</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                        </td>
+                        <td>
+                            <form method="post" asp-action="Adjust" class="d-flex gap-1">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@w.UserId" />
+                                <input name="amount" type="number" step="1000" class="form-control form-control-sm" style="width:110px" placeholder="±đ" required />
+                                <input name="reason" class="form-control form-control-sm" placeholder="Lý do *" required />
+                                <button class="btn btn-sm btn-outline-primary">OK</button>
+                            </form>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" asp-action="ToggleLock" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@w.UserId" />
+                                <button class="btn btn-sm @(w.IsLocked ? "btn-outline-success" : "btn-outline-danger")">
+                                    @(w.IsLocked ? "Mở khóa" : "Khóa ví")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có ví nào.</div>
+    }
+</div>

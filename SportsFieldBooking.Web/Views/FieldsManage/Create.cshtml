@@ -1,214 +1,89 @@
 @model Field
-
 @{
     ViewData["Title"] = "Thêm sân mới";
-    var fieldTypes =
-        (List<FieldType>)ViewBag.FieldTypes;
+    var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
 }
-
-<h3 class="mb-4">
-    <i class="bi bi-plus-circle"></i>
-    Thêm sân mới
-</h3>
+<h3 class="mb-4"><i class="bi bi-plus-circle"></i> Thêm sân mới</h3>
 
 @if (ViewBag.Error != null)
 {
-    <div class="alert alert-danger">
-        @ViewBag.Error
-    </div>
+    <div class="alert alert-danger">@ViewBag.Error</div>
 }
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <form method="post"
-              enctype="multipart/form-data"
-              class="row g-3">
-
+        <form method="post" enctype="multipart/form-data" class="row g-3">
             @Html.AntiForgeryToken()
-
             <div class="col-md-6">
-                <label class="form-label">
-                    Tên sân *
-                </label>
-
-                <input name="FieldName"
-                       value="@Model?.FieldName"
-                       class="form-control"
-                       required />
+                <label class="form-label">Tên sân *</label>
+                <input name="FieldName" value="@Model?.FieldName" class="form-control" required />
             </div>
-
             <div class="col-md-6">
-                <label class="form-label">
-                    Loại sân *
-                </label>
-
-                <select name="FieldTypeId"
-                        class="form-select">
-
-                    @foreach (var type in fieldTypes)
+                <label class="form-label">Loại sân *</label>
+                <select name="FieldTypeId" class="form-select">
+                    @foreach (var t in fieldTypes)
                     {
-                        <option value="@type.FieldTypeId"
-                                selected="@(
-                                Model?.FieldTypeId ==
-                                type.FieldTypeId)">
-
-                        @type.TypeName
-                    </option>
-                                        }
+                        <option value="@t.FieldTypeId" selected="@(Model?.FieldTypeId == t.FieldTypeId)">@t.TypeName</option>
+                    }
                 </select>
             </div>
 
-            <div class="col-md-6">
-                <label class="form-label">
-                    Địa chỉ *
-                </label>
-
-                <input name="Address"
-                       value="@Model?.Address"
-                       class="form-control"
-                       required />
+            <!-- Địa chỉ theo API hành chính VN (mục 7) — không cho nhập tay tỉnh/xã -->
+            <div class="col-md-4">
+                <label class="form-label">Tỉnh / Thành phố *</label>
+                <select id="province-select" class="form-select" required>
+                    <option value="">-- Đang tải... --</option>
+                </select>
+                <input type="hidden" name="ProvinceCode" id="ProvinceCode" value="@Model?.ProvinceCode" />
+                <input type="hidden" name="ProvinceName" id="ProvinceName" value="@Model?.ProvinceName" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Phường / Xã *</label>
+                <select id="ward-select" class="form-select" required>
+                    <option value="">-- Chọn tỉnh trước --</option>
+                </select>
+                <input type="hidden" name="WardCode" id="WardCode" value="@Model?.WardCode" />
+                <input type="hidden" name="WardName" id="WardName" value="@Model?.WardName" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Đường, số nhà *</label>
+                <input name="Street" value="@Model?.Street" class="form-control" required placeholder="VD: 123 Lê Lợi" />
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label">
-                    Quận/Huyện *
-                </label>
-
-                <input name="District"
-                       value="@Model?.District"
-                       class="form-control"
-                       required />
+            <div class="col-md-4">
+                <label class="form-label">Giá mặc định/giờ (đ) *</label>
+                <input name="PricePerHour" value="@Model?.PricePerHour" type="number" min="1000" class="form-control" required />
+                <small class="text-muted">Giá cao điểm/cuối tuần/mùa cấu hình ở "Bảng giá" sau khi tạo.</small>
             </div>
-
-            <div class="col-md-3">
-                <label class="form-label">
-                    Thành phố *
-                </label>
-
-                <input name="City"
-                       value="@Model?.City"
-                       class="form-control"
-                       required />
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">
-                    Giá giờ thường (đ) *
-                </label>
-
-                <input name="PricePerHour"
-                       value="@Model?.PricePerHour"
-                       type="number"
-                       min="1000"
-                       class="form-control"
-                       required />
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">
-                    Giá giờ cao điểm 17–21h (đ)
-                </label>
-
-                <input name="PeakPricePerHour"
-                       value="@Model?.PeakPricePerHour"
-                       type="number"
-                       min="0"
-                       class="form-control" />
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">
-                    Mô tả
-                </label>
-
-                <textarea name="Description"
-                          class="form-control"
-                          rows="3">@Model?.Description</textarea>
-            </div>
-
-            <!-- Upload ảnh -->
-            <div class="col-12">
-                <label for="images"
-                       class="form-label">
-                    Hình ảnh sân
-                </label>
-
-                <input id="images"
-                       name="images"
-                       type="file"
-                       class="form-control"
-                       accept=".jpg,.jpeg,.png,.webp"
-                       multiple />
-
-                <div class="form-text">
-                    Chọn tối đa 10 ảnh.
-                    Chấp nhận JPG, JPEG, PNG, WEBP.
-                    Mỗi ảnh tối đa 5 MB.
-                    Ảnh đầu tiên sẽ là ảnh đại diện.
+            <div class="col-md-4">
+                <label class="form-label">Nhận thanh toán ví</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="AcceptWalletPayment" value="true"
+                           checked="@(Model?.AcceptWalletPayment == true)" />
+                    <label class="form-check-label">Bật tiền ảo cho sân này</label>
                 </div>
             </div>
-
-            <!-- Xem trước ảnh -->
-            <div id="imagePreview"
-                 class="col-12 d-flex flex-wrap gap-3">
+            <div class="col-md-4">
+                <label class="form-label">Cashback khi trả ví (%)</label>
+                <input name="CashbackPercent" value="@(Model?.CashbackPercent ?? 0)" type="number" min="0" max="100" class="form-control" />
             </div>
 
             <div class="col-12">
-                <button type="submit"
-                        class="btn btn-success">
-                    <i class="bi bi-save"></i>
-                    Lưu sân
-                </button>
-
-                <a asp-action="Index"
-                   class="btn btn-outline-secondary">
-                    Hủy
-                </a>
+                <label class="form-label">Mô tả</label>
+                <textarea name="Description" class="form-control" rows="3">@Model?.Description</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Ảnh sân (tối đa 10, ảnh đầu là đại diện)</label>
+                <input type="file" name="images" class="form-control" multiple accept="image/*" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-success">Lưu sân</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        const imageInput =
-            document.getElementById("images");
-
-        const imagePreview =
-            document.getElementById("imagePreview");
-
-        imageInput.addEventListener("change", function () {
-            imagePreview.innerHTML = "";
-
-            const files =
-                Array.from(this.files);
-
-            if (files.length > 10) {
-                alert("Chỉ được chọn tối đa 10 ảnh.");
-                this.value = "";
-                return;
-            }
-
-            files.forEach(file => {
-                const image =
-                    document.createElement("img");
-
-                image.src =
-                    URL.createObjectURL(file);
-
-                image.className =
-                    "rounded border object-fit-cover";
-
-                image.style.width = "150px";
-                image.style.height = "110px";
-
-                image.onload = function () {
-                    URL.revokeObjectURL(
-                        image.src);
-                };
-
-                imagePreview.appendChild(image);
-            });
-        });
-    </script>
+    <partial name="_AddressApiScripts" />
 }

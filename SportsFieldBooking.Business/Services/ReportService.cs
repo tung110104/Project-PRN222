@@ -12,13 +12,15 @@ public class ReportSummary
     public int TotalBookings { get; set; }
     public int TotalCustomers { get; set; }
     public int TotalFields { get; set; }
+    public decimal TotalWalletBalance { get; set; }
     public List<RevenueByDay> RevenueByDays { get; set; } = new();
     public List<TopField> TopFields { get; set; } = new();
 }
 
 public interface IReportService
 {
-    Task<ReportSummary> GetSummaryAsync(DateOnly from, DateOnly to);
+    /// <summary>ownerId != null → chỉ tính doanh thu các sân của chủ sân đó.</summary>
+    Task<ReportSummary> GetSummaryAsync(DateOnly from, DateOnly to, int? ownerId = null);
 }
 
 public class ReportService : IReportService
@@ -26,38 +28,44 @@ public class ReportService : IReportService
     private readonly IUnitOfWork _uow;
     public ReportService(IUnitOfWork uow) => _uow = uow;
 
-    public async Task<ReportSummary> GetSummaryAsync(DateOnly from, DateOnly to)
+    public async Task<ReportSummary> GetSummaryAsync(DateOnly from, DateOnly to, int? ownerId = null)
     {
-        // Doanh thu tinh theo cac payment da thanh toan (Paid)
-        var paidPayments = await _uow.Payments.Query()
-            .Include(p => p.Booking).ThenInclude(b => b.BookingDetails).ThenInclude(d => d.Field)
-            .Where(p => p.Status == "Paid" && p.PaidAt != null)
-            .ToListAsync();
+        var fromDt = from.ToDateTime(TimeOnly.MinValue);
+        var toDt = to.ToDateTime(TimeOnly.MaxValue);
 
-        var inRange = paidPayments
-            .Where(p => DateOnly.FromDateTime(p.PaidAt!.Value) >= from &&
-                        DateOnly.FromDateTime(p.PaidAt!.Value) <= to)
-            .ToList();
+        // Doanh thu = payment Paid, lọc ngày ngay trong SQL
+        var paidQuery = _uow.Payments.Query()
+            .Include(p => p.Booking).ThenInclude(b => b.Field)
+            .Where(p => p.Status == "Paid" && p.PaidAt != null &&
+                        p.PaidAt >= fromDt && p.PaidAt <= toDt);
 
-        var summary = new ReportSummary
+        if (ownerId.HasValue)
+            paidQuery = paidQuery.Where(p => p.Booking.Field.OwnerId == ownerId.Value);
+
+        var inRange = await paidQuery.ToListAsync();
+
+        var fieldsQuery = _uow.Fields.Query().AsQueryable();
+        if (ownerId.HasValue)
+            fieldsQuery = fieldsQuery.Where(f => f.OwnerId == ownerId.Value);
+
+        return new ReportSummary
         {
             TotalRevenue = inRange.Sum(p => p.Amount),
             TotalBookings = inRange.Select(p => p.BookingId).Distinct().Count(),
             TotalCustomers = await _uow.Users.Query().CountAsync(u => u.Role.RoleName == "Customer"),
-            TotalFields = await _uow.Fields.Query().CountAsync(),
+            TotalFields = await fieldsQuery.CountAsync(),
+            TotalWalletBalance = await _uow.Wallets.Query().SumAsync(w => (decimal?)w.Balance) ?? 0,
             RevenueByDays = inRange
                 .GroupBy(p => DateOnly.FromDateTime(p.PaidAt!.Value))
                 .Select(g => new RevenueByDay(g.Key, g.Sum(p => p.Amount), g.Count()))
                 .OrderBy(r => r.Date)
                 .ToList(),
             TopFields = inRange
-                .SelectMany(p => p.Booking.BookingDetails.Where(d => d.Status == "Active"))
-                .GroupBy(d => d.Field.FieldName)
-                .Select(g => new TopField(g.Key, g.Count(), g.Sum(d => d.Price)))
+                .GroupBy(p => p.Booking.Field.FieldName)
+                .Select(g => new TopField(g.Key, g.Count(), g.Sum(p => p.Amount)))
                 .OrderByDescending(t => t.BookingCount)
                 .Take(5)
                 .ToList()
         };
-        return summary;
     }
 }

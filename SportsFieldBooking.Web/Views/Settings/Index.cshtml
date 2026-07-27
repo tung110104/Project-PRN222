@@ -1,0 +1,53 @@
+@model List<SystemSetting>
+@{
+    ViewData["Title"] = "Cấu hình hệ thống";
+    var labels = new Dictionary<string, string>
+    {
+        ["PointsEarnRate"] = "Số tiền (đ) đổi được 1 điểm",
+        ["RedeemUnitPoints"] = "Bội số điểm mỗi lần quy đổi",
+        ["RedeemUnitValue"] = "Giá trị (đ) của mỗi bội số điểm",
+        ["RedeemMaxPercent"] = "Trần % booking được trừ bằng điểm",
+        ["FirstBookingBonus"] = "Điểm thưởng lần đặt đầu tiên",
+        ["ReviewBonus"] = "Điểm thưởng khi review sân",
+        ["DepositBonusThreshold"] = "Ngưỡng nạp được tặng bonus (đ)",
+        ["DepositBonusAmount"] = "Tiền tặng khi đạt ngưỡng nạp (đ)",
+        ["TierSilverPoints"] = "Ngưỡng điểm hạng Bạc",
+        ["TierGoldPoints"] = "Ngưỡng điểm hạng Vàng",
+        ["TierDiamondPoints"] = "Ngưỡng điểm hạng Kim cương",
+        ["TierSilverDiscount"] = "% giảm hạng Bạc",
+        ["TierGoldDiscount"] = "% giảm hạng Vàng",
+        ["TierDiamondDiscount"] = "% giảm hạng Kim cương",
+        ["VoucherCostPoints"] = "Điểm cần để đổi voucher",
+        ["VoucherPercent"] = "% giảm của voucher đổi điểm",
+        ["VoucherMaxDiscount"] = "Trần giảm của voucher (đ)",
+        ["MaintenanceCompensationPoints"] = "Điểm đền bù khi hủy do bảo trì"
+    };
+}
+<h3 class="mb-4"><i class="bi bi-gear"></i> Cấu hình hệ thống (điểm, hạng, ví)</h3>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Tham số</th><th>Ý nghĩa</th><th style="width:260px">Giá trị</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td><code>@s.SettingKey</code></td>
+                        <td>@(labels.TryGetValue(s.SettingKey, out var label) ? label : "")</td>
+                        <td>
+                            <form method="post" asp-action="Update" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="key" value="@s.SettingKey" />
+                                <input name="value" value="@s.SettingValue" class="form-control form-control-sm" required />
+                                <button class="btn btn-sm btn-outline-primary">Lưu</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

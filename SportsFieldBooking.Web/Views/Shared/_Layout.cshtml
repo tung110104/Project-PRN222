@@ -19,35 +19,47 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Tìm sân</a></li>
-                    @if (User.IsInRole("Customer"))
+                    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("SuperAdmin"))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index">Lịch sử đặt sân</a></li>
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="Profile"
-                               asp-action="Index">
-                                <i class="bi bi-person-circle"></i>
-                                Hồ sơ
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index">Đặt sân của tôi</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Index">Ví &amp; Điểm</a></li>
                     }
-                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="FieldsManage" asp-action="Index">Quản lý sân</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="GoldenDays" asp-action="Index">Ngày vàng</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Maintenance" asp-action="Index">Bảo trì</a></li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner") || User.IsInRole("Staff"))
+                    {
                         <li class="nav-item"><a class="nav-link" asp-controller="StaffBookings" asp-action="Index">Quản lý đặt lịch</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Báo cáo</a></li>
                     }
                     @if (User.IsInRole("Admin"))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Người dùng</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Quản trị</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Users" asp-action="Index">Người dùng</a></li>
+                                <li><a class="dropdown-item" asp-controller="AdminWallets" asp-action="Index">Quản trị ví</a></li>
+                                <li><a class="dropdown-item" asp-controller="Settings" asp-action="Index">Cấu hình hệ thống</a></li>
+                            </ul>
+                        </li>
+                    }
+                    @if (User.IsInRole("SuperAdmin"))
+                    {
+                        <li class="nav-item"><a class="nav-link text-warning" asp-controller="SuperAdmin" asp-action="Index">
+                            <i class="bi bi-shield-lock"></i> Cứu hộ Admin</a></li>
                     }
                 </ul>
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item">
-                            <span class="navbar-text me-3"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
+                            <a class="navbar-text me-3 nav-link d-inline" asp-controller="Profile" asp-action="Index">
+                                <i class="bi bi-person-circle"></i> @User.Identity.Name
+                            </a>
                         </li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Logout">Đăng xuất</a></li>
                     }
@@ -69,17 +81,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show">
-                @TempData["Error"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
         @if (TempData["Info"] != null)
         {
             <div class="alert alert-info alert-dismissible fade show">
                 @TempData["Info"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                @TempData["Error"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }

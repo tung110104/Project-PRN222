@@ -2,14 +2,13 @@
 @{
     ViewData["Title"] = "Tìm sân";
     var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
-    var cities = (List<string>)ViewBag.Cities;
 }
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <form method="get" class="row g-2">
             <div class="col-md-3">
-                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tên sân, địa chỉ..." />
+                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tên sân, đường, phường..." />
             </div>
             <div class="col-md-2">
                 <select name="fieldTypeId" class="form-select">
@@ -21,23 +20,26 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="city" class="form-select">
-                    <option value="">-- Khu vực --</option>
-                    @foreach (var c in cities)
-                    {
-                        <option value="@c" selected="@(ViewBag.City as string == c)">@c</option>
-                    }
+                <select name="provinceCode" id="filter-province" class="form-select"
+                        data-selected="@ViewBag.ProvinceCode">
+                    <option value="">-- Tỉnh/Thành --</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <input name="maxPrice" value="@ViewBag.MaxPrice" type="number" class="form-control" placeholder="Giá tối đa/giờ" />
+                <select name="wardCode" id="filter-ward" class="form-select"
+                        data-selected="@ViewBag.WardCode">
+                    <option value="">-- Phường/Xã --</option>
+                </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
+                <input name="maxPrice" value="@ViewBag.MaxPrice" type="number" class="form-control" placeholder="Giá max" />
+            </div>
+            <div class="col-md-1">
                 <select name="minRating" class="form-select">
-                    <option value="">-- Đánh giá --</option>
+                    <option value="">-- Sao --</option>
                     @for (var i = 3; i <= 5; i++)
                     {
-                        <option value="@i" selected="@(ViewBag.MinRating == i)">Từ @i sao</option>
+                        <option value="@i" selected="@(ViewBag.MinRating == i)">≥ @i</option>
                     }
                 </select>
             </div>
@@ -52,8 +54,13 @@
     @foreach (var f in Model)
     {
         var avg = f.Reviews.Any() ? f.Reviews.Average(r => r.Rating) : 0;
+        var primaryImage = f.FieldImages.FirstOrDefault(i => i.IsPrimary) ?? f.FieldImages.FirstOrDefault();
         <div class="col">
             <div class="card h-100 shadow-sm">
+                @if (primaryImage != null)
+                {
+                    <img src="@primaryImage.ImageUrl" class="card-img-top" style="height:170px;object-fit:cover" alt="@f.FieldName" />
+                }
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <span class="badge bg-success mb-2">@f.FieldType.TypeName</span>
@@ -64,10 +71,13 @@
                     </div>
                     <h5 class="card-title">@f.FieldName</h5>
                     <p class="card-text text-muted mb-1">
-                        <i class="bi bi-geo-alt"></i> @f.Address, @f.District, @f.City
+                        <i class="bi bi-geo-alt"></i> @f.Street, @f.WardName, @f.ProvinceName
                     </p>
-                    <p class="mb-1">Giờ thường: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                    <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@f.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-1">Giá từ: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                    @if (f.AcceptWalletPayment)
+                    {
+                        <span class="badge bg-info"><i class="bi bi-wallet2"></i> Nhận ví@(f.CashbackPercent > 0 ? $" · cashback {f.CashbackPercent}%" : "")</span>
+                    }
                 </div>
                 <div class="card-footer bg-white">
                     <a asp-controller="Field" asp-action="Detail" asp-route-id="@f.FieldId" class="btn btn-success w-100">
@@ -85,4 +95,68 @@
         <i class="bi bi-emoji-frown fs-1"></i>
         <p class="mt-2">Không tìm thấy sân phù hợp.</p>
     </div>
+}
+
+@section Scripts {
+    <script>
+        // Bộ lọc khu vực đổ từ API hành chính VN (mục 7) — provinces.open-api.vn (v2 → fallback v1)
+        (function () {
+            var provinceSelect = document.getElementById('filter-province');
+            var wardSelect = document.getElementById('filter-ward');
+            var savedProvince = provinceSelect.dataset.selected;
+            var savedWard = wardSelect.dataset.selected;
+            var API = 'https://provinces.open-api.vn/api';
+
+            async function fetchJson(url) {
+                var res = await fetch(url);
+                if (!res.ok) throw new Error(url);
+                return res.json();
+            }
+
+            async function loadProvinces() {
+                var list;
+                try { list = await fetchJson(API + '/v2/p/'); }
+                catch { try { list = await fetchJson(API + '/p/'); } catch { return; } }
+                list.forEach(function (p) {
+                    var opt = document.createElement('option');
+                    opt.value = p.code;
+                    opt.textContent = p.name;
+                    if (String(p.code) === String(savedProvince)) opt.selected = true;
+                    provinceSelect.appendChild(opt);
+                });
+                if (savedProvince) loadWards(savedProvince);
+            }
+
+            async function loadWards(code) {
+                wardSelect.innerHTML = '<option value="">-- Phường/Xã --</option>';
+                var wards = [];
+                try {
+                    var p2 = await fetchJson(API + '/v2/p/' + code + '?depth=2');
+                    wards = p2.wards || [];
+                } catch {
+                    try {
+                        var p1 = await fetchJson(API + '/p/' + code + '?depth=3');
+                        (p1.districts || []).forEach(function (d) {
+                            (d.wards || []).forEach(function (w) { wards.push(w); });
+                        });
+                    } catch { }
+                }
+                wards.forEach(function (w) {
+                    var opt = document.createElement('option');
+                    opt.value = w.code;
+                    opt.textContent = w.name;
+                    if (String(w.code) === String(savedWard)) opt.selected = true;
+                    wardSelect.appendChild(opt);
+                });
+            }
+
+            provinceSelect.addEventListener('change', function () {
+                savedWard = '';
+                if (this.value) loadWards(this.value);
+                else wardSelect.innerHTML = '<option value="">-- Phường/Xã --</option>';
+            });
+
+            loadProvinces();
+        })();
+    </script>
 }

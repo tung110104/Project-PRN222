@@ -1,0 +1,80 @@
+@* Dropdown địa chỉ từ API hành chính Việt Nam (mục 7) — provinces.open-api.vn.
+   Thử API v2 (34 tỉnh sau sáp nhập, tỉnh → phường/xã) trước, lỗi thì fallback v1. *@
+<script>
+    (function () {
+        var provinceSelect = document.getElementById('province-select');
+        var wardSelect = document.getElementById('ward-select');
+        if (!provinceSelect || !wardSelect) return;
+
+        var savedProvince = document.getElementById('ProvinceCode').value;
+        var savedWard = document.getElementById('WardCode').value;
+
+        function apiBase() { return 'https://provinces.open-api.vn/api'; }
+
+        async function fetchJson(url) {
+            var res = await fetch(url);
+            if (!res.ok) throw new Error(url);
+            return res.json();
+        }
+
+        async function loadProvinces() {
+            var list;
+            try { list = await fetchJson(apiBase() + '/v2/p/'); }
+            catch { list = await fetchJson(apiBase() + '/p/'); }
+
+            provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
+            list.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p.code;
+                opt.textContent = p.name;
+                if (String(p.code) === String(savedProvince)) opt.selected = true;
+                provinceSelect.appendChild(opt);
+            });
+            if (savedProvince) loadWards(savedProvince);
+        }
+
+        async function loadWards(provinceCode) {
+            wardSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
+            var wards = [];
+            try {
+                var p2 = await fetchJson(apiBase() + '/v2/p/' + provinceCode + '?depth=2');
+                wards = p2.wards || [];
+            } catch {
+                try {
+                    // v1: tỉnh → quận/huyện → phường/xã (gộp phẳng)
+                    var p1 = await fetchJson(apiBase() + '/p/' + provinceCode + '?depth=3');
+                    (p1.districts || []).forEach(function (d) {
+                        (d.wards || []).forEach(function (w) { wards.push(w); });
+                    });
+                } catch { wards = []; }
+            }
+
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            wards.forEach(function (w) {
+                var opt = document.createElement('option');
+                opt.value = w.code;
+                opt.textContent = w.name;
+                if (String(w.code) === String(savedWard)) opt.selected = true;
+                wardSelect.appendChild(opt);
+            });
+        }
+
+        provinceSelect.addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            document.getElementById('ProvinceCode').value = this.value;
+            document.getElementById('ProvinceName').value = this.value ? opt.textContent : '';
+            document.getElementById('WardCode').value = '';
+            document.getElementById('WardName').value = '';
+            if (this.value) loadWards(this.value);
+            else wardSelect.innerHTML = '<option value="">-- Chọn tỉnh trước --</option>';
+        });
+
+        wardSelect.addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            document.getElementById('WardCode').value = this.value;
+            document.getElementById('WardName').value = this.value ? opt.textContent : '';
+        });
+
+        loadProvinces();
+    })();
+</script>

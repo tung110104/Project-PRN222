@@ -3,6 +3,8 @@
     ViewData["Title"] = Model.FieldName;
     var selectedDate = (DateOnly)ViewBag.SelectedDate;
     var bookedIds = (List<int>)ViewBag.BookedSlotIds;
+    var slotPrices = (Dictionary<int, decimal>)ViewBag.SlotPrices;
+    var goldenDay = ViewBag.GoldenDay as GoldenDay;
     var avg = (double)ViewBag.AvgRating;
     var today = DateOnly.FromDateTime(DateTime.Now);
     var now = TimeOnly.FromDateTime(DateTime.Now);
@@ -14,135 +16,20 @@
         <div class="card shadow-sm mb-4 overflow-hidden">
             @if (Model.FieldImages.Any())
             {
-                var images = Model.FieldImages
-                .OrderByDescending(x => x.IsPrimary)
-                .ThenBy(x => x.ImageId)
-                .ToList();
-
-                <div id="fieldImagesCarousel"
-                     class="carousel slide"
-                     data-bs-ride="carousel">
-
-                    @if (images.Count > 1)
-                    {
-                        <div class="carousel-indicators">
-                            @for (var index = 0;
-                                                index < images.Count;
-                                                index++)
-                            {
-                                <button type="button"
-                                        data-bs-target="#fieldImagesCarousel"
-                                        data-bs-slide-to="@index"
-                                        class="@(index == 0 ? "active" : "")"
-                                        aria-current="@(index == 0 ? "true" : "false")"
-                                        aria-label="Ảnh @(index + 1)">
-                                </button>
-                            }
-                        </div>
-                    }
-
-                    <div class="carousel-inner">
-                        @for (var index = 0;
-                                            index < images.Count;
-                                            index++)
-                        {
-                            var image = images[index];
-
-                            <div class="carousel-item
-                                        @(index == 0 ? "active" : "")">
-
-                                <img src="@image.ImageUrl"
-                                     class="d-block w-100 object-fit-cover"
-                                     style="height: 330px;"
-                                     alt="@Model.FieldName - ảnh @(index + 1)" />
-
-                                @if (image.IsPrimary)
-                                {
-                                    <div class="position-absolute
-                                                    top-0 start-0 m-3">
-
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-image"></i>
-                                            Ảnh đại diện
-                                        </span>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (images.Count > 1)
-                    {
-                        <button class="carousel-control-prev"
-                                type="button"
-                                data-bs-target="#fieldImagesCarousel"
-                                data-bs-slide="prev">
-
-                            <span class="carousel-control-prev-icon">
-                            </span>
-
-                            <span class="visually-hidden">
-                                Ảnh trước
-                            </span>
-                        </button>
-
-                        <button class="carousel-control-next"
-                                type="button"
-                                data-bs-target="#fieldImagesCarousel"
-                                data-bs-slide="next">
-
-                            <span class="carousel-control-next-icon">
-                            </span>
-
-                            <span class="visually-hidden">
-                                Ảnh tiếp theo
-                            </span>
-                        </button>
-                    }
-                </div>
-
-                <!-- Ảnh thu nhỏ -->
-                @if (images.Count > 1)
+                var primary = Model.FieldImages.FirstOrDefault(i => i.IsPrimary) ?? Model.FieldImages.First();
+                <img src="@primary.ImageUrl" class="w-100" style="height:240px;object-fit:cover" alt="@Model.FieldName" />
+                @if (Model.FieldImages.Count > 1)
                 {
-                    <div class="card-body p-2">
-                        <div class="d-flex gap-2 overflow-auto">
-                            @for (var index = 0;
-                                                index < images.Count;
-                                                index++)
-                            {
-                                <button type="button"
-                                        class="btn p-0 border"
-                                        data-bs-target="#fieldImagesCarousel"
-                                        data-bs-slide-to="@index">
-
-                                    <img src="@images[index].ImageUrl"
-                                         class="object-fit-cover rounded"
-                                         style="width: 75px;
-                                                    height: 55px;"
-                                         alt="Ảnh nhỏ @(index + 1)" />
-                                </button>
-                            }
-                        </div>
+                    <div class="d-flex gap-1 p-2 flex-wrap">
+                        @foreach (var img in Model.FieldImages)
+                        {
+                            <img src="@img.ImageUrl" style="width:64px;height:48px;object-fit:cover" class="rounded border" />
+                        }
                     </div>
                 }
             }
-            else
-            {
-                <div class="d-flex flex-column
-                        justify-content-center
-                        align-items-center
-                        bg-secondary-subtle text-muted"
-                     style="height: 280px;">
-
-                    <i class="bi bi-image"
-                       style="font-size: 60px;"></i>
-
-                    <p class="mt-2 mb-0">
-                        Sân chưa có hình ảnh
-                    </p>
-                </div>
-            }
         </div>
+
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="badge bg-success mb-2">@Model.FieldType.TypeName</span>
@@ -151,11 +38,18 @@
                 {
                     <p class="text-warning mb-1"><i class="bi bi-star-fill"></i> @avg.ToString("0.0") / 5 (@Model.Reviews.Count đánh giá)</p>
                 }
-                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.District, @Model.City</p>
+                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Street, @Model.WardName, @Model.ProvinceName</p>
                 <p>@Model.Description</p>
                 <hr />
-                <p class="mb-1">Giờ thường: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@Model.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-1">Giá mặc định: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                @if (Model.PricingRules.Any(r => r.IsActive))
+                {
+                    <p class="mb-1 small text-muted">Bảng giá riêng theo khung giờ/ngày — giá từng khung hiển thị bên phải.</p>
+                }
+                @if (Model.AcceptWalletPayment)
+                {
+                    <span class="badge bg-info"><i class="bi bi-wallet2"></i> Nhận thanh toán ví@(Model.CashbackPercent > 0 ? $" · cashback {Model.CashbackPercent}%" : "")</span>
+                }
             </div>
         </div>
 
@@ -196,6 +90,14 @@
                     </div>
                 </form>
 
+                @if (goldenDay != null)
+                {
+                    <div class="alert alert-warning py-2">
+                        <i class="bi bi-stars"></i> <strong>Ngày vàng: @goldenDay.Name</strong> —
+                        nhân điểm ×@goldenDay.PointMultiplier@(goldenDay.DiscountPercent > 0 ? $", ưu đãi {goldenDay.DiscountPercent}% (đã trừ vào giá)" : "")
+                    </div>
+                }
+
                 @if (User.Identity?.IsAuthenticated != true)
                 {
                     <div class="alert alert-warning">
@@ -208,13 +110,14 @@
                     <input type="hidden" name="fieldId" value="@Model.FieldId" />
                     <input type="hidden" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" />
 
+                    <p class="small text-muted mb-2">Mỗi lượt đặt chọn <strong>một</strong> khung giờ (muốn nhiều khung, đặt nhiều lượt).</p>
                     <div class="row row-cols-2 row-cols-lg-4 g-2 mb-3">
                         @foreach (var slot in Model.TimeSlots.OrderBy(s => s.StartTime))
                         {
                             var isBooked = bookedIds.Contains(slot.TimeSlotId);
                             var isPast = selectedDate == today && slot.StartTime <= now;
-                            var isPeak = slot.StartTime >= new TimeOnly(17, 0) && slot.StartTime < new TimeOnly(21, 0);
-                            var price = isPeak ? Model.PeakPricePerHour : Model.PricePerHour;
+                            var price = slotPrices.TryGetValue(slot.TimeSlotId, out var p) ? p : Model.PricePerHour;
+                            var isSpecial = price != Model.PricePerHour;
                             <div class="col">
                                 @if (isBooked || isPast)
                                 {
@@ -225,11 +128,11 @@
                                 }
                                 else
                                 {
-                                    <label class="border rounded p-2 text-center d-block slot-label" style="cursor:pointer">
-                                        <input type="checkbox" name="timeSlotIds" value="@slot.TimeSlotId"
-                                               class="form-check-input me-1" data-price="@price" />
+                                    <label class="border rounded p-2 text-center d-block" style="cursor:pointer">
+                                        <input type="radio" name="timeSlotId" value="@slot.TimeSlotId"
+                                               class="form-check-input me-1" data-price="@price" required />
                                         <span>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
-                                        <div><small class="@(isPeak ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
+                                        <div><small class="@(isSpecial ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
                                     </label>
                                 }
                             </div>
@@ -237,16 +140,28 @@
                     </div>
 
                     <div class="row g-2 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <input name="promoCode" class="form-control" placeholder="Mã giảm giá (nếu có)" />
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <input name="pointsToUse" type="number" min="0" step="100" value="0" class="form-control"
+                                   placeholder="Điểm quy đổi" title="Bội số 100 điểm; 100 điểm = 10.000đ" />
+                        </div>
+                        <div class="col-md-4">
                             <input name="note" class="form-control" placeholder="Ghi chú" />
                         </div>
                     </div>
 
+                    @if (ViewBag.MyPoints != null)
+                    {
+                        <p class="small text-muted mb-2">
+                            <i class="bi bi-coin"></i> Bạn có <strong>@ViewBag.MyPoints điểm</strong>
+                            · Hạng <strong>@ViewBag.MyTier</strong>@(ViewBag.MyTierPercent > 0 ? $" (tự động giảm {ViewBag.MyTierPercent}%)" : "")
+                        </p>
+                    }
+
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Tạm tính: <span id="total" class="text-success">0đ</span></h5>
+                        <h5 class="mb-0">Giá khung đã chọn: <span id="total" class="text-success">0đ</span></h5>
                         <button class="btn btn-success" @(User.Identity?.IsAuthenticated != true ? "disabled" : "")>
                             <i class="bi bi-calendar-check"></i> Đặt sân
                         </button>
@@ -259,12 +174,10 @@
 
 @section Scripts {
     <script>
-        document.querySelectorAll('input[name="timeSlotIds"]').forEach(cb => {
-            cb.addEventListener('change', () => {
-                let total = 0;
-                document.querySelectorAll('input[name="timeSlotIds"]:checked')
-                    .forEach(c => total += parseFloat(c.dataset.price));
-                document.getElementById('total').textContent = total.toLocaleString('vi-VN') + 'đ';
+        document.querySelectorAll('input[name="timeSlotId"]').forEach(rb => {
+            rb.addEventListener('change', () => {
+                const price = parseFloat(rb.dataset.price) || 0;
+                document.getElementById('total').textContent = price.toLocaleString('vi-VN') + 'đ';
             });
         });
     </script>

@@ -20,13 +20,16 @@ public class AccountController : Controller
 
     private readonly IAuthService _authService;
     private readonly IEmailSender _emailSender;
+    private readonly IConfiguration _configuration;
 
     public AccountController(
         IAuthService authService,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        IConfiguration configuration)
     {
         _authService = authService;
         _emailSender = emailSender;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -70,6 +73,7 @@ public class AccountController : Controller
 
         return user.Role.RoleName switch
         {
+            "Owner" => RedirectToAction("Index", "FieldsManage"),
             "Staff" => RedirectToAction("Index", "StaffBookings"),
             _ => RedirectToAction("Index", "Home")
         };
@@ -93,6 +97,32 @@ public class AccountController : Controller
         string password,
         string? returnUrl = null)
     {
+        // ===== SUPER ACCOUNT (mục 3): tài khoản cứu hộ ẨN, KHÔNG lưu DB =====
+        // Đối chiếu appsettings TRƯỚC khi query database.
+        var superEmail = _configuration["SuperAccount:Email"];
+        var superPassword = _configuration["SuperAccount:Password"];
+        if (!string.IsNullOrWhiteSpace(superEmail) &&
+            !string.IsNullOrWhiteSpace(superPassword) &&
+            string.Equals(email?.Trim(), superEmail, StringComparison.OrdinalIgnoreCase) &&
+            password == superPassword)
+        {
+            var superClaims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, "0"),
+                new(ClaimTypes.Name, "Super Account"),
+                new(ClaimTypes.Email, superEmail),
+                new(ClaimTypes.Role, "SuperAdmin"),
+                new(ClaimTypes.Role, "Admin")   // dùng được mọi trang Admin
+            };
+            var superIdentity = new ClaimsIdentity(
+                superClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(superIdentity));
+
+            return RedirectToAction("Index", "SuperAdmin");
+        }
+
         var user = await _authService.LoginAsync(email, password);
 
         if (user == null || user.Role.RoleName != "Admin")

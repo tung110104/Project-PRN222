@@ -1,6 +1,9 @@
 @model Booking
 @{
     ViewData["Title"] = "Thanh toán";
+    var walletBalance = (decimal)(ViewBag.WalletBalance ?? 0m);
+    var walletLocked = (bool)(ViewBag.WalletLocked ?? false);
+    var acceptWallet = Model.Field.AcceptWalletPayment;
 }
 <div class="row justify-content-center">
     <div class="col-md-6">
@@ -12,8 +15,30 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.BookingId" />
                     <div class="list-group mb-3">
+                        @if (acceptWallet)
+                        {
+                            <label class="list-group-item d-flex gap-2 @(walletLocked || walletBalance < Model.TotalAmount ? "opacity-50" : "")">
+                                <input class="form-check-input payment-method" type="radio" name="method" value="Wallet"
+                                       @(walletLocked || walletBalance < Model.TotalAmount ? "disabled" : "checked") />
+                                <span><strong>Ví tiền ảo</strong> — số dư @walletBalance.ToString("N0")đ, trừ ngay &amp; xác nhận luôn
+                                    @if (Model.Field.CashbackPercent > 0)
+                                    {
+                                        <span class="badge bg-info">cashback @Model.Field.CashbackPercent%</span>
+                                    }
+                                    @if (walletLocked)
+                                    {
+                                        <span class="badge bg-danger">ví bị khóa</span>
+                                    }
+                                    else if (walletBalance < Model.TotalAmount)
+                                    {
+                                        <span class="badge bg-warning text-dark">không đủ số dư</span>
+                                    }
+                                </span>
+                            </label>
+                        }
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input payment-method" type="radio" name="method" value="Momo" checked />
+                            <input class="form-check-input payment-method" type="radio" name="method" value="Momo"
+                                   @(acceptWallet && !walletLocked && walletBalance >= Model.TotalAmount ? "" : "checked") />
                             <span><strong>Momo</strong> — Ví Momo (quét mã QR)</span>
                         </label>
                         <label class="list-group-item d-flex gap-2">
@@ -26,9 +51,11 @@
                         <img src="~/images/momo-qr.png" alt="Mã QR Momo" class="img-fluid border rounded" style="max-width: 260px;" />
                         <p class="text-muted small mt-2 mb-0">NGUYỄN MẠNH TÙNG — STK: *******014</p>
                     </div>
-                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> <span id="pay-btn-text">Tôi đã chuyển khoản</span></button>
+                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> <span id="pay-btn-text">Xác nhận thanh toán</span></button>
                 </form>
-                <p class="text-muted small text-center mt-3 mb-0">* Bấm nút sau khi bạn đã chuyển khoản. Chủ sân sẽ kiểm tra và xác nhận đặt sân.</p>
+                <p class="text-muted small text-center mt-3 mb-0">
+                    * Ví: trừ tiền và xác nhận ngay. Momo/Tiền mặt: chủ sân kiểm tra rồi mới xác nhận.
+                </p>
             </div>
         </div>
     </div>
@@ -36,14 +63,17 @@
 
 @section Scripts {
     <script>
-        // Chỉ hiện mã QR khi chọn Momo; đổi nhãn nút theo phương thức
         function updatePayUi(method) {
             document.getElementById('momo-qr').style.display = method === 'Momo' ? 'block' : 'none';
             document.getElementById('pay-btn-text').textContent =
-                method === 'Momo' ? 'Tôi đã chuyển khoản' : 'Đặt sân, thanh toán tại sân';
+                method === 'Momo' ? 'Tôi đã chuyển khoản'
+                : method === 'Wallet' ? 'Trừ ví và xác nhận'
+                : 'Đặt sân, thanh toán tại sân';
         }
         document.querySelectorAll('.payment-method').forEach(function (r) {
             r.addEventListener('change', function () { updatePayUi(this.value); });
         });
+        var checkedRb = document.querySelector('.payment-method:checked');
+        if (checkedRb) updatePayUi(checkedRb.value);
     </script>
 }

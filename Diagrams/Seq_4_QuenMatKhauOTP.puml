@@ -1,0 +1,58 @@
+@startuml
+title Sơ đồ tuần tự – Quên mật khẩu (OTP qua Gmail)
+
+actor "Khách" as KH
+participant AccountController as AC
+participant AuthService as AS
+participant "UnitOfWork / DB" as DB
+participant GmailEmailSender as GM
+participant Session as SS
+
+== Gửi OTP ==
+
+KH -> AC : 1. Gửi email quên mật khẩu
+activate AC
+AC -> AS : 2. FindActiveUserByEmailAsync
+activate AS
+AS -> DB : 3. Truy vấn user (đang hoạt động)
+activate DB
+DB --> AS : 4. user
+deactivate DB
+AS --> AC : user
+deactivate AS
+AC -> AC : 5. Sinh OTP 6 số ngẫu nhiên
+AC -> GM : 6. Gửi OTP (email, tên, mã)
+activate GM
+GM --> AC : 7. đã gửi qua Gmail SMTP
+deactivate GM
+AC -> SS : 8. Lưu hash(OTP), hạn 5 phút, số lần thử = 0
+AC --> KH : 9. Chuyển sang trang nhập OTP
+
+== Xác thực OTP ==
+
+KH -> AC : 10. Nhập mã OTP
+AC -> SS : 11. Đọc hash OTP + hạn + số lần thử
+activate SS
+SS --> AC : 12. dữ liệu phiên OTP
+deactivate SS
+AC -> AC : 13. So hash(mã nhập) với hash đã lưu
+
+alt hết hạn 5 phút / sai đủ 5 lần
+  AC -> SS : xóa phiên OTP
+  AC --> KH : báo lỗi, yêu cầu gửi lại OTP
+else đúng mã
+  AC -> SS : đánh dấu đã xác thực
+  AC --> KH : chuyển sang trang đặt lại mật khẩu
+end
+
+== Đặt lại mật khẩu ==
+
+KH -> AC : 14. Nhập mật khẩu mới
+AC -> AS : 15. ResetPasswordAsync(email, mật khẩu mới)
+activate AS
+AS -> DB : 16. Cập nhật PasswordHash (SHA-256)
+AS --> AC : thành công
+deactivate AS
+AC --> KH : 17. Về trang đăng nhập
+deactivate AC
+@enduml

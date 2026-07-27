@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <!-- San cau long trong nha -->
+  <rect width="800" height="500" fill="#2d5a3d"/>
+  <rect x="0" y="0" width="800" height="90" fill="#24492f"/>
+  <!-- San go -->
+  <rect x="80" y="120" width="640" height="330" rx="6" fill="#3f8757"/>
+  <rect x="100" y="140" width="600" height="290" fill="#4a9b64"/>
+  <!-- Vach ke san -->
+  <g stroke="#ffffff" stroke-width="4" fill="none">
+    <rect x="120" y="155" width="560" height="260"/>
+    <line x1="120" y1="285" x2="680" y2="285"/>
+    <line x1="400" y1="155" x2="400" y2="230"/>
+    <line x1="400" y1="340" x2="400" y2="415"/>
+    <line x1="120" y1="230" x2="680" y2="230"/>
+    <line x1="120" y1="340" x2="680" y2="340"/>
+    <line x1="150" y1="155" x2="150" y2="415"/>
+    <line x1="650" y1="155" x2="650" y2="415"/>
+  </g>
+  <!-- Luoi -->
+  <line x1="400" y1="130" x2="400" y2="440" stroke="#1b1b1b" stroke-width="6"/>
+  <rect x="394" y="150" width="12" height="270" fill="#222"/>
+  <rect x="380" y="150" width="40" height="270" fill="rgba(255,255,255,0.35)"/>
+  <g stroke="rgba(255,255,255,0.8)" stroke-width="1">
+    <line x1="382" y1="170" x2="418" y2="170"/><line x1="382" y1="195" x2="418" y2="195"/>
+    <line x1="382" y1="220" x2="418" y2="220"/><line x1="382" y1="245" x2="418" y2="245"/>
+    <line x1="382" y1="270" x2="418" y2="270"/><line x1="382" y1="295" x2="418" y2="295"/>
+    <line x1="382" y1="320" x2="418" y2="320"/><line x1="382" y1="345" x2="418" y2="345"/>
+    <line x1="382" y1="370" x2="418" y2="370"/><line x1="382" y1="395" x2="418" y2="395"/>
+  </g>
+  <!-- Cau long -->
+  <g transform="translate(560,240) rotate(25)">
+    <ellipse cx="0" cy="22" rx="10" ry="10" fill="#e8e8e8"/>
+    <path d="M-9 18 L-16 -18 L-5 -14 L0 -20 L5 -14 L16 -18 L9 18 Z" fill="#fdfdfd" stroke="#cccccc" stroke-width="1.5"/>
+  </g>
+  <!-- Den tran -->
+  <ellipse cx="200" cy="45" rx="60" ry="12" fill="#ffe9a8" opacity="0.9"/>
+  <ellipse cx="600" cy="45" rx="60" ry="12" fill="#ffe9a8" opacity="0.9"/>
+</svg>

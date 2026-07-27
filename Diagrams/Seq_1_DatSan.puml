@@ -1,0 +1,43 @@
+@startuml
+title Sơ đồ tuần tự – Đặt sân (Khách hàng)
+
+actor "Khách hàng" as KH
+participant FieldController as FC
+participant BookingService as BS
+participant PricingContext as PC
+participant "UnitOfWork / DB" as DB
+participant NotificationFactory as NF
+
+KH -> FC : 1. Gửi form đặt sân (ngày, slot, mã KM)
+activate FC
+FC -> BS : 2. CreateBookingAsync(...)
+activate BS
+BS -> DB : 3. Truy vấn sân + khung giờ (đang hoạt động?)
+activate DB
+DB --> BS : 4. sân, slot hợp lệ
+loop từng slot đã chọn
+  BS -> PC : 5. GetPrice(sân, slot)
+  activate PC
+  PC --> BS : 6. giá thường / cao điểm (17–21h)
+  deactivate PC
+end
+BS -> DB : 7. Truy vấn mã KM (còn hạn, còn lượt, đang bật)
+DB --> BS : 8. mã hợp lệ / không dùng mã
+BS -> DB : 9. Mở transaction
+BS -> DB : 10. Kiểm tra trùng slot (đang Active)
+DB --> BS : 11. kết quả kiểm tra
+
+alt trùng slot / DbUpdateException lúc commit (vi phạm unique index)
+  BS -> DB : Rollback
+  BS --> FC : lỗi "khung giờ vừa được người khác đặt"
+else còn trống
+  BS -> DB : 12. Ghi Booking (Pending) + chi tiết, mã KM −1 lượt
+  BS -> DB : 13. Commit transaction
+  deactivate DB
+  BS -> NF : 14. Gửi email "Xác nhận đặt sân" (Factory)
+  BS --> FC : 15. (true, mã booking)
+  deactivate BS
+  FC --> KH : 16. Chuyển sang trang thanh toán
+  deactivate FC
+end
+@enduml

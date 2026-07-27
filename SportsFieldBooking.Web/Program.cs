@@ -27,6 +27,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Business services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailSender, GmailEmailSender>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IPointService, PointService>();
 builder.Services.AddScoped<IFieldService, FieldService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -34,6 +37,8 @@ builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IGoldenDayService, GoldenDayService>();
+builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
 
 // Custom cookie authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -48,12 +53,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             var path = context.Request.Path;
             if (path.StartsWithSegments("/Users") ||
-                path.StartsWithSegments("/Promotions"))
+                path.StartsWithSegments("/AdminWallets") ||
+                path.StartsWithSegments("/Settings") ||
+                path.StartsWithSegments("/SuperAdmin"))
             {
-                var returnUrl = Uri.EscapeDataString(
-                    path + context.Request.QueryString);
-                context.Response.Redirect(
-                    "/Account/AdminLogin?returnUrl=" + returnUrl);
+                var returnUrl = Uri.EscapeDataString(path + context.Request.QueryString);
+                context.Response.Redirect("/Account/AdminLogin?returnUrl=" + returnUrl);
             }
             else
             {
@@ -65,9 +70,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 var app = builder.Build();
 
-// Dong bo tai khoan Admin tu appsettings: luon ton tai va mat khau luon khop cau hinh
+// Seed roles bat buoc (muc 6: Owner tach khoi Staff) + dong bo tai khoan Admin tu appsettings
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<SportsFieldBookingDbContext>();
+
+    foreach (var roleName in new[] { "Admin", "Owner", "Staff", "Customer" })
+    {
+        if (!db.Roles.Any(r => r.RoleName == roleName))
+            db.Roles.Add(new Role { RoleName = roleName });
+    }
+    db.SaveChanges();
+
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var adminEmail = config["AdminAccount:Email"];
     var adminPassword = config["AdminAccount:Password"];
@@ -75,21 +89,11 @@ using (var scope = app.Services.CreateScope())
     if (!string.IsNullOrWhiteSpace(adminEmail) &&
         !string.IsNullOrWhiteSpace(adminPassword))
     {
-        var db = scope.ServiceProvider
-            .GetRequiredService<SportsFieldBookingDbContext>();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
-
-        var adminRole = db.Roles.FirstOrDefault(r => r.RoleName == "Admin");
-        if (adminRole == null)
-        {
-            adminRole = new Role { RoleName = "Admin" };
-            db.Roles.Add(adminRole);
-            db.SaveChanges();
-        }
+        var adminRole = db.Roles.First(r => r.RoleName == "Admin");
 
         var normalizedEmail = adminEmail.Trim().ToLowerInvariant();
-        var admin = db.Users.FirstOrDefault(
-            u => u.Email.ToLower() == normalizedEmail);
+        var admin = db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail);
 
         if (admin == null)
         {

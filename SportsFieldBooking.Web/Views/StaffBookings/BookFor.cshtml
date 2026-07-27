@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "Đặt sân hộ khách";
+    var customers = (List<User>)ViewBag.Customers;
+    var fields = (List<Field>)ViewBag.Fields;
+    var today = DateOnly.FromDateTime(DateTime.Now);
+}
+<h3 class="mb-4"><i class="bi bi-person-plus"></i> Đặt sân hộ khách (walk-in / điện thoại)</h3>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-4">
+                <label class="form-label">Khách hàng</label>
+                <select name="customerId" id="customer-select" class="form-select">
+                    <option value="0">— Khách vãng lai (nhập tay) —</option>
+                    @foreach (var c in customers)
+                    {
+                        <option value="@c.UserId">@c.FullName (@c.Email)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 guest-only">
+                <label class="form-label">Tên khách vãng lai *</label>
+                <input name="guestName" class="form-control" placeholder="VD: Anh Tuấn" />
+            </div>
+            <div class="col-md-4 guest-only">
+                <label class="form-label">SĐT khách</label>
+                <input name="guestPhone" class="form-control" placeholder="09xx..." />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Sân *</label>
+                <select name="fieldId" id="field-select" class="form-select" required>
+                    <option value="">-- Chọn sân --</option>
+                    @foreach (var f in fields)
+                    {
+                        <option value="@f.FieldId">@f.FieldName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ngày đá *</label>
+                <input name="date" id="date-input" type="date" class="form-control" required
+                       value="@today.ToString("yyyy-MM-dd")" min="@today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Khung giờ trống *</label>
+                <select name="timeSlotId" id="slot-select" class="form-select" required>
+                    <option value="">-- Chọn sân + ngày trước --</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Mã giảm giá</label>
+                <input name="promoCode" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Ghi chú</label>
+                <input name="note" class="form-control" placeholder="VD: khách gọi điện lúc 9h" />
+            </div>
+
+            <div class="col-12">
+                <button class="btn btn-success"><i class="bi bi-calendar-check"></i> Tạo booking hộ khách</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleGuestInputs() {
+            var isGuest = document.getElementById('customer-select').value === '0';
+            document.querySelectorAll('.guest-only').forEach(function (el) {
+                el.style.display = isGuest ? '' : 'none';
+            });
+        }
+        document.getElementById('customer-select').addEventListener('change', toggleGuestInputs);
+        toggleGuestInputs();
+
+        async function loadSlots() {
+            var fieldId = document.getElementById('field-select').value;
+            var date = document.getElementById('date-input').value;
+            var slotSelect = document.getElementById('slot-select');
+            if (!fieldId || !date) return;
+            slotSelect.innerHTML = '<option value="">Đang tải...</option>';
+            var res = await fetch('/StaffBookings/FreeSlots?fieldId=' + fieldId + '&date=' + date);
+            var slots = await res.json();
+            slotSelect.innerHTML = slots.length
+                ? '<option value="">-- Chọn khung giờ --</option>'
+                : '<option value="">Hết khung trống</option>';
+            slots.forEach(function (s) {
+                var opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.label + ' — ' + Number(s.price).toLocaleString('vi-VN') + 'đ';
+                slotSelect.appendChild(opt);
+            });
+        }
+        document.getElementById('field-select').addEventListener('change', loadSlots);
+        document.getElementById('date-input').addEventListener('change', loadSlots);
+    </script>
+}

@@ -1,12 +1,18 @@
 @model Promotion
 @{
     ViewData["Title"] = "Thêm khuyến mãi";
+    var fields = (List<Field>)ViewBag.Fields;
+    var isAdmin = (bool)ViewBag.IsAdmin;
 }
 <h3 class="mb-4"><i class="bi bi-plus-circle"></i> Thêm khuyến mãi</h3>
 
 @if (ViewBag.Error != null)
 {
     <div class="alert alert-danger">@ViewBag.Error</div>
+}
+@if (!isAdmin)
+{
+    <div class="alert alert-info py-2 small">Mã bạn tạo sẽ gắn với tài khoản chủ sân của bạn (chỉ áp dụng cho sân của bạn).</div>
 }
 
 <div class="card shadow-sm">
@@ -21,13 +27,27 @@
                 <label class="form-label">Mô tả</label>
                 <input name="Description" value="@Model?.Description" class="form-control" />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
+                <label class="form-label">Áp dụng cho sân</label>
+                <select name="FieldId" class="form-select">
+                    <option value="">@(isAdmin ? "-- Toàn hệ thống --" : "-- Mọi sân của tôi --")</option>
+                    @foreach (var f in fields)
+                    {
+                        <option value="@f.FieldId" selected="@(Model?.FieldId == f.FieldId)">@f.FieldName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="form-label">Giảm (%) *</label>
                 <input name="DiscountPercent" value="@(Model?.DiscountPercent ?? 10)" type="number" min="1" max="100" class="form-control" required />
             </div>
             <div class="col-md-3">
-                <label class="form-label">Giảm tối đa (đ, 0 = không giới hạn)</label>
+                <label class="form-label">Giảm tối đa (đ, 0 = không trần)</label>
                 <input name="MaxDiscount" value="@(Model?.MaxDiscount ?? 0)" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Số lượt *</label>
+                <input name="Quantity" value="@(Model?.Quantity ?? 100)" type="number" min="1" class="form-control" required />
             </div>
             <div class="col-md-3">
                 <label class="form-label">Từ ngày *</label>
@@ -36,10 +56,6 @@
             <div class="col-md-3">
                 <label class="form-label">Đến ngày *</label>
                 <input name="EndDate" value="@Model?.EndDate.ToString("yyyy-MM-dd")" type="date" class="form-control" required />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Số lượt *</label>
-                <input name="Quantity" value="@(Model?.Quantity ?? 100)" type="number" min="1" class="form-control" required />
             </div>
             <div class="col-12">
                 <button class="btn btn-success">Lưu</button>

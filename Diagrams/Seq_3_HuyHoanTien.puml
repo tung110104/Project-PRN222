@@ -1,0 +1,35 @@
+@startuml
+title Sơ đồ tuần tự – Hủy booking & hoàn tiền
+
+actor "Khách hàng" as KH
+participant BookingController as BC
+participant BookingService as BS
+participant AppConfigSingleton as CFG
+participant "UnitOfWork / DB" as DB
+
+KH -> BC : 1. Bấm Hủy booking
+activate BC
+BC -> BS : 2. CancelAsync(id, user, isStaff: false)
+activate BS
+BS -> DB : 3. Lấy đơn + chi tiết + payment
+activate DB
+DB --> BS : 4. đơn của đúng khách, chưa hủy / chưa hoàn thành
+BS -> CFG : 5. Hỏi giờ hủy tối thiểu
+activate CFG
+CFG --> BS : 6. 2 giờ (Singleton)
+deactivate CFG
+
+alt trễ hơn mốc 2 giờ trước giờ đá sớm nhất
+  BS --> BC : lỗi "chỉ được hủy trước giờ đá ít nhất 2 giờ"
+else còn kịp
+  BS -> DB : 7. Đơn + chi tiết → Cancelled (slot tự mở lại)
+  BS -> DB : 8. Hoàn lượt mã KM +1 (nếu có dùng)
+  BS -> DB : 9. Payment Paid → Refunded (nếu đã thanh toán)
+  DB --> BS : 10. Lưu thành công
+  deactivate DB
+  BS --> BC : 11. (true, "đã hủy — hoàn tiền 3–5 ngày")
+  deactivate BS
+  BC --> KH : 12. Về trang lịch sử đặt sân
+  deactivate BC
+end
+@enduml

@@ -1,0 +1,120 @@
+@model List<MaintenanceRequest>
+@{
+    ViewData["Title"] = "Yêu cầu bảo trì";
+    var isAdmin = (bool)ViewBag.IsAdmin;
+    var today = DateOnly.FromDateTime(DateTime.Now);
+}
+<h3 class="mb-4"><i class="bi bi-tools"></i> Yêu cầu bảo trì sân</h3>
+
+@if (!isAdmin)
+{
+    var fields = (List<Field>)ViewBag.Fields;
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white"><strong>Gửi yêu cầu bảo trì (Admin sẽ duyệt)</strong></div>
+        <div class="card-body">
+            <div class="alert alert-warning py-2 small">
+                Khi Admin duyệt: sân chuyển sang Bảo trì, các booking trong khoảng ngày sẽ được
+                <strong>tự động hủy + hoàn tiền + gửi email</strong> cho khách (kèm điểm đền bù).
+            </div>
+            <form method="post" asp-action="Create" class="row g-2">
+                @Html.AntiForgeryToken()
+                <div class="col-md-3">
+                    <label class="form-label">Sân *</label>
+                    <select name="fieldId" class="form-select" required>
+                        @foreach (var f in fields)
+                        {
+                            <option value="@f.FieldId">@f.FieldName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Từ ngày *</label>
+                    <input name="fromDate" type="date" class="form-control" required min="@today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Đến ngày *</label>
+                    <input name="toDate" type="date" class="form-control" required min="@today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Lý do *</label>
+                    <input name="reason" class="form-control" required placeholder="VD: thay mặt cỏ nhân tạo" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-success w-100">Gửi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Sân</th>
+                    @if (isAdmin)
+                    {
+                        <th>Người gửi</th>
+                    }
+                    <th>Khoảng thời gian</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú Admin</th>
+                    @if (isAdmin)
+                    {
+                        <th></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.MaintenanceRequestId</td>
+                        <td>@r.Field.FieldName</td>
+                        @if (isAdmin)
+                        {
+                            <td>@r.RequestedBy.FullName</td>
+                        }
+                        <td>@r.FromDate.ToString("dd/MM/yyyy") → @r.ToDate.ToString("dd/MM/yyyy")</td>
+                        <td>@r.Reason</td>
+                        <td>
+                            @switch (r.Status)
+                            {
+                                case "Pending": <span class="badge bg-warning text-dark">Chờ duyệt</span>; break;
+                                case "Approved": <span class="badge bg-success">Đã duyệt</span>; break;
+                                case "Rejected": <span class="badge bg-danger">Từ chối</span>; break;
+                            }
+                        </td>
+                        <td><small>@r.AdminNote</small></td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end">
+                                @if (r.Status == "Pending")
+                                {
+                                    <form method="post" asp-action="Approve" asp-route-id="@r.MaintenanceRequestId" class="d-inline"
+                                          onsubmit="return confirm('Duyệt bảo trì? Booking trùng lịch sẽ bị hủy + hoàn tiền + email tự động.')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="adminNote" value="Đồng ý bảo trì" />
+                                        <button class="btn btn-sm btn-success">Duyệt</button>
+                                    </form>
+                                    <form method="post" asp-action="Reject" asp-route-id="@r.MaintenanceRequestId" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="adminNote" value="Không đồng ý" />
+                                        <button class="btn btn-sm btn-outline-danger">Từ chối</button>
+                                    </form>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có yêu cầu bảo trì nào.</div>
+    }
+</div>

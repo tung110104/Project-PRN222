@@ -122,9 +122,6 @@
                         <tbody>
                             @foreach (var booking in Model.Bookings)
                             {
-                                var detail =
-                                booking.BookingDetails.FirstOrDefault();
-
                                 var paid =
                                 booking.Payments.Any(
                                 p => p.Status == "Paid");
@@ -139,46 +136,26 @@
                                     </td>
 
                                     <td>
-                                        @if (detail != null)
-                                        {
-                                            <span>
-                                                @detail.Field.FieldName
-                                            </span>
-                                        }
+                                        @booking.Field.FieldName
                                     </td>
 
                                     <td>
                                         @booking.CreatedAt.ToString(
                                         "dd/MM/yyyy")
-                            </td>
+                                    </td>
 
-                            <td>
-                                @if (detail != null)
-                                        {
-                                            <span>
-                                                @detail.BookingDate.ToString(
-                                                "dd/MM/yyyy")
-                                </span>
-
-                                <div class="small text-muted">
-                                    @foreach (
-                                                                        var item in
-                                                                        booking.BookingDetails
-                                                                        .OrderBy(
-                                                                        x => x.TimeSlot
-                                                                        .StartTime))
-                                                {
-                                                    <span class="badge
-                                                                        bg-light text-dark
-                                                                        border me-1">
-
-                                                        @(item.TimeSlot
-                                                        .StartTime
-                                                        .ToString("HH:mm"))
-                                                    </span>
-                                                }
-                                            </div>
-                                        }
+                                    <td>
+                                        <span>
+                                            @booking.BookingDate.ToString(
+                                            "dd/MM/yyyy")
+                                        </span>
+                                        <div class="small text-muted">
+                                            <span class="badge bg-light text-dark border me-1">
+                                                @booking.TimeSlot.StartTime.ToString("HH:mm")
+                                                -
+                                                @booking.TimeSlot.EndTime.ToString("HH:mm")
+                                            </span>
+                                        </div>
                                     </td>
 
                                     <td class="text-success fw-bold">
