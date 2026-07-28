@@ -6,7 +6,8 @@ using SportsFieldBooking.DataAccess.Entities;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-[Authorize(Roles = "Admin,Staff")]
+// Owner quan ly san cua minh, Admin quan ly tat ca (Staff khong quan ly san - chi quan ly booking)
+[Authorize(Roles = "Admin,Owner")]
 public class FieldsManageController : Controller
 {
     private readonly IFieldService _fieldService;
@@ -34,16 +35,22 @@ public class FieldsManageController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Field field)
     {
-        if (string.IsNullOrWhiteSpace(field.FieldName) || field.PricePerHour <= 0)
+        if (string.IsNullOrWhiteSpace(field.FieldName) || field.PricePerHour <= 0 ||
+            string.IsNullOrWhiteSpace(field.Province) || string.IsNullOrWhiteSpace(field.Ward))
         {
             ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
-            ViewBag.Error = "Vui lòng nhập đầy đủ thông tin hợp lệ.";
+            ViewBag.Error = "Vui lòng nhập đầy đủ thông tin hợp lệ (chọn Tỉnh/Thành và Phường/Xã từ danh sách).";
+            return View(field);
+        }
+        if (field.CashbackPercent is < 0 or > 50)
+        {
+            ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
+            ViewBag.Error = "Cashback phải từ 0 đến 50%.";
             return View(field);
         }
         field.OwnerId = CurrentUserId;
-        if (field.PeakPricePerHour <= 0) field.PeakPricePerHour = field.PricePerHour;
         await _fieldService.CreateAsync(field);
-        TempData["Success"] = "Tạo sân thành công (đã tự tạo khung giờ 06:00-22:00).";
+        TempData["Success"] = "Tạo sân thành công (đã tự tạo khung giờ 06:00-22:00). Vào \"Giá & Khung giờ\" để cấu hình bảng giá chi tiết.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -64,14 +71,21 @@ public class FieldsManageController : Controller
         var existing = await _fieldService.GetDetailAsync(field.FieldId);
         if (existing == null) return NotFound();
         if (!IsAdmin && existing.OwnerId != CurrentUserId) return Forbid();
+        if (field.CashbackPercent is < 0 or > 50)
+        {
+            ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
+            ViewBag.Error = "Cashback phải từ 0 đến 50%.";
+            return View(existing);
+        }
 
         existing.FieldName = field.FieldName;
         existing.FieldTypeId = field.FieldTypeId;
         existing.Address = field.Address;
-        existing.District = field.District;
-        existing.City = field.City;
+        existing.Ward = field.Ward;
+        existing.Province = field.Province;
         existing.PricePerHour = field.PricePerHour;
-        existing.PeakPricePerHour = field.PeakPricePerHour;
+        existing.AcceptWalletPayment = field.AcceptWalletPayment;
+        existing.CashbackPercent = field.CashbackPercent;
         existing.Description = field.Description;
         existing.Status = field.Status;
 

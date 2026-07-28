@@ -11,11 +11,16 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<FieldType> FieldTypes { get; }
     IGenericRepository<FieldImage> FieldImages { get; }
     IGenericRepository<TimeSlot> TimeSlots { get; }
+    IGenericRepository<FieldPricingRule> FieldPricingRules { get; }
+    IGenericRepository<GoldenDay> GoldenDays { get; }
     IGenericRepository<Booking> Bookings { get; }
-    IGenericRepository<BookingDetail> BookingDetails { get; }
     IGenericRepository<Payment> Payments { get; }
     IGenericRepository<Review> Reviews { get; }
     IGenericRepository<Promotion> Promotions { get; }
+    IGenericRepository<Wallet> Wallets { get; }
+    IGenericRepository<WalletTransaction> WalletTransactions { get; }
+    IGenericRepository<PointTransaction> PointTransactions { get; }
+    IGenericRepository<MaintenanceRequest> MaintenanceRequests { get; }
 
     SportsFieldBookingDbContext Context { get; }
     Task<int> SaveChangesAsync();
@@ -35,11 +40,16 @@ public class UnitOfWork : IUnitOfWork
         FieldTypes = new GenericRepository<FieldType>(context);
         FieldImages = new GenericRepository<FieldImage>(context);
         TimeSlots = new GenericRepository<TimeSlot>(context);
+        FieldPricingRules = new GenericRepository<FieldPricingRule>(context);
+        GoldenDays = new GenericRepository<GoldenDay>(context);
         Bookings = new GenericRepository<Booking>(context);
-        BookingDetails = new GenericRepository<BookingDetail>(context);
         Payments = new GenericRepository<Payment>(context);
         Reviews = new GenericRepository<Review>(context);
         Promotions = new GenericRepository<Promotion>(context);
+        Wallets = new GenericRepository<Wallet>(context);
+        WalletTransactions = new GenericRepository<WalletTransaction>(context);
+        PointTransactions = new GenericRepository<PointTransaction>(context);
+        MaintenanceRequests = new GenericRepository<MaintenanceRequest>(context);
     }
 
     public IGenericRepository<User> Users { get; }
@@ -48,11 +58,16 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<FieldType> FieldTypes { get; }
     public IGenericRepository<FieldImage> FieldImages { get; }
     public IGenericRepository<TimeSlot> TimeSlots { get; }
+    public IGenericRepository<FieldPricingRule> FieldPricingRules { get; }
+    public IGenericRepository<GoldenDay> GoldenDays { get; }
     public IGenericRepository<Booking> Bookings { get; }
-    public IGenericRepository<BookingDetail> BookingDetails { get; }
     public IGenericRepository<Payment> Payments { get; }
     public IGenericRepository<Review> Reviews { get; }
     public IGenericRepository<Promotion> Promotions { get; }
+    public IGenericRepository<Wallet> Wallets { get; }
+    public IGenericRepository<WalletTransaction> WalletTransactions { get; }
+    public IGenericRepository<PointTransaction> PointTransactions { get; }
+    public IGenericRepository<MaintenanceRequest> MaintenanceRequests { get; }
 
     public SportsFieldBookingDbContext Context => _context;
     public Task<int> SaveChangesAsync() => _context.SaveChangesAsync();

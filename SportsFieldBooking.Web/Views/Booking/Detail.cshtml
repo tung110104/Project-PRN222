@@ -12,21 +12,24 @@
             <div class="card-header bg-white"><strong>Thông tin đặt sân</strong></div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
-                    <thead>
-                        <tr><th>Sân</th><th>Ngày</th><th>Khung giờ</th><th class="text-end">Giá</th><th></th></tr>
-                    </thead>
                     <tbody>
-                        @foreach (var d in Model.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
+                        <tr><th class="w-25">Sân</th><td>@Model.Field.FieldName</td></tr>
+                        <tr><th>Địa chỉ</th><td>@Model.Field.Address, @Model.Field.Ward, @Model.Field.Province</td></tr>
+                        <tr><th>Ngày đá</th><td>@Model.BookingDate.ToString("dd/MM/yyyy")</td></tr>
+                        <tr>
+                            <th>Khung giờ</th>
+                            <td>@Model.TimeSlot.StartTime.ToString("HH:mm") - @Model.TimeSlot.EndTime.ToString("HH:mm")</td>
+                        </tr>
+                        <tr><th>Giá gốc</th><td>@Model.UnitPrice.ToString("N0")đ</td></tr>
+                        @if (Model.DiscountAmount > 0)
                         {
                             <tr>
-                                <td>@d.Field.FieldName</td>
-                                <td>@d.BookingDate.ToString("dd/MM/yyyy")</td>
-                                <td>@d.TimeSlot.StartTime.ToString("HH:mm") - @d.TimeSlot.EndTime.ToString("HH:mm")</td>
-                                <td class="text-end">@d.Price.ToString("N0")đ</td>
-                                <td>
-                                    @if (d.Status == "Cancelled")
+                                <th>Giảm giá</th>
+                                <td class="text-danger">
+                                    -@Model.DiscountAmount.ToString("N0")đ
+                                    @if (Model.PointsUsed > 0)
                                     {
-                                        <span class="badge bg-danger">Hủy</span>
+                                        <small class="text-muted">(gồm @Model.PointsUsed điểm)</small>
                                     }
                                 </td>
                             </tr>
@@ -37,6 +40,10 @@
                 @if (Model.Promotion != null)
                 {
                     <p class="mb-1">Khuyến mãi: <span class="badge bg-info">@Model.Promotion.Code (-@Model.Promotion.DiscountPercent%)</span></p>
+                }
+                @if (Model.CreatedBy != null)
+                {
+                    <p class="mb-1 text-muted"><i class="bi bi-person-badge"></i> Đặt hộ bởi: @Model.CreatedBy.FullName</p>
                 }
                 <h5>Tổng tiền: <span class="text-success">@Model.TotalAmount.ToString("N0")đ</span></h5>
                 @if (!string.IsNullOrEmpty(Model.Note))
@@ -83,6 +90,7 @@
                         @Html.AntiForgeryToken()
                         <button class="btn btn-outline-danger w-100"><i class="bi bi-x-circle"></i> Hủy booking</button>
                     </form>
+                    <p class="text-muted small mt-2 mb-0">* Booking trả bằng ví sẽ được hoàn tiền ngay vào ví khi hủy hợp lệ.</p>
                 }
             </div>
         </div>
@@ -106,7 +114,7 @@
                         <div class="mb-2">
                             <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
                         </div>
-                        <button class="btn btn-warning w-100">Gửi đánh giá</button>
+                        <button class="btn btn-warning w-100">Gửi đánh giá (+điểm thưởng)</button>
                     </form>
                 </div>
             </div>

@@ -24,12 +24,14 @@ public class AuthService : IAuthService
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
+    // Tra ve ca tai khoan bi khoa (IsActive = false) de noi goi hien thong bao
+    // "tai khoan bi khoa" ro rang thay vi "sai mat khau"
     public async Task<User?> LoginAsync(string email, string password)
     {
         var hash = HashPassword(password);
         return await _uow.Users.Query()
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == hash && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == hash);
     }
 
     public async Task<(bool Success, string Message)> RegisterAsync(string fullName, string email, string password, string? phone)

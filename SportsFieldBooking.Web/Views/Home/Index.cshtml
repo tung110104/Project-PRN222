@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Tìm sân";
     var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
-    var cities = (List<string>)ViewBag.Cities;
+    var provinces = (List<string>)ViewBag.Provinces;
 }
 
 <div class="card shadow-sm mb-4">
@@ -21,11 +21,11 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="city" class="form-select">
-                    <option value="">-- Khu vực --</option>
-                    @foreach (var c in cities)
+                <select name="province" class="form-select">
+                    <option value="">-- Tỉnh/Thành --</option>
+                    @foreach (var c in provinces)
                     {
-                        <option value="@c" selected="@(ViewBag.City as string == c)">@c</option>
+                        <option value="@c" selected="@(ViewBag.Province as string == c)">@c</option>
                     }
                 </select>
             </div>
@@ -64,10 +64,19 @@
                     </div>
                     <h5 class="card-title">@f.FieldName</h5>
                     <p class="card-text text-muted mb-1">
-                        <i class="bi bi-geo-alt"></i> @f.Address, @f.District, @f.City
+                        <i class="bi bi-geo-alt"></i> @f.Address, @f.Ward, @f.Province
                     </p>
-                    <p class="mb-1">Giờ thường: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                    <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@f.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-1">Giá từ: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-0">
+                        @if (f.AcceptWalletPayment)
+                        {
+                            <span class="badge bg-primary"><i class="bi bi-wallet2"></i> Nhận ví</span>
+                            @if (f.CashbackPercent > 0)
+                            {
+                                <span class="badge bg-info text-dark">Cashback @f.CashbackPercent%</span>
+                            }
+                        }
+                    </p>
                 </div>
                 <div class="card-footer bg-white">
                     <a asp-controller="Field" asp-action="Detail" asp-route-id="@f.FieldId" class="btn btn-success w-100">

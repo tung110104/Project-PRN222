@@ -4,8 +4,11 @@
     var selectedDate = (DateOnly)ViewBag.SelectedDate;
     var bookedIds = (List<int>)ViewBag.BookedSlotIds;
     var avg = (double)ViewBag.AvgRating;
+    var slotPrices = (Dictionary<int, decimal>)ViewBag.SlotPrices;
+    var goldenDay = ViewBag.GoldenDay as GoldenDay;
     var today = DateOnly.FromDateTime(DateTime.Now);
     var now = TimeOnly.FromDateTime(DateTime.Now);
+    var canBook = User.Identity?.IsAuthenticated == true && !User.IsInRole("SuperAdmin");
 }
 
 <div class="row g-4">
@@ -13,16 +16,24 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="badge bg-success mb-2">@Model.FieldType.TypeName</span>
+                @if (Model.AcceptWalletPayment)
+                {
+                    <span class="badge bg-primary mb-2"><i class="bi bi-wallet2"></i> Nhận ví tiền ảo</span>
+                    @if (Model.CashbackPercent > 0)
+                    {
+                        <span class="badge bg-info text-dark mb-2">Cashback @Model.CashbackPercent%</span>
+                    }
+                }
                 <h3>@Model.FieldName</h3>
                 @if (avg > 0)
                 {
                     <p class="text-warning mb-1"><i class="bi bi-star-fill"></i> @avg.ToString("0.0") / 5 (@Model.Reviews.Count đánh giá)</p>
                 }
-                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.District, @Model.City</p>
+                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.Ward, @Model.Province</p>
                 <p>@Model.Description</p>
                 <hr />
-                <p class="mb-1">Giờ thường: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@Model.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-1">Giá cơ bản: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-0 text-muted small">Giá từng khung giờ hiển thị bên phải - tính theo bảng giá chi tiết (giờ / ngày / mùa).</p>
             </div>
         </div>
 
@@ -63,6 +74,14 @@
                     </div>
                 </form>
 
+                @if (goldenDay != null)
+                {
+                    <div class="alert alert-warning py-2">
+                        <i class="bi bi-star-fill"></i> <strong>Ngày vàng: @goldenDay.Name</strong> -
+                        giá x@(goldenDay.PriceMultiplier.ToString("0.##")), tích điểm x@(goldenDay.PointsMultiplier)!
+                    </div>
+                }
+
                 @if (User.Identity?.IsAuthenticated != true)
                 {
                     <div class="alert alert-warning">
@@ -80,8 +99,8 @@
                         {
                             var isBooked = bookedIds.Contains(slot.TimeSlotId);
                             var isPast = selectedDate == today && slot.StartTime <= now;
-                            var isPeak = slot.StartTime >= new TimeOnly(17, 0) && slot.StartTime < new TimeOnly(21, 0);
-                            var price = isPeak ? Model.PeakPricePerHour : Model.PricePerHour;
+                            var price = slotPrices.TryGetValue(slot.TimeSlotId, out var p) ? p : Model.PricePerHour;
+                            var isSpecial = price != Model.PricePerHour;
                             <div class="col">
                                 @if (isBooked || isPast)
                                 {
@@ -96,7 +115,7 @@
                                         <input type="checkbox" name="timeSlotIds" value="@slot.TimeSlotId"
                                                class="form-check-input me-1" data-price="@price" />
                                         <span>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
-                                        <div><small class="@(isPeak ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
+                                        <div><small class="@(isSpecial ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
                                     </label>
                                 }
                             </div>
@@ -114,10 +133,14 @@
 
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Tạm tính: <span id="total" class="text-success">0đ</span></h5>
-                        <button class="btn btn-success" @(User.Identity?.IsAuthenticated != true ? "disabled" : "")>
+                        <button class="btn btn-success" @(canBook ? "" : "disabled")>
                             <i class="bi bi-calendar-check"></i> Đặt sân
                         </button>
                     </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        * Giảm giá theo hạng thành viên và mã khuyến mãi sẽ được trừ khi tạo booking;
+                        điểm tích lũy có thể dùng ở bước thanh toán.
+                    </p>
                 </form>
             </div>
         </div>
