@@ -37,15 +37,23 @@
                         <td>@u.FullName<br /><small class="text-muted">@u.Phone</small></td>
                         <td>@u.Email</td>
                         <td>
-                            <form method="post" asp-action="ChangeRole" asp-route-id="@u.UserId" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <select name="roleId" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                    @foreach (var r in roles)
-                                    {
-                                        <option value="@r.RoleId" selected="@(u.RoleId == r.RoleId)">@r.RoleName</option>
-                                    }
-                                </select>
-                            </form>
+                            @if (isSuper)
+                            {
+                                @* Super account chi cap/thu hoi Admin - khong doi role tuy y *@
+                                <span class="badge bg-light text-dark border">@u.Role.RoleName</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-action="ChangeRole" asp-route-id="@u.UserId" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <select name="roleId" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                                        @foreach (var r in roles)
+                                        {
+                                            <option value="@r.RoleId" selected="@(u.RoleId == r.RoleId)">@r.RoleName</option>
+                                        }
+                                    </select>
+                                </form>
+                            }
                         </td>
                         <td>
                             <small>
@@ -85,12 +93,15 @@
                                     <button class="btn btn-sm btn-outline-success">Cấp Admin</button>
                                 </form>
                             }
-                            <form method="post" asp-action="ToggleActive" asp-route-id="@u.UserId" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm @(u.IsActive ? "btn-outline-danger" : "btn-outline-success")">
-                                    @(u.IsActive ? "Khóa" : "Mở khóa")
-                                </button>
-                            </form>
+                            @if (!isSuper)
+                            {
+                                <form method="post" asp-action="ToggleActive" asp-route-id="@u.UserId" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm @(u.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(u.IsActive ? "Khóa" : "Mở khóa")
+                                    </button>
+                                </form>
+                            }
                             @if (!isSuper)
                             {
                                 <button class="btn btn-sm btn-outline-secondary" type="button"

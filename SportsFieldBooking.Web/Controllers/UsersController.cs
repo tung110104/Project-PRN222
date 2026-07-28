@@ -4,7 +4,9 @@ using SportsFieldBooking.Business.Services;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-// SuperAdmin (tai khoan cuu ho trong appsettings) cung vao duoc trang nay de cap/thu hoi Admin
+// SuperAdmin (tai khoan cuu ho) chi duoc XEM danh sach va CAP/THU HOI Admin (SetAdmin).
+// Moi thao tac khac (khoa tai khoan, doi role, dieu chinh vi/diem) chi danh cho Admin -
+// super account khong dat san, khong co vi, khong quan ly nghiep vu.
 [Authorize(Roles = "Admin,SuperAdmin")]
 public class UsersController : Controller
 {
@@ -25,6 +27,7 @@ public class UsersController : Controller
         return View(await _userService.GetAllAsync());
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleActive(int id)
@@ -34,6 +37,7 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangeRole(int id, int roleId)
@@ -54,6 +58,7 @@ public class UsersController : Controller
     }
 
     // ----- Admin dieu chinh vi / diem thu cong (co ly do) -----
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdjustWallet(int id, decimal amount, string reason)
@@ -63,6 +68,7 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdjustPoints(int id, int points, string reason)
