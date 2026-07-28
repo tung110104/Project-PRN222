@@ -6,9 +6,9 @@ using SportsFieldBooking.Business.Services;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-// Moi role dang nhap deu dat va quan ly booking cua minh duoc (Customer, Staff, Admin, Owner).
+// Moi role dang nhap deu dat va quan ly booking cua minh duoc (Customer, Admin, Owner).
 // SuperAdmin la tai khoan cuu ho khong co trong DB nen khong dat san.
-[Authorize(Roles = "Customer,Staff,Admin,Owner")]
+[Authorize(Roles = "Customer,Admin,Owner")]
 public class BookingController : Controller
 {
     private readonly IBookingService _bookingService;

@@ -10,7 +10,7 @@ public interface IBookingService
     Task<List<int>> GetBookedSlotIdsAsync(int fieldId, DateOnly date);
     /// <summary>
     /// Tao booking: moi khung gio duoc chon = 1 booking (da bo BookingDetail).
-    /// createdById != null nghia la Staff/Admin/Owner dat ho khach (userId la khach duoc dat ho).
+    /// createdById != null nghia la Owner/Admin dat ho khach (userId la khach duoc dat ho).
     /// </summary>
     Task<(bool Success, string Message, List<int> BookingIds)> CreateBookingAsync(
         int userId, int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note,

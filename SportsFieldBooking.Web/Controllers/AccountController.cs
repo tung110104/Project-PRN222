@@ -27,7 +27,7 @@ public class AccountController : Controller
         return View();
     }
 
-    // Trang login thuong: danh cho Customer / Owner / Staff.
+    // Trang login thuong: danh cho Customer / Owner (chu san kiem nguoi truc quay).
     // Tai khoan Admin va Super Account phai dung trang login quan tri rieng (AdminLogin).
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -63,7 +63,6 @@ public class AccountController : Controller
         return user.Role.RoleName switch
         {
             "Owner" => RedirectToAction("Index", "FieldsManage"),
-            "Staff" => RedirectToAction("Index", "StaffBookings"),
             _ => RedirectToAction("Index", "Home")
         };
     }

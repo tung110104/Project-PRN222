@@ -10,7 +10,7 @@
    - Them MaintenanceRequests (chu san xin bao tri, admin duyet)
    - Fields: dia chi chi tiet Province/Ward/Address (chon tu API hanh chinh VN)
    - Promotions.OwnerId: ma khuyen mai cua chu san (gui qua email)
-   - Them role Owner (chu san); Staff chi quan ly dat lich
+   - Them role Owner (chu san - dong thoi quan ly dat lich, khong con role Staff rieng)
    - Super account cuu ho nam trong appsettings.json (KHONG co trong DB)
    ============================================================= */
 -- Bat buoc cho filtered index (sqlcmd mac dinh QUOTED_IDENTIFIER OFF se loi; SSMS thi mac dinh ON)
@@ -142,7 +142,7 @@ CREATE TABLE Bookings (
     PointsUsed     INT NOT NULL DEFAULT 0,            -- so diem da dung
     TotalAmount    DECIMAL(12,0) NOT NULL DEFAULT 0,  -- so tien phai tra cuoi cung
     Note           NVARCHAR(500) NULL,
-    CreatedById    INT NULL REFERENCES Users(UserId), -- Staff/Admin dat ho khach
+    CreatedById    INT NULL REFERENCES Users(UserId), -- Owner/Admin dat ho khach
     CreatedAt      DATETIME NOT NULL DEFAULT GETDATE()
 );
 
@@ -223,16 +223,16 @@ GO
    SEED DATA  (mat khau tat ca tai khoan: 123456)
    Super account cuu ho: khong nam trong DB/appsettings - chi luu SHA-256 hash trong AccountController
    ============================================================= */
-INSERT INTO Roles (RoleName) VALUES (N'Admin'), (N'Owner'), (N'Staff'), (N'Customer');
+INSERT INTO Roles (RoleName) VALUES (N'Admin'), (N'Owner'), (N'Customer');
 
 -- SHA256('123456')
 DECLARE @pw NVARCHAR(256) = N'8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
 INSERT INTO Users (FullName, Email, PasswordHash, Phone, RoleId) VALUES
 (N'Quản trị viên',   N'admin@sfb.com',    @pw, N'0900000001', 1),  -- 1 Admin
 (N'Nguyễn Chủ Sân',  N'owner@sfb.com',    @pw, N'0900000002', 2),  -- 2 Owner (chu san)
-(N'Phạm Nhân Viên',  N'staff@sfb.com',    @pw, N'0900000003', 3),  -- 3 Staff
-(N'Trần Văn Khách',  N'customer@sfb.com', @pw, N'0900000004', 4),  -- 4 Customer
-(N'Lê Thị Hoa',      N'hoa@gmail.com',    @pw, N'0900000005', 4);  -- 5 Customer
+(N'Phạm Chủ Sân',    N'staff@sfb.com',    @pw, N'0900000003', 2),  -- 3 Owner (chu san thu 2, chua co san)
+(N'Trần Văn Khách',  N'customer@sfb.com', @pw, N'0900000004', 3),  -- 4 Customer
+(N'Lê Thị Hoa',      N'hoa@gmail.com',    @pw, N'0900000005', 3);  -- 5 Customer
 
 INSERT INTO FieldTypes (TypeName) VALUES (N'Bóng đá'), (N'Cầu lông'), (N'Tennis'), (N'Bóng rổ');
 

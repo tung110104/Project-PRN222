@@ -5,7 +5,7 @@ using SportsFieldBooking.Business.Services;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-[Authorize(Roles = "Admin,Staff,Owner")]
+[Authorize(Roles = "Admin,Owner")]
 public class ReportsController : Controller
 {
     private readonly IReportService _reportService;
@@ -19,7 +19,7 @@ public class ReportsController : Controller
         var fromDate = from ?? toDate.AddDays(-30);
         ViewBag.From = fromDate;
         ViewBag.To = toDate;
-        // Owner chi xem bao cao san cua minh; Admin/Staff xem toan he thong
+        // Owner chi xem bao cao san cua minh; Admin xem toan he thong
         int? ownerId = User.IsInRole("Owner") && !User.IsInRole("Admin") ? CurrentUserId : null;
         ViewBag.IsOwnerScope = ownerId.HasValue;
         return View(await _reportService.GetSummaryAsync(fromDate, toDate, ownerId));

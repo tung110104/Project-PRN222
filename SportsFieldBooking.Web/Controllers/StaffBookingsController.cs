@@ -5,7 +5,9 @@ using SportsFieldBooking.Business.Services;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-[Authorize(Roles = "Admin,Staff,Owner")]
+// Chu san (Owner) quan ly dat lich san cua minh, Admin quan ly tat ca.
+// (Role Staff da gop vao Owner - chu san dong thoi la nguoi truc quay.)
+[Authorize(Roles = "Admin,Owner")]
 public class StaffBookingsController : Controller
 {
     private readonly IBookingService _bookingService;
@@ -28,14 +30,14 @@ public class StaffBookingsController : Controller
     public async Task<IActionResult> Index(string? status)
     {
         await _bookingService.CompletePastBookingsAsync();
-        // Owner chi thay booking san cua minh; Admin/Staff thay tat ca
+        // Owner chi thay booking san cua minh; Admin thay tat ca
         int? ownerId = IsOwnerOnly ? CurrentUserId : null;
         var bookings = await _bookingService.GetForStaffAsync(ownerId, status);
         ViewBag.Status = status;
         return View(bookings);
     }
 
-    /// <summary>Owner chi thao tac booking thuoc san cua minh; Admin/Staff thao tac tat ca.</summary>
+    /// <summary>Owner chi thao tac booking thuoc san cua minh; Admin thao tac tat ca.</summary>
     private async Task<bool> CanManageAsync(int bookingId)
     {
         if (!IsOwnerOnly) return true;

@@ -34,7 +34,7 @@ public class FieldController : Controller
     }
 
     // Moi role dang nhap (tru SuperAdmin - khong co trong DB) deu dat san cho chinh minh duoc
-    [Authorize(Roles = "Customer,Staff,Admin,Owner")]
+    [Authorize(Roles = "Customer,Admin,Owner")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Book(int fieldId, DateOnly date, List<int> timeSlotIds, string? promoCode, string? note)

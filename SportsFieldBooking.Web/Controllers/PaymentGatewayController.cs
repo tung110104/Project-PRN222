@@ -13,7 +13,7 @@ namespace SportsFieldBooking.Web.Controllers;
 ///          -> hoac trang cong demo noi bo (Demo.cshtml) neu chua cau hinh
 /// -> nguoi dung xac nhan tren cong -> VnPayReturn / DemoComplete xac thuc va ghi nhan tien.
 /// </summary>
-[Authorize(Roles = "Customer,Staff,Admin,Owner")]
+[Authorize(Roles = "Customer,Admin,Owner")]
 public class PaymentGatewayController : Controller
 {
     private readonly IVnPayService _vnPayService;

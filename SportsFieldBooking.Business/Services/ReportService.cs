@@ -18,7 +18,7 @@ public class ReportSummary
 
 public interface IReportService
 {
-    /// <summary>ownerId = null: bao cao toan he thong (Admin/Staff); co gia tri: chi san cua chu san do.</summary>
+    /// <summary>ownerId = null: bao cao toan he thong (Admin); co gia tri: chi san cua chu san do.</summary>
     Task<ReportSummary> GetSummaryAsync(DateOnly from, DateOnly to, int? ownerId = null);
 }
 

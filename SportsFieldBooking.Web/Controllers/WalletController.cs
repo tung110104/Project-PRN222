@@ -7,7 +7,7 @@ using SportsFieldBooking.Business.Services;
 namespace SportsFieldBooking.Web.Controllers;
 
 // Trang "Ví & Điểm" cua nguoi dung: so du vi, lich su giao dich, nap tien, diem + hang thanh vien
-[Authorize(Roles = "Customer,Staff,Admin,Owner")]
+[Authorize(Roles = "Customer,Admin,Owner")]
 public class WalletController : Controller
 {
     private readonly IWalletService _walletService;

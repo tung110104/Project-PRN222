@@ -164,7 +164,7 @@ public class Booking
     public int PointsUsed { get; set; }
     public decimal TotalAmount { get; set; }
     public string? Note { get; set; }
-    // Nguoi thao tac tao booking (Staff/Admin dat ho khach); null = khach tu dat
+    // Nguoi thao tac tao booking (Owner/Admin dat ho khach); null = khach tu dat
     public int? CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
 
