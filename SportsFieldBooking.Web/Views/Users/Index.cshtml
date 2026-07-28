@@ -93,15 +93,12 @@
                                     <button class="btn btn-sm btn-outline-success">Cấp Admin</button>
                                 </form>
                             }
-                            @if (!isSuper)
-                            {
-                                <form method="post" asp-action="ToggleActive" asp-route-id="@u.UserId" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button class="btn btn-sm @(u.IsActive ? "btn-outline-danger" : "btn-outline-success")">
-                                        @(u.IsActive ? "Khóa" : "Mở khóa")
-                                    </button>
-                                </form>
-                            }
+                            <form method="post" asp-action="ToggleActive" asp-route-id="@u.UserId" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm @(u.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(u.IsActive ? "Khóa" : "Mở khóa")
+                                </button>
+                            </form>
                             @if (!isSuper)
                             {
                                 <button class="btn btn-sm btn-outline-secondary" type="button"

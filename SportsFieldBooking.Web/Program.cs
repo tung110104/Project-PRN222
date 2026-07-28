@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SportsFieldBooking.Business.Services;
@@ -40,6 +41,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
+
+        // Tai khoan bi khoa thi phien dang nhap dang mo cung bi vo hieu ngay request ke tiep
+        // (khong cho "dung not" den khi cookie het han)
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var idClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                // Super account (id = 0) khong nam trong DB -> bo qua kiem tra
+                if (!int.TryParse(idClaim, out var userId) || userId == 0) return;
+
+                var uow = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+                var stillActive = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+                    .AnyAsync(uow.Users.Query(), u => u.UserId == userId && u.IsActive);
+                if (!stillActive)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                }
+            }
+        };
     });
 
 var app = builder.Build();

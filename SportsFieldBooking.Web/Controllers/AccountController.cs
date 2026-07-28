@@ -47,6 +47,12 @@ public class AccountController : Controller
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
+        if (!user.IsActive)
+        {
+            ViewBag.Error = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.";
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
         if (user.Role.RoleName == "Admin")
         {
             ViewBag.Error = "Tài khoản Admin vui lòng đăng nhập tại trang dành riêng cho quản trị.";
@@ -96,6 +102,11 @@ public class AccountController : Controller
         if (user == null)
         {
             ViewBag.Error = "Email hoặc mật khẩu không đúng.";
+            return View();
+        }
+        if (!user.IsActive)
+        {
+            ViewBag.Error = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.";
             return View();
         }
         if (user.Role.RoleName != "Admin")

@@ -4,9 +4,9 @@ using SportsFieldBooking.Business.Services;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-// SuperAdmin (tai khoan cuu ho) chi duoc XEM danh sach va CAP/THU HOI Admin (SetAdmin).
-// Moi thao tac khac (khoa tai khoan, doi role, dieu chinh vi/diem) chi danh cho Admin -
-// super account khong dat san, khong co vi, khong quan ly nghiep vu.
+// SuperAdmin (tai khoan cuu ho): cap/thu hoi Admin + khoa/mo khoa tai khoan.
+// Khong dat san, khong co vi, khong quan ly nghiep vu (cac controller nghiep vu khong cap quyen SuperAdmin).
+// Doi role tuy y va dieu chinh vi/diem van chi danh cho Admin.
 [Authorize(Roles = "Admin,SuperAdmin")]
 public class UsersController : Controller
 {
@@ -27,7 +27,6 @@ public class UsersController : Controller
         return View(await _userService.GetAllAsync());
     }
 
-    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleActive(int id)
