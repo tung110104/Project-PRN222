@@ -13,6 +13,7 @@
             <thead class="table-light">
                 <tr>
                     <th>#</th>
+                    <th>Ảnh</th>
                     <th>Tên sân</th>
                     <th>Loại</th>
                     <th>Khu vực</th>
@@ -25,8 +26,15 @@
             <tbody>
                 @foreach (var f in Model)
                 {
+                    var thumb = f.FieldImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                                ?? f.FieldImages.FirstOrDefault()?.ImageUrl
+                                ?? "/images/field-placeholder.svg";
                     <tr>
                         <td>@f.FieldId</td>
+                        <td>
+                            <img src="@thumb" class="rounded" style="width:64px;height:48px;object-fit:cover"
+                                 alt="@f.FieldName" onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
+                        </td>
                         <td>@f.FieldName</td>
                         <td>@f.FieldType.TypeName</td>
                         <td>@f.Ward, @f.Province</td>

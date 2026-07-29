@@ -12,7 +12,7 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
             @Html.AntiForgeryToken()
             <input type="hidden" name="FieldId" value="@Model.FieldId" />
             <div class="col-md-6">
@@ -77,6 +77,14 @@
                 <label class="form-label">Mô tả</label>
                 <textarea name="Description" class="form-control" rows="3">@Model.Description</textarea>
             </div>
+
+            <div class="col-12">
+                <label class="form-label"><i class="bi bi-images"></i> Thêm ảnh mới</label>
+                <input type="file" name="imageFiles" id="imageInput" class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp" multiple />
+                <small class="text-muted">Chọn được nhiều ảnh (JPG/PNG/WEBP, tối đa 5MB/ảnh). Ảnh mới sẽ được thêm khi bấm "Cập nhật".</small>
+                <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
             <div class="col-12">
                 <button class="btn btn-success">Cập nhật</button>
                 <a asp-controller="FieldPricing" asp-action="Index" asp-route-id="@Model.FieldId" class="btn btn-outline-primary">
@@ -88,7 +96,72 @@
     </div>
 </div>
 
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white">
+        <strong><i class="bi bi-images"></i> Ảnh hiện tại (@Model.FieldImages.Count)</strong>
+    </div>
+    <div class="card-body">
+        @if (!Model.FieldImages.Any())
+        {
+            <p class="text-muted mb-0">Chưa có ảnh nào. Chọn ảnh ở ô "Thêm ảnh mới" phía trên rồi bấm "Cập nhật".</p>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-3">
+                @foreach (var img in Model.FieldImages.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.ImageId))
+                {
+                    <div class="border rounded p-2 text-center" style="width:180px;">
+                        <div class="position-relative">
+                            <img src="@img.ImageUrl" class="rounded w-100" style="height:110px;object-fit:cover"
+                                 alt="Ảnh sân" onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
+                            @if (img.IsPrimary)
+                            {
+                                <span class="badge bg-success position-absolute top-0 start-0 m-1">
+                                    <i class="bi bi-star-fill"></i> Đại diện
+                                </span>
+                            }
+                        </div>
+                        <div class="d-flex gap-1 justify-content-center mt-2">
+                            @if (!img.IsPrimary)
+                            {
+                                <form method="post" asp-action="SetPrimaryImage" asp-route-id="@img.ImageId">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-success" title="Đặt làm ảnh đại diện">
+                                        <i class="bi bi-star"></i> Đại diện
+                                    </button>
+                                </form>
+                            }
+                            <form method="post" asp-action="DeleteImage" asp-route-id="@img.ImageId"
+                                  onsubmit="return confirm('Xóa ảnh này?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger" title="Xóa ảnh">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/address-select.js"></script>
     <script>initAddressSelect('@Model.Province', '@Model.Ward');</script>
+    <script>
+        // Xem truoc anh vua chon
+        document.getElementById('imageInput').addEventListener('change', function () {
+            const box = document.getElementById('imagePreview');
+            box.innerHTML = '';
+            [...this.files].forEach(f => {
+                if (!f.type.startsWith('image/')) return;
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                img.className = 'rounded border';
+                img.style.cssText = 'width:120px;height:85px;object-fit:cover';
+                box.appendChild(img);
+            });
+        });
+    </script>
 }

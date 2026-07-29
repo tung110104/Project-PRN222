@@ -7,3 +7,6 @@ appsettings.Development.json
 .claude/
 .$*.bkp
 *.bkp
+
+# Anh nguoi dung upload - khong commit
+SportsFieldBooking.Web/wwwroot/uploads/

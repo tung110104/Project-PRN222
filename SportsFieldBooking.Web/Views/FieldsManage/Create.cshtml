@@ -12,7 +12,7 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
             @Html.AntiForgeryToken()
             <div class="col-md-6">
                 <label class="form-label">Tên sân *</label>
@@ -70,6 +70,14 @@
                 <label class="form-label">Mô tả</label>
                 <textarea name="Description" class="form-control" rows="3">@Model?.Description</textarea>
             </div>
+
+            <div class="col-12">
+                <label class="form-label"><i class="bi bi-images"></i> Ảnh sân</label>
+                <input type="file" name="imageFiles" id="imageInput" class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp" multiple />
+                <small class="text-muted">Chọn được nhiều ảnh (JPG/PNG/WEBP, tối đa 5MB/ảnh). Ảnh đầu tiên sẽ là ảnh đại diện của sân.</small>
+                <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
             <div class="col-12">
                 <button class="btn btn-success">Lưu sân</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
@@ -81,4 +89,28 @@
 @section Scripts {
     <script src="~/js/address-select.js"></script>
     <script>initAddressSelect('@Model?.Province', '@Model?.Ward');</script>
+    <script>
+        // Xem truoc anh vua chon
+        document.getElementById('imageInput').addEventListener('change', function () {
+            const box = document.getElementById('imagePreview');
+            box.innerHTML = '';
+            [...this.files].forEach((f, idx) => {
+                if (!f.type.startsWith('image/')) return;
+                const wrap = document.createElement('div');
+                wrap.className = 'position-relative';
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                img.className = 'rounded border';
+                img.style.cssText = 'width:120px;height:85px;object-fit:cover';
+                wrap.appendChild(img);
+                if (idx === 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success position-absolute top-0 start-0 m-1';
+                    badge.textContent = 'Đại diện';
+                    wrap.appendChild(badge);
+                }
+                box.appendChild(wrap);
+            });
+        });
+    </script>
 }

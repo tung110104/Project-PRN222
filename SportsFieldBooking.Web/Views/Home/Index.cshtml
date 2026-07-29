@@ -62,8 +62,14 @@
     @foreach (var f in Model)
     {
         var avg = f.Reviews.Any() ? f.Reviews.Average(r => r.Rating) : 0;
+        var imgUrl = f.FieldImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                     ?? f.FieldImages.FirstOrDefault()?.ImageUrl
+                     ?? "/images/field-placeholder.svg";
         <div class="col">
             <div class="card h-100 shadow-sm">
+                <img src="@imgUrl" class="card-img-top" alt="@f.FieldName"
+                     style="height:180px;object-fit:cover"
+                     onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <span class="badge bg-success mb-2">@f.FieldType.TypeName</span>
@@ -123,7 +129,12 @@
             if (f.cashbackPercent > 0)
                 badges += ` <span class="badge bg-info text-dark">Cashback ${f.cashbackPercent}%</span>`;
         }
-        return `<div class="col"><div class="card h-100 shadow-sm"><div class="card-body">
+        const imgUrl = f.imageUrl || '/images/field-placeholder.svg';
+        return `<div class="col"><div class="card h-100 shadow-sm">
+            <img src="${imgUrl}" class="card-img-top" alt="${f.fieldName}"
+                 style="height:180px;object-fit:cover"
+                 onerror="this.onerror=null;this.src='/images/field-placeholder.svg'">
+            <div class="card-body">
             <div class="d-flex justify-content-between">
               <span class="badge bg-success mb-2">${f.fieldType}</span>${rating}
             </div>

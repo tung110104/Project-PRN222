@@ -16,6 +16,10 @@ public interface IFieldService
     Task<List<Field>> GetByOwnerAsync(int ownerId);
     Task<List<Field>> GetAllForAdminAsync();
     Task<double> GetAverageRatingAsync(int fieldId);
+    Task AddImagesAsync(int fieldId, List<string> imageUrls);
+    Task<FieldImage?> GetImageAsync(int imageId);
+    Task<string?> DeleteImageAsync(int imageId);
+    Task SetPrimaryImageAsync(int fieldId, int imageId);
 }
 
 public class FieldService : IFieldService
@@ -111,14 +115,80 @@ public class FieldService : IFieldService
         _uow.Fields.Query()
             .Include(f => f.FieldType)
             .Include(f => f.Owner)
+            .Include(f => f.FieldImages)
             .OrderBy(f => f.FieldId)
             .ToListAsync();
 
     public Task<List<Field>> GetByOwnerAsync(int ownerId) =>
         _uow.Fields.Query()
             .Include(f => f.FieldType)
+            .Include(f => f.FieldImages)
             .Where(f => f.OwnerId == ownerId)
             .ToListAsync();
+
+    public async Task AddImagesAsync(int fieldId, List<string> imageUrls)
+    {
+        if (imageUrls.Count == 0) return;
+
+        // Neu san chua co anh dai dien thi anh dau tien trong lo upload nay lam dai dien
+        var hasPrimary = await _uow.FieldImages.Query().AnyAsync(i => i.FieldId == fieldId && i.IsPrimary);
+        var first = true;
+        foreach (var url in imageUrls)
+        {
+            await _uow.FieldImages.AddAsync(new FieldImage
+            {
+                FieldId = fieldId,
+                ImageUrl = url,
+                IsPrimary = !hasPrimary && first
+            });
+            first = false;
+        }
+        await _uow.SaveChangesAsync();
+    }
+
+    public Task<FieldImage?> GetImageAsync(int imageId) =>
+        _uow.FieldImages.Query()
+            .Include(i => i.Field)
+            .FirstOrDefaultAsync(i => i.ImageId == imageId);
+
+    public async Task<string?> DeleteImageAsync(int imageId)
+    {
+        var image = await _uow.FieldImages.GetByIdAsync(imageId);
+        if (image == null) return null;
+
+        var url = image.ImageUrl;
+        var fieldId = image.FieldId;
+        var wasPrimary = image.IsPrimary;
+        _uow.FieldImages.Remove(image);
+        await _uow.SaveChangesAsync();
+
+        // Xoa anh dai dien -> don anh con lai (neu co) len lam dai dien
+        if (wasPrimary)
+        {
+            var next = await _uow.FieldImages.Query()
+                .Where(i => i.FieldId == fieldId)
+                .OrderBy(i => i.ImageId)
+                .FirstOrDefaultAsync();
+            if (next != null)
+            {
+                next.IsPrimary = true;
+                _uow.FieldImages.Update(next);
+                await _uow.SaveChangesAsync();
+            }
+        }
+        return url;
+    }
+
+    public async Task SetPrimaryImageAsync(int fieldId, int imageId)
+    {
+        var images = await _uow.FieldImages.Query().Where(i => i.FieldId == fieldId).ToListAsync();
+        foreach (var img in images)
+        {
+            img.IsPrimary = img.ImageId == imageId;
+            _uow.FieldImages.Update(img);
+        }
+        await _uow.SaveChangesAsync();
+    }
 
     public async Task<double> GetAverageRatingAsync(int fieldId)
     {

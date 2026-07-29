@@ -13,6 +13,40 @@
 
 <div class="row g-4">
     <div class="col-md-5">
+        @{
+            var images = Model.FieldImages.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.ImageId).ToList();
+        }
+        @if (images.Any())
+        {
+            <div id="fieldCarousel" class="carousel slide mb-4 shadow-sm rounded overflow-hidden">
+                <div class="carousel-inner">
+                    @for (var i = 0; i < images.Count; i++)
+                    {
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@images[i].ImageUrl" class="d-block w-100" alt="@Model.FieldName"
+                                 style="height:280px;object-fit:cover"
+                                 onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
+                        </div>
+                    }
+                </div>
+                @if (images.Count > 1)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#fieldCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#fieldCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                    <div class="carousel-indicators">
+                        @for (var i = 0; i < images.Count; i++)
+                        {
+                            <button type="button" data-bs-target="#fieldCarousel" data-bs-slide-to="@i"
+                                    class="@(i == 0 ? "active" : "")"></button>
+                        }
+                    </div>
+                }
+            </div>
+        }
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="badge bg-success mb-2">@Model.FieldType.TypeName</span>
