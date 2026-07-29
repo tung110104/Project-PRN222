@@ -22,6 +22,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<PointTransaction> PointTransactions { get; }
     IGenericRepository<MaintenanceRequest> MaintenanceRequests { get; }
     IGenericRepository<PasswordResetOtp> PasswordResetOtps { get; }
+    IGenericRepository<RefundRequest> RefundRequests { get; }
 
     SportsFieldBookingDbContext Context { get; }
     Task<int> SaveChangesAsync();
@@ -52,6 +53,7 @@ public class UnitOfWork : IUnitOfWork
         PointTransactions = new GenericRepository<PointTransaction>(context);
         MaintenanceRequests = new GenericRepository<MaintenanceRequest>(context);
         PasswordResetOtps = new GenericRepository<PasswordResetOtp>(context);
+        RefundRequests = new GenericRepository<RefundRequest>(context);
     }
 
     public IGenericRepository<User> Users { get; }
@@ -71,6 +73,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<PointTransaction> PointTransactions { get; }
     public IGenericRepository<MaintenanceRequest> MaintenanceRequests { get; }
     public IGenericRepository<PasswordResetOtp> PasswordResetOtps { get; }
+    public IGenericRepository<RefundRequest> RefundRequests { get; }
 
     public SportsFieldBookingDbContext Context => _context;
     public Task<int> SaveChangesAsync() => _context.SaveChangesAsync();

@@ -29,12 +29,57 @@ public class PaymentService : IPaymentService
     private readonly IUnitOfWork _uow;
     private readonly IPointService _pointService;
     private readonly IWalletService _walletService;
+    private readonly IEmailService _emailService;
 
-    public PaymentService(IUnitOfWork uow, IPointService pointService, IWalletService walletService)
+    public PaymentService(IUnitOfWork uow, IPointService pointService, IWalletService walletService,
+        IEmailService emailService)
     {
         _uow = uow;
         _pointService = pointService;
         _walletService = walletService;
+        _emailService = emailService;
+    }
+
+    /// <summary>Email xac nhan thanh toan - goi sau khi da ghi nhan Paid thanh cong.</summary>
+    private async Task SendPaymentEmailAsync(Booking booking, string method, decimal amount,
+        int pointsUsed, decimal cashback)
+    {
+        var user = booking.User ?? await _uow.Users.GetByIdAsync(booking.UserId);
+        if (user == null) return;
+
+        var methodText = method switch
+        {
+            "Wallet" => "Ví tiền ảo",
+            "Cash" => "Tiền mặt tại sân",
+            _ => method
+        };
+        var extras = "";
+        if (pointsUsed > 0) extras += $"<tr><td>Điểm đã dùng</td><td><b>{pointsUsed} điểm</b></td></tr>";
+        if (cashback > 0) extras += $"<tr><td>Hoàn tiền cashback</td><td><b style=\"color:#198754\">+{cashback:N0}đ vào ví</b></td></tr>";
+
+        try
+        {
+            await _emailService.SendAsync(user.Email,
+                $"[SportBooking] Thanh toán thành công {amount:N0}đ - booking #{booking.BookingId}",
+                $"""
+                <h3>Xin chào {user.FullName},</h3>
+                <p>Cảm ơn bạn! Booking <b>#{booking.BookingId}</b> đã được thanh toán thành công và xác nhận.</p>
+                <div style="border:2px solid #198754;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+                    <p style="margin:0;">Số tiền đã thanh toán</p>
+                    <h2 style="color:#198754;margin:4px 0;">{amount:N0}đ</h2>
+                    <p style="margin:0;">qua <b>{methodText}</b></p>
+                </div>
+                <table cellpadding="6" style="border-collapse:collapse;">
+                    <tr><td>Sân</td><td><b>{booking.Field?.FieldName}</b></td></tr>
+                    <tr><td>Ngày đá</td><td><b>{booking.BookingDate:dd/MM/yyyy}</b></td></tr>
+                    <tr><td>Khung giờ</td><td><b>{booking.TimeSlot?.StartTime:HH\:mm} - {booking.TimeSlot?.EndTime:HH\:mm}</b></td></tr>
+                    {extras}
+                </table>
+                <p>Vui lòng có mặt trước giờ đá 10 phút. Nếu cần hủy, hãy hủy trước giờ đá ít nhất 2 tiếng để được hoàn tiền.</p>
+                <p>SportBooking - Hệ thống đặt sân thể thao</p>
+                """);
+        }
+        catch { /* loi gui mail khong duoc lam hong giao dich da chot */ }
     }
 
     public async Task<(bool Success, string Message)> PayAsync(int bookingId, int userId, string method, int pointsToUse = 0)
@@ -141,6 +186,11 @@ public class PaymentService : IPaymentService
 
             await tx.CommitAsync();
 
+            // Email xac nhan thanh toan (gui sau khi commit de khong giu transaction cho SMTP)
+            var cashbackAmount = method == "Wallet" && booking.Field.CashbackPercent > 0
+                ? Math.Round(booking.TotalAmount * booking.Field.CashbackPercent / 100m) : 0m;
+            await SendPaymentEmailAsync(booking, method, booking.TotalAmount, pointsToUse, cashbackAmount);
+
             var pointsNote = pointsToUse > 0 ? $" (đã dùng {pointsToUse} điểm)" : "";
             return (true, $"Thanh toán {method} thành công{pointsNote}! Booking đã được xác nhận.{cashbackNote}");
         }
@@ -156,6 +206,8 @@ public class PaymentService : IPaymentService
         var booking = await _uow.Bookings.Query()
             .Include(b => b.Payments)
             .Include(b => b.Field)
+            .Include(b => b.User)
+            .Include(b => b.TimeSlot)
             .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
         if (booking == null) return (false, "Không tìm thấy booking.");
@@ -184,6 +236,9 @@ public class PaymentService : IPaymentService
         if (booking.Status == "Pending") booking.Status = "Confirmed";
         _uow.Bookings.Update(booking);
         await _uow.SaveChangesAsync();
+
+        // Email bao khach da thu tien mat thanh cong
+        await SendPaymentEmailAsync(booking, "Cash", booking.TotalAmount, booking.PointsUsed, 0m);
 
         return (true, $"Đã xác nhận thu {booking.TotalAmount:N0}đ tiền mặt. Booking #{bookingId} được xác nhận.");
     }

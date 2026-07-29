@@ -19,6 +19,11 @@ public class User
     public string? Phone { get; set; }
     public int RoleId { get; set; }
     public bool IsActive { get; set; } = true;
+    // Tai khoan ngan hang: dung khi hoan tien cho booking tra qua cong/tien mat
+    // ma san khong nhan vi tien ao (khong the hoan vao vi).
+    public string? BankAccountNumber { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountHolder { get; set; }
     // So du diem hien tai (co the tieu); LifetimePoints chi tang - dung de xet hang thanh vien
     public int Points { get; set; }
     public int LifetimePoints { get; set; }
@@ -238,6 +243,32 @@ public class PointTransaction
     public string? Description { get; set; }
     public int? BookingId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public virtual User User { get; set; } = null!;
+}
+
+/// <summary>
+/// Yeu cau hoan tien ve tai khoan ngan hang - dung khi booking tra qua cong thanh toan / tien mat
+/// ma san KHONG nhan vi tien ao (khong hoan vao vi duoc). Admin/chu san chuyen khoan roi danh dau da xu ly.
+/// Truong hop hoan vao vi thi khong tao ban ghi nay (da hoan ngay, co WalletTransaction lam bang chung).
+/// </summary>
+public class RefundRequest
+{
+    public int RefundRequestId { get; set; }
+    public int BookingId { get; set; }
+    public int UserId { get; set; }
+    public decimal Amount { get; set; }
+    public string Reason { get; set; } = null!;          // ly do hoan: huy booking / bao tri san
+    public string Status { get; set; } = "Pending";       // Pending / Completed / Rejected
+    // Snapshot thong tin ngan hang tai thoi diem tao (khach co the doi STK sau nay)
+    public string? BankAccountNumber { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountHolder { get; set; }
+    public string? ProcessedNote { get; set; }            // ma giao dich chuyen khoan
+    public int? ProcessedById { get; set; }
+    public DateTime? ProcessedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public virtual Booking Booking { get; set; } = null!;
     public virtual User User { get; set; } = null!;
 }
 

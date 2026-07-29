@@ -29,6 +29,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IPointService, PointService>();
 builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
+builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Cong thanh toan VNPay sandbox (chua cau hinh TmnCode -> tu fallback sang cong demo noi bo)

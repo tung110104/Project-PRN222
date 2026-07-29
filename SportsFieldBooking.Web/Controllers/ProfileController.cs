@@ -96,6 +96,15 @@ public class ProfileController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateBankAccount(string? bankName, string? accountNumber, string? accountHolder)
+    {
+        var (ok, message) = await _authService.UpdateBankAccountAsync(CurrentUserId, bankName, accountNumber, accountHolder);
+        TempData[ok ? "Success" : "Error"] = message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
     {
         if (newPassword != confirmPassword)

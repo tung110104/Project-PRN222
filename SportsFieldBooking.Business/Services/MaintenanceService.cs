@@ -23,13 +23,16 @@ public class MaintenanceService : IMaintenanceService
     private readonly IWalletService _walletService;
     private readonly IPointService _pointService;
     private readonly IEmailService _emailService;
+    private readonly IRefundService _refundService;
 
-    public MaintenanceService(IUnitOfWork uow, IWalletService walletService, IPointService pointService, IEmailService emailService)
+    public MaintenanceService(IUnitOfWork uow, IWalletService walletService, IPointService pointService,
+        IEmailService emailService, IRefundService refundService)
     {
         _uow = uow;
         _walletService = walletService;
         _pointService = pointService;
         _emailService = emailService;
+        _refundService = refundService;
     }
 
     public Task<List<MaintenanceRequest>> GetByOwnerAsync(int ownerId) =>
@@ -107,6 +110,7 @@ public class MaintenanceService : IMaintenanceService
             .Include(b => b.User)
             .Include(b => b.TimeSlot)
             .Include(b => b.Payments)
+            .Include(b => b.Field)
             .Where(b => b.FieldId == request.FieldId &&
                         b.BookingDate >= request.StartDate && b.BookingDate <= request.EndDate &&
                         (b.Status == "Pending" || b.Status == "Confirmed"))
@@ -129,25 +133,15 @@ public class MaintenanceService : IMaintenanceService
         {
             await _pointService.ReturnUsedPointsAsync(booking, "sân bảo trì");
 
-            var paid = booking.Payments.FirstOrDefault(p => p.Status == "Paid");
-            var refundText = "Booking của bạn chưa thanh toán nên không phát sinh hoàn tiền.";
-            if (paid != null)
+            // RefundService quyet dinh hoan vao vi hay chuyen khoan ve STK + gui email hoan tien chi tiet
+            var (destination, amount, _) = await _refundService.RefundBookingAsync(booking, "sân bảo trì");
+            var refundText = destination switch
             {
-                paid.Status = "Refunded";
-                _uow.Payments.Update(paid);
-                await _uow.SaveChangesAsync();
-
-                if (paid.Method == "Wallet")
-                {
-                    await _walletService.RefundAsync(booking.UserId, paid.Amount, booking.BookingId,
-                        $"Hoàn tiền do sân bảo trì - booking #{booking.BookingId}");
-                    refundText = $"Số tiền {paid.Amount:N0}đ đã được hoàn ngay vào ví của bạn.";
-                }
-                else
-                {
-                    refundText = $"Số tiền {paid.Amount:N0}đ sẽ được hoàn trong 3-5 ngày làm việc.";
-                }
-            }
+                RefundDestination.Wallet => $"Số tiền {amount:N0}đ đã được hoàn ngay vào ví của bạn.",
+                RefundDestination.BankTransfer => $"Số tiền {amount:N0}đ sẽ được chuyển khoản về tài khoản ngân hàng của bạn " +
+                                                  "(sân này không nhận thanh toán bằng ví) - xem email hoàn tiền kèm theo.",
+                _ => "Booking của bạn chưa thanh toán nên không phát sinh hoàn tiền."
+            };
 
             // Email thong bao huy (khong hoi y kien - san bao tri thi booking chac chan khong thuc hien duoc),
             // kem goi y dat lai lich khac de bu dap

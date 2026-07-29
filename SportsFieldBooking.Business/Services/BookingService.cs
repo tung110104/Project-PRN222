@@ -30,15 +30,17 @@ public class BookingService : IBookingService
     private readonly IPointService _pointService;
     private readonly IWalletService _walletService;
     private readonly IEmailService _emailService;
+    private readonly IRefundService _refundService;
 
     public BookingService(IUnitOfWork uow, IPricingService pricingService, IPointService pointService,
-        IWalletService walletService, IEmailService emailService)
+        IWalletService walletService, IEmailService emailService, IRefundService refundService)
     {
         _uow = uow;
         _pricingService = pricingService;
         _pointService = pointService;
         _walletService = walletService;
         _emailService = emailService;
+        _refundService = refundService;
     }
 
     public async Task<List<int>> GetBookedSlotIdsAsync(int fieldId, DateOnly date)
@@ -240,28 +242,51 @@ public class BookingService : IBookingService
         // Hoan diem da dung (neu co)
         await _pointService.ReturnUsedPointsAsync(booking, "hủy booking");
 
-        // Hoan tien: tra bang vi -> hoan ngay vao vi; phuong thuc khac -> danh dau cho hoan thu cong
-        var paid = booking.Payments.FirstOrDefault(p => p.Status == "Paid");
-        var refundNote = "";
-        if (paid != null)
-        {
-            paid.Status = "Refunded";
-            _uow.Payments.Update(paid);
-            await _uow.SaveChangesAsync();
+        // Hoan tien: RefundService tu quyet dinh hoan vao vi hay chuyen khoan ve STK, va gui email hoan tien
+        var cancelReason = isStaff ? "chủ sân/quản trị viên hủy" : "khách hàng tự hủy";
+        var (destination, refundAmount, refundNote) = await _refundService.RefundBookingAsync(booking, cancelReason);
 
-            if (paid.Method == "Wallet")
-            {
-                await _walletService.RefundAsync(booking.UserId, paid.Amount, booking.BookingId,
-                    $"Hoàn tiền hủy booking #{booking.BookingId}");
-                refundNote = $" {paid.Amount:N0}đ đã được hoàn vào ví.";
-            }
-            else
-            {
-                refundNote = " Tiền sẽ được hoàn trong 3-5 ngày làm việc.";
-            }
-        }
+        // Email thong bao huy booking (rieng email hoan tien do RefundService gui)
+        await SendCancelEmailAsync(booking, cancelReason, destination, refundAmount);
 
         return (true, "Đã hủy booking." + refundNote);
+    }
+
+    /// <summary>Email bao huy booking cho khach (moi truong hop huy deu gui, khong chi rieng bao tri).</summary>
+    private async Task SendCancelEmailAsync(Booking booking, string reason, RefundDestination destination, decimal amount)
+    {
+        if (booking.User == null) return;
+
+        var refundBlock = destination switch
+        {
+            RefundDestination.Wallet =>
+                $"<p>Số tiền <b>{amount:N0}đ</b> đã được <b>hoàn vào ví tiền ảo</b> của bạn (xem chi tiết trong email hoàn tiền kèm theo).</p>",
+            RefundDestination.BankTransfer =>
+                $"<p>Số tiền <b>{amount:N0}đ</b> sẽ được <b>chuyển khoản</b> về tài khoản ngân hàng của bạn (xem chi tiết trong email hoàn tiền kèm theo).</p>",
+            _ => "<p>Booking chưa thanh toán nên không phát sinh hoàn tiền.</p>"
+        };
+
+        try
+        {
+            await _emailService.SendAsync(booking.User.Email,
+                $"[SportBooking] Đã hủy booking #{booking.BookingId}",
+                $"""
+                <h3>Xin chào {booking.User.FullName},</h3>
+                <p>Booking của bạn đã được hủy — lý do: <b>{reason}</b>.</p>
+                <table cellpadding="6" style="border-collapse:collapse;">
+                    <tr><td>Mã booking</td><td><b>#{booking.BookingId}</b></td></tr>
+                    <tr><td>Sân</td><td><b>{booking.Field?.FieldName}</b></td></tr>
+                    <tr><td>Ngày đá</td><td><b>{booking.BookingDate:dd/MM/yyyy}</b></td></tr>
+                    <tr><td>Khung giờ</td><td><b>{booking.TimeSlot?.StartTime:HH\:mm} - {booking.TimeSlot?.EndTime:HH\:mm}</b></td></tr>
+                    <tr><td>Tổng tiền</td><td><b>{booking.TotalAmount:N0}đ</b></td></tr>
+                </table>
+                {refundBlock}
+                <p>Điểm tích lũy đã dùng (nếu có) và lượt mã khuyến mãi đã được hoàn lại cho bạn.</p>
+                <p>Rất mong được phục vụ bạn lần sau!</p>
+                <p>SportBooking - Hệ thống đặt sân thể thao</p>
+                """);
+        }
+        catch { /* loi gui mail khong duoc lam hong nghiep vu huy booking */ }
     }
 
     public Task<List<Booking>> GetForStaffAsync(int? ownerId, string? status)

@@ -46,6 +46,10 @@ CREATE TABLE Users (
     IsActive       BIT NOT NULL DEFAULT 1,
     Points         INT NOT NULL DEFAULT 0,   -- so du diem hien tai (tieu duoc)
     LifetimePoints INT NOT NULL DEFAULT 0,   -- diem tich luy tron doi -> xet hang thanh vien
+    -- STK nhan tien hoan khi san khong nhan vi tien ao
+    BankAccountNumber NVARCHAR(50)  NULL,
+    BankName          NVARCHAR(100) NULL,
+    BankAccountHolder NVARCHAR(150) NULL,
     CreatedAt      DATETIME NOT NULL DEFAULT GETDATE()
 );
 
@@ -217,6 +221,26 @@ CREATE TABLE MaintenanceRequests (
     CreatedAt   DATETIME NOT NULL DEFAULT GETDATE(),
     ProcessedAt DATETIME NULL
 );
+GO
+
+/* Yeu cau hoan tien ve STK - khi booking cua san KHONG nhan vi tien ao bi huy */
+CREATE TABLE RefundRequests (
+    RefundRequestId   INT IDENTITY(1,1) PRIMARY KEY,
+    BookingId         INT NOT NULL REFERENCES Bookings(BookingId),
+    UserId            INT NOT NULL REFERENCES Users(UserId),
+    Amount            DECIMAL(12,0) NOT NULL,
+    Reason            NVARCHAR(300) NOT NULL,
+    Status            NVARCHAR(20) NOT NULL DEFAULT 'Pending', -- Pending / Completed / Rejected
+    BankAccountNumber NVARCHAR(50) NULL,
+    BankName          NVARCHAR(100) NULL,
+    BankAccountHolder NVARCHAR(150) NULL,
+    ProcessedNote     NVARCHAR(300) NULL,
+    ProcessedById     INT NULL,
+    ProcessedAt       DATETIME NULL,
+    CreatedAt         DATETIME NOT NULL DEFAULT GETDATE()
+);
+GO
+CREATE INDEX IX_RefundRequests_Status ON RefundRequests(Status);
 GO
 
 /* Ma OTP dat lai mat khau (chi Customer/Owner - Admin dung Super Account de cuu ho) */

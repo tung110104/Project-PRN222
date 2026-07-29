@@ -26,6 +26,7 @@ public class SportsFieldBookingDbContext : DbContext
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
     public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
+    public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -56,6 +57,9 @@ public class SportsFieldBookingDbContext : DbContext
             e.Property(x => x.Email).HasMaxLength(100);
             e.Property(x => x.PasswordHash).HasMaxLength(256);
             e.Property(x => x.Phone).HasMaxLength(20);
+            e.Property(x => x.BankAccountNumber).HasMaxLength(50);
+            e.Property(x => x.BankName).HasMaxLength(100);
+            e.Property(x => x.BankAccountHolder).HasMaxLength(150);
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             e.HasIndex(x => x.Email).IsUnique();
             e.HasOne(x => x.Role).WithMany(r => r.Users).HasForeignKey(x => x.RoleId);
@@ -211,6 +215,24 @@ public class SportsFieldBookingDbContext : DbContext
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             e.HasOne(x => x.Field).WithMany(f => f.MaintenanceRequests).HasForeignKey(x => x.FieldId);
             e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RefundRequest>(e =>
+        {
+            e.ToTable("RefundRequests");
+            e.Property(x => x.Amount).HasColumnType("decimal(12,0)");
+            e.Property(x => x.Reason).HasMaxLength(300);
+            e.Property(x => x.Status).HasMaxLength(20);
+            e.Property(x => x.BankAccountNumber).HasMaxLength(50);
+            e.Property(x => x.BankName).HasMaxLength(100);
+            e.Property(x => x.BankAccountHolder).HasMaxLength(150);
+            e.Property(x => x.ProcessedNote).HasMaxLength(300);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => x.Status);
+            e.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

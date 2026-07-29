@@ -23,6 +23,9 @@ public interface IAuthService
     // ----- Ho so ca nhan -----
     Task<User?> GetProfileAsync(int userId);
     Task<(bool Success, string Message)> UpdateProfileAsync(int userId, string fullName, string? phone);
+    /// <summary>Cap nhat tai khoan ngan hang de nhan tien hoan khi san khong nhan vi tien ao.</summary>
+    Task<(bool Success, string Message)> UpdateBankAccountAsync(int userId, string? bankName,
+        string? accountNumber, string? accountHolder);
     Task<(bool Success, string Message)> ChangePasswordAsync(int userId, string currentPassword, string newPassword);
 }
 
@@ -205,6 +208,33 @@ public class AuthService : IAuthService
         _uow.Users.Update(user);
         await _uow.SaveChangesAsync();
         return (true, "Cập nhật thông tin cá nhân thành công.");
+    }
+
+    public async Task<(bool Success, string Message)> UpdateBankAccountAsync(int userId, string? bankName,
+        string? accountNumber, string? accountHolder)
+    {
+        bankName = string.IsNullOrWhiteSpace(bankName) ? null : bankName.Trim();
+        accountNumber = string.IsNullOrWhiteSpace(accountNumber) ? null : accountNumber.Trim().Replace(" ", "");
+        accountHolder = string.IsNullOrWhiteSpace(accountHolder) ? null : accountHolder.Trim().ToUpperInvariant();
+
+        var filled = new[] { bankName, accountNumber, accountHolder }.Count(x => x != null);
+        if (filled is > 0 and < 3)
+            return (false, "Vui lòng nhập đủ cả ngân hàng, số tài khoản và tên chủ tài khoản.");
+        if (accountNumber != null && (accountNumber.Length < 6 || accountNumber.Length > 20 || !accountNumber.All(char.IsDigit)))
+            return (false, "Số tài khoản phải gồm 6-20 chữ số.");
+
+        var user = await _uow.Users.GetByIdAsync(userId);
+        if (user == null) return (false, "Không tìm thấy tài khoản.");
+
+        user.BankName = bankName;
+        user.BankAccountNumber = accountNumber;
+        user.BankAccountHolder = accountHolder;
+        _uow.Users.Update(user);
+        await _uow.SaveChangesAsync();
+
+        return (true, filled == 0
+            ? "Đã xóa thông tin tài khoản ngân hàng."
+            : "Cập nhật tài khoản ngân hàng thành công. Tiền hoàn của sân không nhận ví sẽ được chuyển về tài khoản này.");
     }
 
     public async Task<(bool Success, string Message)> ChangePasswordAsync(int userId, string currentPassword, string newPassword)

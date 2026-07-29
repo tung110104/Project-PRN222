@@ -113,6 +113,45 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <strong><i class="bi bi-bank"></i> Tài khoản ngân hàng nhận tiền hoàn</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Khi hủy booking đã thanh toán: sân <strong>có nhận ví</strong> thì tiền hoàn ngay vào ví;
+                    sân <strong>không nhận ví</strong> thì tiền được chuyển khoản về tài khoản dưới đây.
+                </p>
+                @if (string.IsNullOrWhiteSpace(Model.BankAccountNumber))
+                {
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Bạn chưa cập nhật tài khoản ngân hàng. Hãy bổ sung để nhận được tiền hoàn từ những sân không nhận ví.
+                    </div>
+                }
+                <form method="post" asp-action="UpdateBankAccount" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-4">
+                        <label class="form-label">Ngân hàng</label>
+                        <input name="bankName" value="@Model.BankName" class="form-control" placeholder="VD: Vietcombank" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Số tài khoản</label>
+                        <input name="accountNumber" value="@Model.BankAccountNumber" class="form-control"
+                               inputmode="numeric" placeholder="VD: 0011001234567" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Chủ tài khoản</label>
+                        <input name="accountHolder" value="@Model.BankAccountHolder" class="form-control"
+                               placeholder="VD: NGUYEN VAN A" />
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary"><i class="bi bi-save"></i> Lưu tài khoản ngân hàng</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
                 <div class="card text-center shadow-sm h-100">

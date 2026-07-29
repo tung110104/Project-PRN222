@@ -25,7 +25,13 @@ public interface IWalletService
 public class WalletService : IWalletService
 {
     private readonly IUnitOfWork _uow;
-    public WalletService(IUnitOfWork uow) => _uow = uow;
+    private readonly IEmailService _emailService;
+
+    public WalletService(IUnitOfWork uow, IEmailService emailService)
+    {
+        _uow = uow;
+        _emailService = emailService;
+    }
 
     public async Task<Wallet> GetOrCreateAsync(int userId)
     {
@@ -79,6 +85,36 @@ public class WalletService : IWalletService
                 $"Khuyến mãi nạp: nạp từ {bonusTier.MinAmount:N0}đ tặng {bonusTier.BonusAmount:N0}đ", null);
 
         await _uow.SaveChangesAsync();
+
+        // Email bien lai nap tien
+        var user = await _uow.Users.GetByIdAsync(userId);
+        if (user != null)
+        {
+            var bonusRow = bonusTier == null ? ""
+                : $"<tr><td>Khuyến mãi nạp</td><td><b style=\"color:#198754\">+{bonusTier.BonusAmount:N0}đ</b></td></tr>";
+            try
+            {
+                await _emailService.SendAsync(user.Email,
+                    $"[SportBooking] Nạp ví thành công {amount:N0}đ",
+                    $"""
+                    <h3>Xin chào {user.FullName},</h3>
+                    <p>Bạn đã nạp tiền vào ví SportBooking thành công.</p>
+                    <div style="border:2px solid #198754;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+                        <p style="margin:0;">Số tiền nạp</p>
+                        <h2 style="color:#198754;margin:4px 0;">{amount:N0}đ</h2>
+                    </div>
+                    <table cellpadding="6" style="border-collapse:collapse;">
+                        {bonusRow}
+                        <tr><td>Số dư ví hiện tại</td><td><b>{wallet.Balance:N0}đ</b></td></tr>
+                        <tr><td>Thời gian</td><td>{DateTime.Now:HH:mm dd/MM/yyyy}</td></tr>
+                    </table>
+                    <p>Tiền trong ví dùng để đặt sân, không rút ra được. Xem lịch sử giao dịch tại mục <b>Ví &amp; Điểm</b>.</p>
+                    <p>SportBooking - Hệ thống đặt sân thể thao</p>
+                    """);
+            }
+            catch { /* loi gui mail khong duoc lam hong giao dich nap tien */ }
+        }
+
         return (true, bonusTier == null
             ? $"Đã nạp {amount:N0}đ vào ví."
             : $"Đã nạp {amount:N0}đ vào ví + tặng {bonusTier.BonusAmount:N0}đ khuyến mãi nạp.");

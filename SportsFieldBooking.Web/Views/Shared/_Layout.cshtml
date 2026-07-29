@@ -34,6 +34,7 @@
                     @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="StaffBookings" asp-action="Index">Quản lý đặt lịch</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Refunds" asp-action="Index">Hoàn tiền</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Báo cáo</a></li>
                     }
                     @if (User.IsInRole("Admin"))
