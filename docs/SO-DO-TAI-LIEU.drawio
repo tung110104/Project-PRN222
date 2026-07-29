@@ -1,0 +1,481 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram id="ctx" name="Context Diagram">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sys" value="SPORTS FIELD BOOKING SYSTEM&#10;(Hệ thống đặt sân thể thao)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="330" width="330" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="acGuest" value="Khách vãng lai" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="90" y="110" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="acCust" value="Customer&#10;(Khách hàng)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="90" y="350" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="acOwner" value="Owner&#10;(Chủ sân)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="90" y="590" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="acAdmin" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="480" y="70" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="acSuper" value="Super Account&#10;(cứu hộ)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="730" y="70" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="exVnpay" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&#10;VNPay Sandbox&#10;Cổng thanh toán" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="180" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="exSmtp" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&#10;Email Server (SMTP)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="370" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="exApi" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&#10;Provinces Open API&#10;(đơn vị hành chính VN)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="550" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ce1" value="tìm sân, xem giá theo khung giờ" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="acGuest" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce2" value="đặt sân, thanh toán, nạp ví, điểm/voucher, đánh giá" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="acCust" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce3" value="quản lý sân/giá/ngày vàng, khuyến mãi, bảo trì, duyệt booking, đặt hộ, báo cáo" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="acOwner" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce4" value="quản lý user/ví/điểm, ngày vàng hệ thống, duyệt bảo trì, báo cáo" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="acAdmin" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce5" value="cấp/thu hồi Admin, khóa tài khoản" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="acSuper" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce6" value="URL thanh toán ký HMAC-SHA512 / kết quả giao dịch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="sys" target="exVnpay"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce7" value="email xác nhận booking, khuyến mãi, voucher, bảo trì" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="sys" target="exSmtp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce8" value="danh sách Tỉnh/Thành - Phường/Xã" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="exApi" target="sys"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="ftree" name="Feature Tree">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1750" pageHeight="750" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="root" value="SPORTS FIELD BOOKING SYSTEM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="30" width="300" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" value="1. Xác thực &amp; Tài khoản" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g1a" value="1.1 Đăng ký tài khoản" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="60" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g1b" value="1.2 Đăng nhập khách (Customer/Owner)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="60" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g1c" value="1.3 Đăng nhập quản trị riêng (Admin)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="60" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g1d" value="1.4 Super Account cứu hộ (hash trong code)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="60" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g1e" value="1.5 Khóa / mở khóa tài khoản" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="60" y="415" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2" value="2. Tìm &amp; Đặt sân" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g2a" value="2.1 Tìm kiếm + lọc (loại sân, Tỉnh/Thành, giá, sao)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2b" value="2.2 Xem chi tiết + giá theo từng khung giờ" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2c" value="2.3 Đặt 1..n khung giờ (mỗi khung 1 booking)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2d" value="2.4 Áp mã khuyến mãi khi đặt" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2e" value="2.5 Hủy booking (trước giờ đá ≥ 2h)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="415" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g2f" value="2.6 Đánh giá sân sau khi hoàn thành" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="350" y="465" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g3" value="3. Thanh toán" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g3a" value="3.1 Thanh toán bằng ví (+cashback theo sân)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="640" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g3b" value="3.2 VNPay sandbox / cổng demo nội bộ" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="640" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g3c" value="3.3 Tiền mặt tại quầy (chủ sân xác nhận)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="640" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g3d" value="3.4 Dùng điểm trừ tiền (tối đa 50%)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="640" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g4" value="4. Ví ảo &amp; Điểm thành viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="910" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g4a" value="4.1 Nạp ví qua cổng + thưởng nạp (Bonus)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="930" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g4b" value="4.2 Lịch sử giao dịch ví (sổ cái)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="930" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g4c" value="4.3 Tích điểm + thưởng sự kiện + hạng thành viên" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="930" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g4d" value="4.4 Đổi điểm lấy voucher gửi email" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="930" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5" value="5. Chủ sân (Owner)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g5a" value="5.1 Quản lý sân (CRUD, ví/cashback, địa chỉ API)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5b" value="5.2 Bảng giá đa cấp + khung giờ" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5c" value="5.3 Ngày vàng riêng của sân" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5d" value="5.4 Khuyến mãi + gửi email cho khách" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5e" value="5.5 Yêu cầu bảo trì sân" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="415" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5f" value="5.6 Duyệt/hủy booking + đặt hộ khách walk-in" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="465" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g5g" value="5.7 Báo cáo doanh thu sân mình" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1220" y="515" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g6" value="6. Quản trị (Admin / Super)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1490" y="150" width="250" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="g6a" value="6.1 Quản lý người dùng + role + cấp Admin" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1510" y="215" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g6b" value="6.2 Quản lý ví (khóa ví, cộng/trừ có lý do)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1510" y="265" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g6c" value="6.3 Ngày vàng toàn hệ thống" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1510" y="315" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g6d" value="6.4 Duyệt/từ chối bảo trì (tự hủy + hoàn tiền)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1510" y="365" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="g6e" value="6.5 Báo cáo toàn hệ thống" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1510" y="415" width="230" height="40" as="geometry" /></mxCell>
+        <mxCell id="fe1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fe2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fe3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fe4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fe5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fe6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="root" target="g6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="fl1a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g1" target="g1a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="50" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl1b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g1" target="g1b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="50" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl1c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g1" target="g1c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="50" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl1d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g1" target="g1d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="50" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl1e" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g1" target="g1e"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="50" y="435" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2e" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2e"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="435" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl2f" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g2" target="g2f"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="485" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl3a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g3" target="g3a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl3b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g3" target="g3b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl3c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g3" target="g3c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl3d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g3" target="g3d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl4a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g4" target="g4a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="920" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl4b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g4" target="g4b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="920" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl4c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g4" target="g4c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="920" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl4d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g4" target="g4d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="920" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5e" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5e"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="435" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5f" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5f"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="485" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl5g" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g5" target="g5g"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1210" y="535" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl6a" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g6" target="g6a"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1500" y="235" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl6b" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g6" target="g6b"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1500" y="285" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl6c" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g6" target="g6c"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1500" y="335" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl6d" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g6" target="g6d"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1500" y="385" /></Array></mxGeometry></mxCell>
+        <mxCell id="fl6e" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="g6" target="g6e"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1500" y="435" /></Array></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="usecase" name="Use Case Diagram">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="boundary" value="SPORTS FIELD BOOKING SYSTEM" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;fontStyle=1;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="330" y="40" width="840" height="1060" as="geometry" />
+        </mxCell>
+        <mxCell id="uacGuest" value="Khách vãng lai" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="120" y="100" width="40" height="80" as="geometry" /></mxCell>
+        <mxCell id="uacCust" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="120" y="470" width="40" height="80" as="geometry" /></mxCell>
+        <mxCell id="uacOwner" value="Owner (Chủ sân)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="120" y="870" width="40" height="80" as="geometry" /></mxCell>
+        <mxCell id="uacAdmin" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1320" y="380" width="40" height="80" as="geometry" /></mxCell>
+        <mxCell id="uacSuper" value="Super Account" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="1320" y="880" width="40" height="80" as="geometry" /></mxCell>
+        <mxCell id="uacVnp" value="&amp;lt;&amp;lt;system&amp;gt;&amp;gt;&#10;VNPay Sandbox" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1290" y="120" width="130" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc1" value="UC01 Tìm kiếm / lọc sân" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="80" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc2" value="UC02 Xem chi tiết + giá theo khung giờ" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="155" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc3" value="UC03 Đăng ký / Đăng nhập" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="230" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc4" value="UC04 Đặt sân (1..n khung giờ + mã KM)" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="330" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc5" value="UC05 Thanh toán booking (Ví/VNPay/MoMo/Cash + điểm)" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="405" width="180" height="65" as="geometry" /></mxCell>
+        <mxCell id="uc6" value="UC06 Nạp tiền vào ví" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="490" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc7" value="UC07 Đổi điểm lấy voucher" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="565" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc8" value="UC08 Hủy booking" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="640" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc9" value="UC09 Đánh giá sân" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="380" y="715" width="180" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc10" value="UC10 Quản lý sân (CRUD + ví/cashback)" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="700" width="190" height="60" as="geometry" /></mxCell>
+        <mxCell id="uc11" value="UC11 Bảng giá đa cấp + khung giờ + ngày vàng sân" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="780" width="190" height="65" as="geometry" /></mxCell>
+        <mxCell id="uc12" value="UC12 Khuyến mãi + gửi email" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="865" width="190" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc13" value="UC13 Yêu cầu bảo trì" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="700" y="940" width="190" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc14" value="UC14 Duyệt / hủy booking + đặt hộ khách" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="700" width="190" height="60" as="geometry" /></mxCell>
+        <mxCell id="uc15" value="UC15 Xem báo cáo doanh thu" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="780" width="190" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc16" value="UC16 Quản lý người dùng + role" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="120" width="190" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc17" value="UC17 Quản lý ví + điểm (khóa, cộng/trừ)" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="195" width="190" height="60" as="geometry" /></mxCell>
+        <mxCell id="uc18" value="UC18 Ngày vàng hệ thống" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="275" width="190" height="55" as="geometry" /></mxCell>
+        <mxCell id="uc19" value="UC19 Duyệt bảo trì (tự hủy + hoàn tiền)" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="350" width="190" height="60" as="geometry" /></mxCell>
+        <mxCell id="uc20" value="UC20 Cấp / thu hồi Admin, khóa tài khoản" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="920" y="930" width="190" height="60" as="geometry" /></mxCell>
+        <mxCell id="ue1" style="html=1;endArrow=none;" edge="1" parent="1" source="uacGuest" target="uc1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue2" style="html=1;endArrow=none;" edge="1" parent="1" source="uacGuest" target="uc2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue3" style="html=1;endArrow=none;" edge="1" parent="1" source="uacGuest" target="uc3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue4" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue5" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue6" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue7" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue8" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue9" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue10" style="html=1;endArrow=none;" edge="1" parent="1" source="uacCust" target="uc9"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue11" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue12" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue13" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc12"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue14" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc13"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue15" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc14"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue16" style="html=1;endArrow=none;" edge="1" parent="1" source="uacOwner" target="uc15"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue17" style="html=1;endArrow=none;" edge="1" parent="1" source="uacAdmin" target="uc16"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue18" style="html=1;endArrow=none;" edge="1" parent="1" source="uacAdmin" target="uc17"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue19" style="html=1;endArrow=none;" edge="1" parent="1" source="uacAdmin" target="uc18"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue20" style="html=1;endArrow=none;" edge="1" parent="1" source="uacAdmin" target="uc19"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue21" style="html=1;endArrow=none;" edge="1" parent="1" source="uacSuper" target="uc20"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue22" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="uc5" target="uacVnp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ue23" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="uc6" target="uacVnp"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="erd" name="ERD">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1250" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="tRoles" value="&lt;b&gt;Roles&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;RoleId&lt;/u&gt; PK&lt;br&gt;RoleName" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="60" y="60" width="180" height="80" as="geometry" /></mxCell>
+        <mxCell id="tUsers" value="&lt;b&gt;Users&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;UserId&lt;/u&gt; PK&lt;br&gt;FullName, Email (UQ)&lt;br&gt;PasswordHash, Phone&lt;br&gt;RoleId FK, IsActive&lt;br&gt;Points, LifetimePoints&lt;br&gt;CreatedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="320" y="40" width="200" height="140" as="geometry" /></mxCell>
+        <mxCell id="tWallets" value="&lt;b&gt;Wallets&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;WalletId&lt;/u&gt; PK&lt;br&gt;UserId FK (UQ 1-1)&lt;br&gt;Balance, IsLocked&lt;br&gt;UpdatedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="620" y="40" width="190" height="110" as="geometry" /></mxCell>
+        <mxCell id="tWTx" value="&lt;b&gt;WalletTransactions&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;WalletTransactionId&lt;/u&gt; PK&lt;br&gt;WalletId FK&lt;br&gt;Type (Deposit/Payment/Refund/&lt;br&gt;Cashback/Bonus/Adjust)&lt;br&gt;Amount, BalanceAfter&lt;br&gt;Description, BookingId, CreatedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="900" y="30" width="240" height="140" as="geometry" /></mxCell>
+        <mxCell id="tPTx" value="&lt;b&gt;PointTransactions&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;PointTransactionId&lt;/u&gt; PK&lt;br&gt;UserId FK&lt;br&gt;Type (Earn/Redeem/ReviewBonus/&lt;br&gt;Revoke/Adjust)&lt;br&gt;Points, Description&lt;br&gt;BookingId, CreatedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="1230" y="30" width="240" height="140" as="geometry" /></mxCell>
+        <mxCell id="tFieldTypes" value="&lt;b&gt;FieldTypes&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;FieldTypeId&lt;/u&gt; PK&lt;br&gt;TypeName (UQ)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="60" y="260" width="180" height="80" as="geometry" /></mxCell>
+        <mxCell id="tFields" value="&lt;b&gt;Fields&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;FieldId&lt;/u&gt; PK&lt;br&gt;FieldName, FieldTypeId FK&lt;br&gt;OwnerId FK (Users)&lt;br&gt;Address, Ward, Province&lt;br&gt;PricePerHour&lt;br&gt;AcceptWalletPayment&lt;br&gt;CashbackPercent&lt;br&gt;Status (Active/Maintenance/Closed)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="320" y="250" width="220" height="170" as="geometry" /></mxCell>
+        <mxCell id="tFieldImages" value="&lt;b&gt;FieldImages&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;ImageId&lt;/u&gt; PK&lt;br&gt;FieldId FK&lt;br&gt;ImageUrl, IsPrimary" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="60" y="400" width="180" height="95" as="geometry" /></mxCell>
+        <mxCell id="tTimeSlots" value="&lt;b&gt;TimeSlots&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;TimeSlotId&lt;/u&gt; PK&lt;br&gt;FieldId FK&lt;br&gt;StartTime, EndTime&lt;br&gt;IsActive&lt;br&gt;UQ(FieldId, StartTime)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="620" y="250" width="190" height="120" as="geometry" /></mxCell>
+        <mxCell id="tRules" value="&lt;b&gt;FieldPricingRules&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;PricingRuleId&lt;/u&gt; PK&lt;br&gt;FieldId FK, RuleName&lt;br&gt;StartTime, EndTime&lt;br&gt;DayType (All/Weekday/Weekend)&lt;br&gt;StartMonth, EndMonth&lt;br&gt;Price, Priority, IsActive" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="620" y="410" width="220" height="140" as="geometry" /></mxCell>
+        <mxCell id="tGolden" value="&lt;b&gt;GoldenDays&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;GoldenDayId&lt;/u&gt; PK&lt;br&gt;FieldId FK (NULL = hệ thống)&lt;br&gt;Date, Name&lt;br&gt;PriceMultiplier&lt;br&gt;PointsMultiplier, IsActive" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="60" y="540" width="200" height="130" as="geometry" /></mxCell>
+        <mxCell id="tMaint" value="&lt;b&gt;MaintenanceRequests&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;MaintenanceRequestId&lt;/u&gt; PK&lt;br&gt;FieldId FK, OwnerId FK&lt;br&gt;Reason, StartDate, EndDate&lt;br&gt;Status (Pending/Approved/Rejected)&lt;br&gt;AdminNote, ProcessedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="60" y="710" width="230" height="130" as="geometry" /></mxCell>
+        <mxCell id="tPromo" value="&lt;b&gt;Promotions&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;PromotionId&lt;/u&gt; PK&lt;br&gt;Code (UQ), Description&lt;br&gt;DiscountPercent, MaxDiscount&lt;br&gt;StartDate, EndDate&lt;br&gt;Quantity, IsActive&lt;br&gt;OwnerId FK (NULL = hệ thống)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="1230" y="250" width="230" height="140" as="geometry" /></mxCell>
+        <mxCell id="tBookings" value="&lt;b&gt;Bookings&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;BookingId&lt;/u&gt; PK&lt;br&gt;UserId FK, FieldId FK&lt;br&gt;TimeSlotId FK, BookingDate&lt;br&gt;PromotionId FK (NULL)&lt;br&gt;Status (Pending/Confirmed/&lt;br&gt;Completed/Cancelled)&lt;br&gt;UnitPrice, DiscountAmount&lt;br&gt;PointsUsed, TotalAmount&lt;br&gt;CreatedById FK (đặt hộ)&lt;br&gt;UQ(FieldId,TimeSlotId,Date) khi chưa hủy" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="900" y="410" width="260" height="210" as="geometry" /></mxCell>
+        <mxCell id="tPayments" value="&lt;b&gt;Payments&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;PaymentId&lt;/u&gt; PK&lt;br&gt;BookingId FK, Amount&lt;br&gt;Method (VNPay/Momo/Cash/Wallet)&lt;br&gt;Status (Pending/Paid/&lt;br&gt;Refunded/Failed)&lt;br&gt;TransactionCode, PaidAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="1260" y="450" width="230" height="140" as="geometry" /></mxCell>
+        <mxCell id="tReviews" value="&lt;b&gt;Reviews&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;&lt;u&gt;ReviewId&lt;/u&gt; PK&lt;br&gt;FieldId FK, UserId FK&lt;br&gt;BookingId FK (UQ 1-1)&lt;br&gt;Rating (1-5), Comment&lt;br&gt;CreatedAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="900" y="680" width="200" height="130" as="geometry" /></mxCell>
+        <mxCell id="er1" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tRoles" target="tUsers"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er2" value="1..1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tUsers" target="tWallets"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er3" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tWallets" target="tWTx"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er4" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tUsers" target="tPTx"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er5" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFieldTypes" target="tFields"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er6" value="owner 1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tUsers" target="tFields"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er7" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tFieldImages"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er8" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tTimeSlots"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er9" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tRules"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er10" value="0..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tGolden"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er11" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tMaint"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er12" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tUsers" target="tBookings"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er13" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tFields" target="tBookings"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er14" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tTimeSlots" target="tBookings"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er15" value="0..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tPromo" target="tBookings"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er16" value="1..n" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tBookings" target="tPayments"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er17" value="1..1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="tBookings" target="tReviews"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="arch" name="Software Architecture">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="br" value="Trình duyệt (Bootstrap 5, Razor Views)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="30" width="400" height="50" as="geometry" /></mxCell>
+<mxCell id="lp" value="PRESENTATION LAYER — SportsFieldBooking.Web" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="120" y="120" width="920" height="150" as="geometry" /></mxCell>
+<mxCell id="lp1" value="Controllers (14)&#10;Account, Field, Booking, Wallet,&#10;PaymentGateway, FieldsManage,&#10;FieldPricing, GoldenDays, Users..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="150" y="165" width="280" height="90" as="geometry" /></mxCell>
+<mxCell id="lp2" value="Views (Razor .cshtml)&#10;_Layout + 28 view" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="460" y="165" width="250" height="90" as="geometry" /></mxCell>
+<mxCell id="lp3" value="VnPayService&#10;(ký HMAC-SHA512,&#10;xác thực chữ ký trả về)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="740" y="165" width="270" height="90" as="geometry" /></mxCell>
+<mxCell id="lb" value="BUSINESS LAYER — SportsFieldBooking.Business" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="120" y="320" width="920" height="150" as="geometry" /></mxCell>
+<mxCell id="lb1" value="Services (13)&#10;Auth, Field, Pricing, Booking, Payment,&#10;Wallet, Point, Promotion, Review,&#10;Report, User, Maintenance, Email" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="150" y="362" width="320" height="95" as="geometry" /></mxCell>
+<mxCell id="lb2" value="Design Patterns&#10;Strategy (PricingEngine)&#10;Singleton (AppConfig)&#10;Factory (Notification)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="500" y="362" width="250" height="95" as="geometry" /></mxCell>
+<mxCell id="lb3" value="Nghiệp vụ: giá đa cấp, ngày vàng,&#10;ví + sổ cái, điểm + hạng,&#10;khuyến mãi, bảo trì" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="780" y="362" width="230" height="95" as="geometry" /></mxCell>
+<mxCell id="ld" value="DATA ACCESS LAYER — SportsFieldBooking.DataAccess" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="120" y="520" width="920" height="140" as="geometry" /></mxCell>
+<mxCell id="ld1" value="SportsFieldBookingDbContext&#10;(EF Core 8, Fluent API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="150" y="562" width="280" height="80" as="geometry" /></mxCell>
+<mxCell id="ld2" value="UnitOfWork +&#10;GenericRepository&amp;lt;T&amp;gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="460" y="562" width="250" height="80" as="geometry" /></mxCell>
+<mxCell id="ld3" value="Entities (16)&#10;User, Field, Booking, Wallet..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="740" y="562" width="270" height="80" as="geometry" /></mxCell>
+<mxCell id="db" value="SQL Server — SportsFieldBookingDB" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="380" y="710" width="400" height="60" as="geometry" /></mxCell>
+<mxCell id="ex1" value="VNPay Sandbox" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1100" y="165" width="140" height="60" as="geometry" /></mxCell>
+<mxCell id="ex2" value="SMTP Server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1100" y="362" width="140" height="60" as="geometry" /></mxCell>
+<mxCell id="ae1" value="HTTP request / response" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="br" target="lp"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="ae2" value="gọi service (DI)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="lp" target="lb"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="ae3" value="IUnitOfWork" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="lb" target="ld"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="ae4" value="EF Core (LINQ → SQL)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="ld" target="db"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="ae5" value="redirect + return" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="lp3" target="ex1"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="ae6" value="SmtpClient" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;" edge="1" parent="1" source="lb1" target="ex2"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="pkg" name="Package Diagram">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="pw" value="SportsFieldBooking.Web" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=110;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="80" y="60" width="340" height="220" as="geometry" /></mxCell>
+<mxCell id="pw1" value="Controllers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="110" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pw2" value="Views" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="260" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pw3" value="Services (VnPay)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="110" y="170" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pw4" value="wwwroot (js, css)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="260" y="170" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pb" value="SportsFieldBooking.Business" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=110;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="560" y="60" width="340" height="220" as="geometry" /></mxCell>
+<mxCell id="pb1" value="Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="590" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pb2" value="Patterns" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="740" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pd" value="SportsFieldBooking.DataAccess" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=110;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1040" y="60" width="340" height="220" as="geometry" /></mxCell>
+<mxCell id="pd1" value="Entities" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1070" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pd2" value="Repositories" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1220" y="110" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pd3" value="DbContext" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="1070" y="170" width="130" height="40" as="geometry" /></mxCell>
+<mxCell id="pdb" value="Database&#10;(SportsFieldBookingDB.sql)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="1040" y="360" width="340" height="70" as="geometry" /></mxCell>
+<mxCell id="pe1" value="&amp;lt;&amp;lt;depends&amp;gt;&amp;gt;" style="html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="pw" target="pb"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe2" value="&amp;lt;&amp;lt;depends&amp;gt;&amp;gt;" style="html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="pb" target="pd"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe3" value="EF Core" style="html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="pd" target="pdb"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="state" name="State Diagram">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="stt1" value="TRẠNG THÁI BOOKING" style="text;html=1;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="60" y="40" width="300" height="30" as="geometry" /></mxCell>
+<mxCell id="s0" value="" style="ellipse;fillColor=#000000;" vertex="1" parent="1"><mxGeometry x="80" y="110" width="30" height="30" as="geometry" /></mxCell>
+<mxCell id="s1" value="Pending&#10;(Chờ xác nhận)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="180" y="100" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="s2" value="Confirmed&#10;(Đã xác nhận)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="460" y="100" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="s3" value="Completed&#10;(Hoàn thành)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="750" y="100" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="s4" value="Cancelled&#10;(Đã hủy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="460" y="260" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="s9" value="" style="ellipse;shape=endState;fillColor=#000000;" vertex="1" parent="1"><mxGeometry x="990" y="110" width="30" height="30" as="geometry" /></mxCell>
+<mxCell id="s9b" value="" style="ellipse;shape=endState;fillColor=#000000;" vertex="1" parent="1"><mxGeometry x="640" y="350" width="30" height="30" as="geometry" /></mxCell>
+<mxCell id="se1" value="tạo booking" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s0" target="s1"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se2" value="thanh toán thành công / chủ sân xác nhận" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s1" target="s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se3" value="qua ngày đá (job tự chạy) → cộng điểm nếu đã TT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s2" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se4" value="hủy (khách ≥2h / chủ sân / bảo trì)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s1" target="s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se5" value="hủy hợp lệ → hoàn tiền + điểm + mã KM" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s2" target="s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s3" target="s9"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="se7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="s4" target="s9b"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="stt2" value="TRẠNG THÁI PAYMENT" style="text;html=1;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="60" y="440" width="300" height="30" as="geometry" /></mxCell>
+<mxCell id="p0" value="" style="ellipse;fillColor=#000000;" vertex="1" parent="1"><mxGeometry x="80" y="510" width="30" height="30" as="geometry" /></mxCell>
+<mxCell id="p1" value="Pending&#10;(Chờ thanh toán)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="180" y="500" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="p2" value="Paid&#10;(Đã thanh toán)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="460" y="500" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="p3" value="Refunded&#10;(Đã hoàn ví)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="750" y="500" width="160" height="50" as="geometry" /></mxCell>
+<mxCell id="p4" value="Failed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="460" y="640" width="160" height="45" as="geometry" /></mxCell>
+<mxCell id="p9" value="" style="ellipse;shape=endState;fillColor=#000000;" vertex="1" parent="1"><mxGeometry x="990" y="510" width="30" height="30" as="geometry" /></mxCell>
+<mxCell id="pe1s" value="tạo giao dịch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="p0" target="p1"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe2s" value="cổng xác nhận / trừ ví / nhận tiền mặt" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="p1" target="p2"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe3s" value="hủy booking đã trả bằng ví" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="p2" target="p3"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe4s" value="cổng báo thất bại / hủy trên cổng" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="p1" target="p4"><mxGeometry relative="1" as="geometry" /></mxCell>
+<mxCell id="pe5s" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="p3" target="p9"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="seqlogin" name="Seq - Đăng nhập">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1150" pageHeight="690" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="spu" value="Người dùng" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="130" y="40" width="40" height="70" as="geometry" /></mxCell>
+<mxCell id="slu" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="145" y="120" width="10" height="450" as="geometry" /></mxCell>
+<mxCell id="spac" value=":AccountController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="330" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slac" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="425" y="120" width="10" height="450" as="geometry" /></mxCell>
+<mxCell id="spas" value=":AuthService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slas" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="685" y="120" width="10" height="450" as="geometry" /></mxCell>
+<mxCell id="spdb" value=":Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="850" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sldb" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="945" y="120" width="10" height="450" as="geometry" /></mxCell>
+<mxCell id="sm0" value="POST /Account/Login (email, password)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="160" as="sourcePoint" /><mxPoint x="430" y="160" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm1" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="210" as="sourcePoint" /><mxPoint x="500" y="210" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sml1" value="Khớp SHA-256 hash Super? → chặn (dùng trang quản trị)" style="text;html=1;align=left;fontSize=11;" vertex="1" parent="1"><mxGeometry x="438" y="172" width="220" height="32" as="geometry" /></mxCell>
+<mxCell id="sm2" value="LoginAsync(email, password)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="260" as="sourcePoint" /><mxPoint x="690" y="260" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm3" value="SELECT Users JOIN Roles WHERE Email = @email AND PasswordHash = SHA256(@pw)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="310" as="sourcePoint" /><mxPoint x="950" y="310" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm4" value="User + Role / null" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="950" y="360" as="sourcePoint" /><mxPoint x="690" y="360" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm5" value="user" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="410" as="sourcePoint" /><mxPoint x="430" y="410" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm6" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="460" as="sourcePoint" /><mxPoint x="500" y="460" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sml6" value="Kiểm tra IsActive (khóa → báo lỗi), chặn role Admin" style="text;html=1;align=left;fontSize=11;" vertex="1" parent="1"><mxGeometry x="438" y="422" width="220" height="32" as="geometry" /></mxCell>
+<mxCell id="sm7" value="SignInAsync: cookie 8h + claims → redirect theo role" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="510" as="sourcePoint" /><mxPoint x="150" y="510" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="snote" value="Trang /Account/AdminLogin dùng luồng tương tự: khớp hash Super → phiên SuperAdmin (id=0); ngược lại yêu cầu role Admin." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=8;" vertex="1" parent="1"><mxGeometry x="70" y="570" width="600" height="50" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="seqbook" name="Seq - Đặt sân">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1670" pageHeight="790" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="spc" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="130" y="40" width="40" height="70" as="geometry" /></mxCell>
+<mxCell id="slc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="145" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spfc" value=":FieldController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="330" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slfc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="425" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spbs" value=":BookingService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slbs" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="685" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="sppe" value=":PricingEngine" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="850" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slpe" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="945" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spdb" value=":Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1110" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sldb" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1205" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spes" value=":EmailService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1370" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sles" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1465" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="sm0" value="POST /Field/Book (fieldId, date, timeSlotIds[], promoCode)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="160" as="sourcePoint" /><mxPoint x="430" y="160" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm1" value="CreateBookingAsync(...)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="210" as="sourcePoint" /><mxPoint x="690" y="210" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm2" value="Kiểm tra: sân Active, không trùng bảo trì, slot trống, quá khứ, mã KM hợp lệ" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="260" as="sourcePoint" /><mxPoint x="1210" y="260" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm3" value="GetPrice(field, slot, date, goldenDay) cho từng khung giờ" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="310" as="sourcePoint" /><mxPoint x="950" y="310" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm4" value="đơn giá theo rule + hệ số ngày vàng" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="950" y="360" as="sourcePoint" /><mxPoint x="690" y="360" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm5" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="410" as="sourcePoint" /><mxPoint x="760" y="410" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sml5" value="Trừ mã khuyến mãi (trần MaxDiscount) + giảm theo hạng thành viên" style="text;html=1;align=left;fontSize=11;" vertex="1" parent="1"><mxGeometry x="698" y="372" width="220" height="32" as="geometry" /></mxCell>
+<mxCell id="sm6" value="BEGIN TRAN → INSERT Booking(Pending) mỗi khung giờ (unique index chống trùng) → COMMIT" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="460" as="sourcePoint" /><mxPoint x="1210" y="460" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm7" value="Gửi email xác nhận đặt sân" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="510" as="sourcePoint" /><mxPoint x="1470" y="510" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm8" value="(success, bookingIds)" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="560" as="sourcePoint" /><mxPoint x="430" y="560" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm9" value="Redirect trang thanh toán / danh sách booking" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="610" as="sourcePoint" /><mxPoint x="150" y="610" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="seqpay" name="Seq - Thanh toán bằng ví">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1670" pageHeight="840" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="spc" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="130" y="40" width="40" height="70" as="geometry" /></mxCell>
+<mxCell id="slc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="145" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="spbc" value=":BookingController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="330" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slbc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="425" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="spps" value=":PaymentService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slps" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="685" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="sppt" value=":PointService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="850" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slpt" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="945" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="spws" value=":WalletService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1110" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slws" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1205" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="spdb" value=":Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1370" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sldb" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1465" y="120" width="10" height="600" as="geometry" /></mxCell>
+<mxCell id="sm0" value="POST /Booking/Pay (id, method=Wallet, pointsToUse)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="160" as="sourcePoint" /><mxPoint x="430" y="160" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm1" value="PayAsync(bookingId, userId, Wallet, pointsToUse)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="210" as="sourcePoint" /><mxPoint x="690" y="210" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm2" value="Kiểm tra booking của đúng user, chưa Paid, chưa hủy" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="260" as="sourcePoint" /><mxPoint x="1470" y="260" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm3" value="RedeemAsync(pointsToUse) — kiểm tra trần 50% + số dư điểm" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="310" as="sourcePoint" /><mxPoint x="950" y="310" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm4" value="discountValue (1 điểm = 100đ)" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="950" y="360" as="sourcePoint" /><mxPoint x="690" y="360" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm5" value="ChargeAsync(userId, số tiền còn lại)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="410" as="sourcePoint" /><mxPoint x="1210" y="410" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm6" value="Kiểm tra ví không khóa + đủ số dư → trừ Balance + ghi WalletTransaction(Payment)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1210" y="460" as="sourcePoint" /><mxPoint x="1470" y="460" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm7" value="INSERT Payment(Paid) + Booking → Confirmed" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="510" as="sourcePoint" /><mxPoint x="1470" y="510" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm8" value="CashbackAsync(x% theo cấu hình sân) → WalletTransaction(Cashback)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="560" as="sourcePoint" /><mxPoint x="1210" y="560" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm9" value="(true, &#x27;Thanh toán thành công...&#x27;)" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="610" as="sourcePoint" /><mxPoint x="430" y="610" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm10" value="Hiển thị kết quả + số tiền hoàn cashback" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="660" as="sourcePoint" /><mxPoint x="150" y="660" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="seqdeposit" name="Seq - Nạp ví qua VNPay">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1670" pageHeight="790" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="spc" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="130" y="40" width="40" height="70" as="geometry" /></mxCell>
+<mxCell id="slc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="145" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spwc" value=":WalletController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="330" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slwc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="425" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="sppg" value=":PaymentGateway Controller" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slpg" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="685" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spvs" value=":VnPayService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="850" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slvs" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="945" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spvn" value="VNPay Sandbox" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1110" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slvn" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1205" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="spws" value=":WalletService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1370" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slws" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1465" y="120" width="10" height="550" as="geometry" /></mxCell>
+<mxCell id="sm0" value="POST /Wallet/Deposit (amount ≥ 10.000đ)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="160" as="sourcePoint" /><mxPoint x="430" y="160" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm1" value="Redirect Checkout(type=deposit, amount)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="210" as="sourcePoint" /><mxPoint x="690" y="210" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm2" value="CreatePaymentUrl(amount, txnRef DP-...) — ký HMAC-SHA512" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="260" as="sourcePoint" /><mxPoint x="950" y="260" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm3" value="URL cổng thanh toán có chữ ký" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="950" y="310" as="sourcePoint" /><mxPoint x="690" y="310" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm4" value="Redirect sang cổng VNPay (hoặc trang demo nội bộ nếu chưa cấu hình)" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="360" as="sourcePoint" /><mxPoint x="150" y="360" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm5" value="Xác nhận thanh toán trên cổng (QR / thẻ test)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="410" as="sourcePoint" /><mxPoint x="1210" y="410" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm6" value="Redirect /PaymentGateway/VnPayReturn?vnp_* + vnp_SecureHash" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1210" y="460" as="sourcePoint" /><mxPoint x="690" y="460" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm7" value="ValidateReturn: xác thực chữ ký + ResponseCode 00" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="510" as="sourcePoint" /><mxPoint x="950" y="510" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm8" value="DepositAsync(userId, vnp_Amount) → +Bonus nếu đạt mốc khuyến mãi nạp" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="560" as="sourcePoint" /><mxPoint x="1470" y="560" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm9" value="&#x27;Đã nạp Xđ vào ví (+thưởng)&#x27; → trang Ví" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="610" as="sourcePoint" /><mxPoint x="150" y="610" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="seqmaint" name="Seq - Duyệt bảo trì">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1670" pageHeight="740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+<mxCell id="spa" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1"><mxGeometry x="130" y="40" width="40" height="70" as="geometry" /></mxCell>
+<mxCell id="sla" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="145" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="spmc" value=":MaintenanceController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="330" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slmc" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="425" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="spms" value=":MaintenanceService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slms" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="685" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="spws" value=":WalletService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="850" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="slws" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="945" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="spes" value=":EmailService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1110" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sles" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1205" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="spdb" value=":Database" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1370" y="50" width="200" height="45" as="geometry" /></mxCell>
+<mxCell id="sldb" style="html=1;shape=line;direction=north;strokeWidth=1;dashed=1;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="1465" y="120" width="10" height="500" as="geometry" /></mxCell>
+<mxCell id="sm0" value="POST /Maintenance/Approve (id, adminNote)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="160" as="sourcePoint" /><mxPoint x="430" y="160" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm1" value="ApproveAsync(requestId, adminNote)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="210" as="sourcePoint" /><mxPoint x="690" y="210" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm2" value="Request → Approved; sân → Maintenance (nếu đang trong khoảng)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="260" as="sourcePoint" /><mxPoint x="1470" y="260" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm3" value="Tìm booking Pending/Confirmed trùng khoảng bảo trì" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="310" as="sourcePoint" /><mxPoint x="1470" y="310" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm4" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="360" as="sourcePoint" /><mxPoint x="760" y="360" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sml4" value="Với từng booking: hủy + trả lượt mã KM + hoàn điểm đã dùng" style="text;html=1;align=left;fontSize=11;" vertex="1" parent="1"><mxGeometry x="698" y="322" width="220" height="32" as="geometry" /></mxCell>
+<mxCell id="sm5" value="RefundAsync nếu đã trả bằng ví (phương thức khác → chờ hoàn thủ công)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="410" as="sourcePoint" /><mxPoint x="950" y="410" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm6" value="Email từng khách: lý do bảo trì + xác nhận hoàn tiền" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="460" as="sourcePoint" /><mxPoint x="1210" y="460" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm7" value="(true, &#x27;Đã duyệt, tự hủy N booking&#x27;)" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="690" y="510" as="sourcePoint" /><mxPoint x="430" y="510" as="targetPoint" /></mxGeometry></mxCell>
+<mxCell id="sm8" value="Hiển thị kết quả duyệt" style="html=1;endArrow=block;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="560" as="sourcePoint" /><mxPoint x="150" y="560" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -241,6 +241,22 @@ public class PointTransaction
     public virtual User User { get; set; } = null!;
 }
 
+/// <summary>
+/// Ma OTP dat lai mat khau gui qua email. Chi ap dung cho Customer/Owner -
+/// tai khoan Admin va Super Account khong dung luong nay (cuu ho bang Super Account).
+/// </summary>
+public class PasswordResetOtp
+{
+    public int PasswordResetOtpId { get; set; }
+    public int UserId { get; set; }
+    public string OtpCode { get; set; } = null!;   // 6 chu so
+    public DateTime ExpiresAt { get; set; }        // het han sau 10 phut
+    public bool IsUsed { get; set; }
+    public int AttemptCount { get; set; }          // so lan nhap sai, qua 5 lan thi vo hieu
+    public DateTime CreatedAt { get; set; }
+    public virtual User User { get; set; } = null!;
+}
+
 /// <summary>Chu san gui yeu cau bao tri, Admin duyet/tu choi.</summary>
 public class MaintenanceRequest
 {

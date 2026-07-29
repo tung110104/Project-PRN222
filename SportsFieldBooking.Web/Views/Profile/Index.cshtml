@@ -1,0 +1,248 @@
+@model User
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    var wallet = (Wallet)ViewBag.Wallet;
+    var tier = (SportsFieldBooking.Business.Patterns.MembershipTier)ViewBag.Tier;
+    var recent = (List<Booking>)ViewBag.RecentBookings;
+    var myFields = ViewBag.MyFields as List<Field>;
+    var isOwnerScope = myFields != null;
+
+    string RoleLabel(string r) => r switch
+    {
+        "Admin" => "Quản trị viên",
+        "Owner" => "Chủ sân",
+        "Customer" => "Khách hàng",
+        _ => r
+    };
+    string RoleBadge(string r) => r switch
+    {
+        "Admin" => "bg-danger",
+        "Owner" => "bg-primary",
+        _ => "bg-success"
+    };
+}
+
+<h3 class="mb-4"><i class="bi bi-person-circle"></i> Hồ sơ cá nhân</h3>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white mb-3"
+                     style="width:88px;height:88px;font-size:38px;">
+                    @Model.FullName.Trim().Substring(0, 1).ToUpper()
+                </div>
+                <h5 class="mb-1">@Model.FullName</h5>
+                <p class="text-muted mb-2">@Model.Email</p>
+                <span class="badge @RoleBadge(Model.Role.RoleName)">@RoleLabel(Model.Role.RoleName)</span>
+                @if (Model.Role.RoleName == "Customer" || Model.Role.RoleName == "Owner")
+                {
+                    <span class="badge @tier.BadgeCss">@tier.Name</span>
+                }
+                <hr />
+                <div class="row text-center small">
+                    <div class="col-6 border-end">
+                        <div class="text-muted">Số dư ví</div>
+                        <div class="fw-bold text-success">@wallet.Balance.ToString("N0")đ</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted">Điểm tích lũy</div>
+                        <div class="fw-bold text-warning">@Model.Points điểm</div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    Tham gia từ @Model.CreatedAt.ToString("dd/MM/yyyy")
+                    @if (!Model.IsActive)
+                    {
+                        <br><span class="badge bg-danger">Tài khoản đang bị khóa</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong><i class="bi bi-shield-lock"></i> Đổi mật khẩu</strong></div>
+            <div class="card-body">
+                <form method="post" asp-action="ChangePassword">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label small">Mật khẩu hiện tại</label>
+                        <input name="currentPassword" type="password" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Mật khẩu mới</label>
+                        <input name="newPassword" type="password" class="form-control form-control-sm" minlength="6" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Xác nhận mật khẩu mới</label>
+                        <input name="confirmPassword" type="password" class="form-control form-control-sm" minlength="6" required />
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100">Đổi mật khẩu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong><i class="bi bi-pencil-square"></i> Thông tin cá nhân</strong></div>
+            <div class="card-body">
+                <form method="post" asp-action="Update" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-md-6">
+                        <label class="form-label">Họ và tên</label>
+                        <input name="fullName" value="@Model.FullName" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Số điện thoại</label>
+                        <input name="phone" value="@Model.Phone" class="form-control" placeholder="VD: 0900000001" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input value="@Model.Email" class="form-control" disabled />
+                        <div class="form-text">Email dùng để đăng nhập, không thể thay đổi.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vai trò</label>
+                        <input value="@RoleLabel(Model.Role.RoleName)" class="form-control" disabled />
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-success"><i class="bi bi-save"></i> Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted small">Tổng booking</div>
+                        <h4 class="mb-0">@ViewBag.TotalBookings</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted small">Hoàn thành</div>
+                        <h4 class="mb-0 text-success">@ViewBag.CompletedBookings</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted small">Đã hủy</div>
+                        <h4 class="mb-0 text-danger">@ViewBag.CancelledBookings</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="text-muted small">Đã chi tiêu</div>
+                        <h5 class="mb-0 text-success">@(((decimal)ViewBag.TotalSpent).ToString("N0"))đ</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (isOwnerScope)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-building"></i> Sân của tôi (@myFields!.Count)</strong>
+                    <a asp-controller="FieldsManage" asp-action="Index" class="btn btn-sm btn-outline-primary">Quản lý sân</a>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="border rounded p-2 text-center">
+                                <div class="text-muted small">Doanh thu 30 ngày qua</div>
+                                <h5 class="mb-0 text-success">@(((decimal)ViewBag.OwnerRevenue).ToString("N0"))đ</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-2 text-center">
+                                <div class="text-muted small">Lượt đặt 30 ngày qua</div>
+                                <h5 class="mb-0">@ViewBag.OwnerBookings</h5>
+                            </div>
+                        </div>
+                    </div>
+                    @if (myFields.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var f in myFields)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>
+                                        @f.FieldName
+                                        <small class="text-muted">— @f.Ward, @f.Province</small>
+                                    </span>
+                                    <span>
+                                        @if (f.Status == "Active")
+                                        {
+                                            <span class="badge bg-success">Hoạt động</span>
+                                        }
+                                        else if (f.Status == "Maintenance")
+                                        {
+                                            <span class="badge bg-warning text-dark">Bảo trì</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Đóng cửa</span>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Bạn chưa có sân nào. Hãy thêm sân để bắt đầu kinh doanh.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-clock-history"></i> Booking gần đây</strong>
+                <a asp-controller="Booking" asp-action="Index" class="btn btn-sm btn-outline-secondary">Xem tất cả</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Sân</th><th>Ngày đá</th><th>Khung giờ</th><th class="text-end">Tiền</th><th>Trạng thái</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in recent)
+                        {
+                            <tr>
+                                <td>@b.BookingId</td>
+                                <td>@b.Field.FieldName</td>
+                                <td>@b.BookingDate.ToString("dd/MM/yyyy")</td>
+                                <td>@b.TimeSlot.StartTime.ToString("HH\\:mm") - @b.TimeSlot.EndTime.ToString("HH\\:mm")</td>
+                                <td class="text-end">@b.TotalAmount.ToString("N0")đ</td>
+                                <td>
+                                    @switch (b.Status)
+                                    {
+                                        case "Pending": <span class="badge bg-warning text-dark">Chờ</span>; break;
+                                        case "Confirmed": <span class="badge bg-primary">Xác nhận</span>; break;
+                                        case "Completed": <span class="badge bg-success">Hoàn thành</span>; break;
+                                        case "Cancelled": <span class="badge bg-danger">Hủy</span>; break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!recent.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted">Chưa có booking nào.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

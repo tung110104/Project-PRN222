@@ -5,3 +5,5 @@ obj/
 appsettings.Development.json
 .claude/settings.local.json
 .claude/
+.$*.bkp
+*.bkp

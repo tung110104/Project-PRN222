@@ -77,7 +77,17 @@
                     }
                 }
 
-                @if (!paid && Model.Status is "Pending" or "Confirmed")
+                @{
+                    var cashPending = Model.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash");
+                }
+                @if (cashPending)
+                {
+                    <div class="alert alert-warning py-2 mt-2 mb-0">
+                        <i class="bi bi-hourglass-split"></i> <strong>Chờ chủ sân xác nhận thu tiền mặt.</strong><br />
+                        <small>Vui lòng đến sân thanh toán @Model.TotalAmount.ToString("N0")đ. Booking sẽ được xác nhận ngay sau khi chủ sân xác nhận đã nhận tiền.</small>
+                    </div>
+                }
+                @if (!paid && !cashPending && Model.Status is "Pending" or "Confirmed")
                 {
                     <a asp-action="Pay" asp-route-id="@Model.BookingId" class="btn btn-success w-100 mt-2">
                         <i class="bi bi-credit-card"></i> Thanh toán ngay

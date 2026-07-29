@@ -85,13 +85,32 @@ public class PromotionsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Gui ma qua email cho khach hang (khong phat offline)
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    // ----- Gui ma qua email: chon nguoi nhan truoc khi gui (khong phat offline) -----
+    [HttpGet]
     public async Task<IActionResult> SendEmail(int id)
     {
-        var (success, message, _) = await _promotionService.SendPromotionEmailAsync(id, ScopeOwnerId);
-        TempData[success ? "Success" : "Error"] = message;
+        var promo = await _promotionService.GetByIdAsync(id);
+        if (promo == null) return NotFound();
+        if (!IsAdmin && promo.OwnerId != CurrentUserId) return Forbid();
+
+        ViewBag.Recipients = await _promotionService.GetRecipientCandidatesAsync(id, ScopeOwnerId);
+        return View(promo);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendEmail(int id, List<int> userIds)
+    {
+        var (success, message, _) = await _promotionService.SendPromotionEmailAsync(id, ScopeOwnerId, userIds);
+        if (!success)
+        {
+            var promo = await _promotionService.GetByIdAsync(id);
+            if (promo == null) return NotFound();
+            ViewBag.Error = message;
+            ViewBag.Recipients = await _promotionService.GetRecipientCandidatesAsync(id, ScopeOwnerId);
+            return View(promo);
+        }
+        TempData["Success"] = message;
         return RedirectToAction(nameof(Index));
     }
 }

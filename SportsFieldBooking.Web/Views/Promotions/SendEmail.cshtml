@@ -1,0 +1,146 @@
+@model Promotion
+@{
+    ViewData["Title"] = "Gửi mã khuyến mãi";
+    var recipients = (List<SportsFieldBooking.Business.Services.PromotionRecipient>)ViewBag.Recipients;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-envelope-paper"></i> Gửi mã <code>@Model.Code</code> cho khách hàng</h4>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Quay lại</a>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row small">
+            <div class="col-md-3"><span class="text-muted">Giảm giá:</span>
+                <strong>@Model.DiscountPercent%</strong>
+                @if (Model.MaxDiscount > 0)
+                {
+                    <span>(tối đa @Model.MaxDiscount.ToString("N0")đ)</span>
+                }
+            </div>
+            <div class="col-md-3"><span class="text-muted">Hiệu lực:</span>
+                <strong>@Model.StartDate.ToString("dd/MM/yyyy") - @Model.EndDate.ToString("dd/MM/yyyy")</strong>
+            </div>
+            <div class="col-md-3"><span class="text-muted">Còn lại:</span> <strong>@Model.Quantity lượt</strong></div>
+            <div class="col-md-3"><span class="text-muted">Phạm vi:</span>
+                @if (Model.OwnerId == null)
+                {
+                    <span class="badge bg-warning text-dark">Toàn hệ thống</span>
+                }
+                else
+                {
+                    <span class="badge bg-primary">Sân của tôi</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.PromotionId" />
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <strong>Chọn khách hàng nhận mã (@recipients.Count khách)</strong>
+            <div class="d-flex gap-2 align-items-center">
+                <input type="search" id="filterBox" class="form-control form-control-sm"
+                       style="width:220px" placeholder="Lọc theo tên / email..." />
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAll">Chọn tất cả</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNone">Bỏ chọn</button>
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height:460px; overflow-y:auto;">
+            <table class="table table-hover align-middle mb-0" id="recipientTable">
+                <thead class="table-light position-sticky top-0">
+                    <tr>
+                        <th style="width:44px"></th>
+                        <th>Khách hàng</th>
+                        <th>Email</th>
+                        <th class="text-center">Số lần đặt</th>
+                        <th>Lần đặt gần nhất</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in recipients)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-check-input rcp" type="checkbox" name="userIds" value="@r.UserId" checked />
+                            </td>
+                            <td>@r.FullName</td>
+                            <td><span class="text-muted">@r.Email</span></td>
+                            <td class="text-center">
+                                @if (r.BookingCount > 0)
+                                {
+                                    <span class="badge bg-success">@r.BookingCount</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border">0</span>
+                                }
+                            </td>
+                            <td>@(r.LastBookingDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                    @if (!recipients.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                @if (Model.OwnerId == null)
+                                {
+                                    <span>Chưa có khách hàng nào trong hệ thống.</span>
+                                }
+                                else
+                                {
+                                    <span>Chưa có khách hàng nào từng đặt sân của bạn.</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (recipients.Any())
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Đã chọn <strong id="selectedCount">@recipients.Count</strong> khách hàng</span>
+                <button class="btn btn-success">
+                    <i class="bi bi-send"></i> Gửi mã qua email
+                </button>
+            </div>
+        }
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    const boxes = () => [...document.querySelectorAll('.rcp')];
+    const countLabel = document.getElementById('selectedCount');
+    function updateCount() {
+        if (countLabel) countLabel.textContent = boxes().filter(b => b.checked).length;
+    }
+    document.getElementById('btnAll')?.addEventListener('click', () => {
+        boxes().forEach(b => { if (b.closest('tr').style.display !== 'none') b.checked = true; });
+        updateCount();
+    });
+    document.getElementById('btnNone')?.addEventListener('click', () => {
+        boxes().forEach(b => b.checked = false); updateCount();
+    });
+    document.getElementById('recipientTable')?.addEventListener('change', updateCount);
+
+    // Loc nhanh theo ten hoac email
+    document.getElementById('filterBox')?.addEventListener('input', e => {
+        const q = e.target.value.trim().toLowerCase();
+        document.querySelectorAll('#recipientTable tbody tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+</script>
+}

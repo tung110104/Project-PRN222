@@ -64,11 +64,9 @@
                             }
                         </td>
                         <td class="text-end" style="min-width:220px">
-                            <form method="post" asp-action="SendEmail" asp-route-id="@p.PromotionId" class="d-inline"
-                                  onsubmit="return confirm('Gửi mã @p.Code qua email cho khách hàng?')">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-envelope"></i> Gửi email</button>
-                            </form>
+                            <a asp-action="SendEmail" asp-route-id="@p.PromotionId" class="btn btn-sm btn-primary">
+                                <i class="bi bi-envelope"></i> Gửi email
+                            </a>
                             <a asp-action="Edit" asp-route-id="@p.PromotionId" class="btn btn-sm btn-outline-primary">Sửa</a>
                             <form method="post" asp-action="ToggleActive" asp-route-id="@p.PromotionId" class="d-inline">
                                 @Html.AntiForgeryToken()

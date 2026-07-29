@@ -39,6 +39,12 @@
                                 var method = b.Payments.First(p => p.Status == "Paid").Method;
                                 <span class="badge bg-success">Đã TT (@method)</span>
                             }
+                            else if (b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash"))
+                            {
+                                <span class="badge bg-warning text-dark" title="Đến sân thanh toán, chủ sân sẽ xác nhận">
+                                    <i class="bi bi-cash-coin"></i> Chờ thu tiền mặt
+                                </span>
+                            }
                             else if (b.Payments.Any(p => p.Status == "Refunded"))
                             {
                                 <span class="badge bg-info">Đã hoàn tiền</span>

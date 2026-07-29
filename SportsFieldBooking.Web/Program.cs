@@ -79,6 +79,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// API JSON (ApiFieldsController dung attribute routing: /api/fields/...)
+app.MapControllers();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

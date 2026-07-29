@@ -219,6 +219,20 @@ CREATE TABLE MaintenanceRequests (
 );
 GO
 
+/* Ma OTP dat lai mat khau (chi Customer/Owner - Admin dung Super Account de cuu ho) */
+CREATE TABLE PasswordResetOtps (
+    PasswordResetOtpId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId       INT NOT NULL REFERENCES Users(UserId) ON DELETE CASCADE,
+    OtpCode      NVARCHAR(10) NOT NULL,      -- 6 chu so
+    ExpiresAt    DATETIME NOT NULL,          -- het han sau 10 phut
+    IsUsed       BIT NOT NULL DEFAULT 0,
+    AttemptCount INT NOT NULL DEFAULT 0,     -- nhap sai qua 5 lan thi vo hieu
+    CreatedAt    DATETIME NOT NULL DEFAULT GETDATE()
+);
+GO
+CREATE INDEX IX_PasswordResetOtps_User ON PasswordResetOtps(UserId, IsUsed);
+GO
+
 /* =============================================================
    SEED DATA  (mat khau tat ca tai khoan: 123456)
    Super account cuu ho: khong nam trong DB/appsettings - chi luu SHA-256 hash trong AccountController

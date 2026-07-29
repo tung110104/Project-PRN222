@@ -25,6 +25,7 @@ public class SportsFieldBookingDbContext : DbContext
     public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
+    public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -211,6 +212,16 @@ public class SportsFieldBookingDbContext : DbContext
             e.HasOne(x => x.Field).WithMany(f => f.MaintenanceRequests).HasForeignKey(x => x.FieldId);
             e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PasswordResetOtp>(e =>
+        {
+            e.ToTable("PasswordResetOtps");
+            e.Property(x => x.OtpCode).HasMaxLength(10);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => new { x.UserId, x.IsUsed });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -60,6 +60,12 @@
                             {
                                 <span class="badge bg-success">Đã TT (@b.Payments.First(p => p.Status == "Paid").Method)</span>
                             }
+                            else if (b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash"))
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-cash-coin"></i> Chờ thu tiền mặt
+                                </span>
+                            }
                             else if (b.Payments.Any(p => p.Status == "Refunded"))
                             {
                                 <span class="badge bg-info">Hoàn tiền</span>
@@ -79,6 +85,38 @@
                             }
                         </td>
                         <td class="text-end">
+                            @{
+                                var cashPending = b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash");
+                                var paid = b.Payments.Any(p => p.Status == "Paid");
+                            }
+                            @* Khach dang ky tra tien mat -> chu san xac nhan da thu tien tai quay *@
+                            @if (cashPending && b.Status != "Cancelled")
+                            {
+                                <form method="post" asp-action="ConfirmCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận đã thu @b.TotalAmount.ToString("N0")đ tiền mặt của khách @b.User.FullName?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-success" title="Khách đã trả tiền mặt tại sân">
+                                        <i class="bi bi-cash-coin"></i> Đã thu tiền
+                                    </button>
+                                </form>
+                                <form method="post" asp-action="RejectCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Từ chối yêu cầu trả tiền mặt này? Khách sẽ phải chọn phương thức thanh toán khác.')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-secondary" title="Khách không đến trả tiền">
+                                        Từ chối
+                                    </button>
+                                </form>
+                            }
+                            else if (!paid && b.Status is "Pending" or "Confirmed")
+                            {
+                                <form method="post" asp-action="ConfirmCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Ghi nhận khách đã trả @b.TotalAmount.ToString("N0")đ tiền mặt tại quầy?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-success" title="Ghi nhận thu tiền mặt tại quầy">
+                                        <i class="bi bi-cash"></i> Thu tiền mặt
+                                    </button>
+                                </form>
+                            }
                             @if (b.Status == "Pending")
                             {
                                 <form method="post" asp-action="Confirm" asp-route-id="@b.BookingId" class="d-inline">

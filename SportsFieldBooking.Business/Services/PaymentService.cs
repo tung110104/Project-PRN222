@@ -8,10 +8,20 @@ namespace SportsFieldBooking.Business.Services;
 public interface IPaymentService
 {
     /// <summary>
-    /// Thanh toan booking: VNPay/Momo/Cash (mo phong) hoac Wallet (vi tien ao, chi khi san bat AcceptWalletPayment).
+    /// Thanh toan booking: VNPay/Momo (qua cong), Wallet (vi tien ao, chi khi san bat AcceptWalletPayment)
+    /// hoac Cash (tien mat - CHI ghi nhan yeu cau, cho chu san xac nhan da thu tien tai quay).
     /// pointsToUse: so diem khach muon dung de tru tien truoc khi thanh toan (0 = khong dung).
     /// </summary>
     Task<(bool Success, string Message)> PayAsync(int bookingId, int userId, string method, int pointsToUse = 0);
+
+    /// <summary>
+    /// [CHU SAN] Xac nhan da thu tien mat tai quay -> chuyen Payment sang Paid va booking sang Confirmed.
+    /// confirmedById: nguoi thao tac (chu san/admin) de truy vet.
+    /// </summary>
+    Task<(bool Success, string Message)> ConfirmCashPaymentAsync(int bookingId, int confirmedById);
+
+    /// <summary>[CHU SAN] Tu choi yeu cau tra tien mat (khach khong den tra) -> huy ban ghi cho thanh toan.</summary>
+    Task<(bool Success, string Message)> RejectCashPaymentAsync(int bookingId, int rejectedById);
 }
 
 public class PaymentService : IPaymentService
@@ -43,6 +53,29 @@ public class PaymentService : IPaymentService
             return (false, "Phương thức thanh toán không hợp lệ.");
         if (method == "Wallet" && !booking.Field.AcceptWalletPayment)
             return (false, "Sân này không chấp nhận thanh toán bằng ví tiền ảo.");
+
+        // TIEN MAT: khong tu dong chuyen Paid - chi ghi nhan yeu cau (Pending),
+        // chu san phai bam "Xac nhan da thu tien" tai trang Quan ly dat lich.
+        if (method == "Cash")
+        {
+            if (booking.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash"))
+                return (false, "Bạn đã đăng ký trả tiền mặt cho booking này, đang chờ chủ sân xác nhận.");
+            if (pointsToUse > 0)
+                return (false, "Thanh toán tiền mặt không dùng được điểm. Vui lòng chọn phương thức khác nếu muốn dùng điểm.");
+
+            await _uow.Payments.AddAsync(new Payment
+            {
+                BookingId = bookingId,
+                Amount = booking.TotalAmount,
+                Method = "Cash",
+                Status = "Pending",
+                TransactionCode = $"CASH-{DateTime.Now:yyyyMMddHHmmss}-{bookingId}",
+                PaidAt = null
+            });
+            await _uow.SaveChangesAsync();
+            return (true, $"Đã ghi nhận yêu cầu thanh toán tiền mặt {booking.TotalAmount:N0}đ. " +
+                          "Vui lòng đến sân thanh toán - booking được xác nhận sau khi chủ sân xác nhận đã thu tiền.");
+        }
 
         // Transaction bao ca: tru diem -> tru vi -> ghi payment (hong buoc nao rollback het)
         await using var tx = await _uow.BeginTransactionAsync();
@@ -116,5 +149,60 @@ public class PaymentService : IPaymentService
             await tx.RollbackAsync();
             return (false, "Có lỗi khi thanh toán, vui lòng thử lại.");
         }
+    }
+
+    public async Task<(bool Success, string Message)> ConfirmCashPaymentAsync(int bookingId, int confirmedById)
+    {
+        var booking = await _uow.Bookings.Query()
+            .Include(b => b.Payments)
+            .Include(b => b.Field)
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+        if (booking == null) return (false, "Không tìm thấy booking.");
+        if (booking.Status == "Cancelled") return (false, "Booking đã bị hủy, không thể thu tiền.");
+        if (booking.Payments.Any(p => p.Status == "Paid")) return (false, "Booking này đã được thanh toán.");
+
+        var cash = booking.Payments.FirstOrDefault(p => p.Status == "Pending" && p.Method == "Cash");
+        if (cash == null)
+        {
+            // Khach tra thang tai quay ma chua dang ky truoc -> tao ban ghi moi da thu tien
+            cash = new Payment
+            {
+                BookingId = bookingId,
+                Amount = booking.TotalAmount,
+                Method = "Cash",
+                TransactionCode = $"CASH-{DateTime.Now:yyyyMMddHHmmss}-{bookingId}"
+            };
+            await _uow.Payments.AddAsync(cash);
+        }
+
+        cash.Amount = booking.TotalAmount;   // chot lai theo so tien hien tai cua booking
+        cash.Status = "Paid";
+        cash.PaidAt = DateTime.Now;
+        cash.TransactionCode = $"CASH-{DateTime.Now:yyyyMMddHHmmss}-{bookingId}-BY{confirmedById}";
+
+        if (booking.Status == "Pending") booking.Status = "Confirmed";
+        _uow.Bookings.Update(booking);
+        await _uow.SaveChangesAsync();
+
+        return (true, $"Đã xác nhận thu {booking.TotalAmount:N0}đ tiền mặt. Booking #{bookingId} được xác nhận.");
+    }
+
+    public async Task<(bool Success, string Message)> RejectCashPaymentAsync(int bookingId, int rejectedById)
+    {
+        var booking = await _uow.Bookings.Query()
+            .Include(b => b.Payments)
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+        if (booking == null) return (false, "Không tìm thấy booking.");
+        var cash = booking.Payments.FirstOrDefault(p => p.Status == "Pending" && p.Method == "Cash");
+        if (cash == null) return (false, "Booking này không có yêu cầu thanh toán tiền mặt đang chờ.");
+
+        cash.Status = "Failed";
+        cash.TransactionCode = $"CASH-REJECTED-{DateTime.Now:yyyyMMddHHmmss}-BY{rejectedById}";
+        _uow.Payments.Update(cash);
+        await _uow.SaveChangesAsync();
+
+        return (true, $"Đã từ chối yêu cầu trả tiền mặt của booking #{bookingId}. Khách có thể chọn phương thức khác.");
     }
 }

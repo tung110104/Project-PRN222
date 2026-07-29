@@ -72,12 +72,18 @@ public class StaffBookingsController : Controller
             return RedirectToAction(nameof(Create));
         }
 
-        // Khach tra tien mat ngay tai quay -> ghi nhan thanh toan Cash luon
+        // Khach tra tien mat ngay tai quay: chinh chu san dang thu tien nen xac nhan luon
         if (cashPaid)
         {
+            var failed = 0;
             foreach (var id in bookingIds)
-                await _paymentService.PayAsync(id, customerId, "Cash");
-            message += " Đã ghi nhận thanh toán tiền mặt.";
+            {
+                var (ok, _) = await _paymentService.ConfirmCashPaymentAsync(id, CurrentUserId);
+                if (!ok) failed++;
+            }
+            message += failed == 0
+                ? " Đã xác nhận thu tiền mặt."
+                : $" Lưu ý: {failed} booking chưa ghi nhận được thanh toán, vui lòng thu tiền thủ công tại danh sách.";
         }
 
         TempData["Success"] = message;
@@ -100,6 +106,27 @@ public class StaffBookingsController : Controller
             .OrderBy(s => s.StartTime)
             .Select(s => new { s.TimeSlotId, Start = s.StartTime.ToString("HH:mm"), End = s.EndTime.ToString("HH:mm") });
         return Json(slots);
+    }
+
+    // ----- Xac nhan thu tien mat tai quay -----
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmCash(int id)
+    {
+        if (!await CanManageAsync(id)) return Forbid();
+        var (success, message) = await _paymentService.ConfirmCashPaymentAsync(id, CurrentUserId);
+        TempData[success ? "Success" : "Error"] = message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectCash(int id)
+    {
+        if (!await CanManageAsync(id)) return Forbid();
+        var (success, message) = await _paymentService.RejectCashPaymentAsync(id, CurrentUserId);
+        TempData[success ? "Success" : "Error"] = message;
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]

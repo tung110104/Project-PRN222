@@ -174,6 +174,74 @@ public class AccountController : Controller
         return RedirectToAction(nameof(Login));
     }
 
+    // ---------- QUEN MAT KHAU (Customer / Owner) ----------
+    // Admin va Super Account khong dung luong nay: mat tai khoan Admin thi dung Super Account de cap lai quyen.
+    [HttpGet]
+    public IActionResult ForgotPassword() => View();
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var (_, message) = await _authService.RequestPasswordResetAsync(email);
+        TempData["Success"] = message;
+        return RedirectToAction(nameof(VerifyOtp), new { email });
+    }
+
+    [HttpGet]
+    public IActionResult VerifyOtp(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return RedirectToAction(nameof(ForgotPassword));
+        ViewBag.Email = email;
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyOtp(string email, string otp)
+    {
+        var (ok, message) = await _authService.VerifyOtpAsync(email, otp);
+        if (!ok)
+        {
+            ViewBag.Email = email;
+            ViewBag.Error = message;
+            return View();
+        }
+        return RedirectToAction(nameof(ResetPassword), new { email, otp });
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string email, string otp)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(otp))
+            return RedirectToAction(nameof(ForgotPassword));
+        ViewBag.Email = email;
+        ViewBag.Otp = otp;
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(string email, string otp, string newPassword, string confirmPassword)
+    {
+        if (newPassword != confirmPassword)
+        {
+            ViewBag.Email = email; ViewBag.Otp = otp;
+            ViewBag.Error = "Xác nhận mật khẩu không khớp.";
+            return View();
+        }
+
+        var (ok, message) = await _authService.ResetPasswordAsync(email, otp, newPassword);
+        if (!ok)
+        {
+            ViewBag.Email = email; ViewBag.Otp = otp;
+            ViewBag.Error = message;
+            return View();
+        }
+        TempData["Success"] = message;
+        return RedirectToAction(nameof(Login));
+    }
+
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

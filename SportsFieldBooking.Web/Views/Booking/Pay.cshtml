@@ -64,8 +64,14 @@
                             <span><strong>MoMo</strong> — Chuyển đến cổng thanh toán MoMo (quét QR)</span>
                         </label>
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input" type="radio" name="method" value="Cash" />
-                            <span><strong>Tiền mặt</strong> — Thanh toán tại sân</span>
+                            <input class="form-check-input" type="radio" name="method" value="Cash" id="methodCash" />
+                            <span>
+                                <strong>Tiền mặt</strong> — Trả trực tiếp tại sân
+                                <br /><small class="text-muted">
+                                    Booking chỉ được xác nhận sau khi chủ sân xác nhận đã thu tiền tại quầy.
+                                    Không áp dụng dùng điểm cho hình thức này.
+                                </small>
+                            </span>
                         </label>
                     </div>
                     <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> Xác nhận thanh toán</button>
@@ -82,6 +88,17 @@
 
 @section Scripts {
     <script>
+        // Tien mat khong dung duoc diem -> khoa o nhap diem khi chon Cash
+        const cashRadio = document.getElementById('methodCash');
+        const ptsBox = document.getElementById('pointsToUse');
+        function syncCash() {
+            if (!ptsBox) return;
+            const isCash = cashRadio && cashRadio.checked;
+            ptsBox.disabled = isCash;
+            if (isCash) { ptsBox.value = 0; ptsBox.dispatchEvent(new Event('input')); }
+        }
+        document.querySelectorAll('input[name=method]').forEach(r => r.addEventListener('change', syncCash));
+
         const pointsInput = document.getElementById('pointsToUse');
         if (pointsInput) {
             const amountEl = document.getElementById('amountDue');
