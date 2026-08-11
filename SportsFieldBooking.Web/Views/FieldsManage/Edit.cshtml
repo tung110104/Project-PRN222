@@ -32,14 +32,28 @@
             <div class="col-md-4">
                 <label class="form-label">Tỉnh/Thành phố *</label>
                 <select id="provinceSelect" class="form-select" required>
-                    <option value="">-- Đang tải... --</option>
+                    @if (!string.IsNullOrWhiteSpace(Model.Province))
+                    {
+                        <option value="@Model.Province" data-name="@Model.Province" selected>@Model.Province</option>
+                    }
+                    else
+                    {
+                        <option value="">-- Đang tải... --</option>
+                    }
                 </select>
                 <input type="hidden" name="Province" id="provinceInput" value="@Model.Province" />
             </div>
             <div class="col-md-4">
                 <label class="form-label">Phường/Xã *</label>
-                <select id="wardSelect" class="form-select" required disabled>
-                    <option value="">-- Chọn Tỉnh/Thành trước --</option>
+                <select id="wardSelect" class="form-select" required @(string.IsNullOrWhiteSpace(Model.Province) ? "disabled" : "")>
+                    @if (!string.IsNullOrWhiteSpace(Model.Ward))
+                    {
+                        <option value="@Model.Ward" data-name="@Model.Ward" selected>@Model.Ward</option>
+                    }
+                    else
+                    {
+                        <option value="">-- Chọn Tỉnh/Thành trước --</option>
+                    }
                 </select>
                 <input type="hidden" name="Ward" id="wardInput" value="@Model.Ward" />
             </div>
@@ -147,8 +161,13 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/address-select.js"></script>
-    <script>initAddressSelect('@Model.Province', '@Model.Ward');</script>
+    <script src="~/js/address-select.js" asp-append-version="true"></script>
+    <script>
+        initAddressSelect(
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Province ?? "")),
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Ward ?? ""))
+        );
+    </script>
     <script>
         // Xem truoc anh vua chon
         document.getElementById('imageInput').addEventListener('change', function () {

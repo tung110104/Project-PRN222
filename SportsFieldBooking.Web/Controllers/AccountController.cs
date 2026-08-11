@@ -13,8 +13,8 @@ public class AccountController : Controller
     // [SUPER ACCOUNT] Tai khoan cuu ho KHONG ton tai trong database lan appsettings.json.
     // Chi luu SHA-256 hash mot chieu trong code -> doc source cung khong suy nguoc ra email/mat khau,
     // khong the bi khoa/xoa/sua qua bat ky giao dien nao. Doi mat khau = thay 2 hang so nay va build lai.
-    private const string SuperEmailHash = "6635bec58a5f262a3c5466e85b3b83b32b765d71be6094009ddda3686ae0bfcd";
-    private const string SuperPasswordHash = "2807ee3ac93612aaba2b8e780d9d9c529f9af33ea1ce997d71cf8da5a70c03d3";
+    private const string SuperEmailHash = "27cbfffc12a8cf6ebfeb875859ef17e04feb0965cd208affff7d2de2b43a9292";
+    private const string SuperPasswordHash = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
 
     private readonly IAuthService _authService;
 
