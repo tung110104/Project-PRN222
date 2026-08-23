@@ -6,342 +6,196 @@ using SportsFieldBooking.DataAccess.Entities;
 
 namespace SportsFieldBooking.Web.Controllers;
 
-[Authorize(Roles = "Admin,Staff")]
+// Owner quan ly san cua minh, Admin quan ly tat ca (Staff khong quan ly san - chi quan ly booking)
+[Authorize(Roles = "Admin,Owner")]
 public class FieldsManageController : Controller
 {
-    private readonly IFieldService _fieldService;
-    private readonly IWebHostEnvironment _environment;
+    private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+    private const long MaxImageSizeBytes = 5 * 1024 * 1024; // 5MB/anh
 
-    public FieldsManageController(
-        IFieldService fieldService,
-        IWebHostEnvironment environment)
+    private readonly IFieldService _fieldService;
+    private readonly IWebHostEnvironment _env;
+
+    public FieldsManageController(IFieldService fieldService, IWebHostEnvironment env)
     {
         _fieldService = fieldService;
-        _environment = environment;
+        _env = env;
     }
 
-    private int CurrentUserId =>
-        int.Parse(
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier)!);
-
-    private bool IsAdmin =>
-        User.IsInRole("Admin");
+    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private bool IsAdmin => User.IsInRole("Admin");
 
     public async Task<IActionResult> Index()
     {
         var fields = IsAdmin
             ? await _fieldService.GetAllForAdminAsync()
-            : await _fieldService.GetByOwnerAsync(
-                CurrentUserId);
-
+            : await _fieldService.GetByOwnerAsync(CurrentUserId);
         return View(fields);
     }
-
-    // ==============================
-    // TẠO SÂN
-    // ==============================
 
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        ViewBag.FieldTypes =
-            await _fieldService.GetFieldTypesAsync();
-
+        ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        Field field,
-        List<IFormFile> images)
+    public async Task<IActionResult> Create(Field field, List<IFormFile> imageFiles)
     {
-        if (string.IsNullOrWhiteSpace(
-                field.FieldName) ||
-            field.PricePerHour <= 0)
+        if (string.IsNullOrWhiteSpace(field.FieldName) || field.PricePerHour <= 0 ||
+            string.IsNullOrWhiteSpace(field.Province) || string.IsNullOrWhiteSpace(field.Ward))
         {
-            ViewBag.FieldTypes =
-                await _fieldService.GetFieldTypesAsync();
-
-            ViewBag.Error =
-                "Vui lòng nhập đầy đủ thông tin hợp lệ.";
-
+            ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
+            ViewBag.Error = "Vui lòng nhập đầy đủ thông tin hợp lệ (chọn Tỉnh/Thành và Phường/Xã từ danh sách).";
             return View(field);
         }
-
+        if (field.CashbackPercent is < 0 or > 50)
+        {
+            ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
+            ViewBag.Error = "Cashback phải từ 0 đến 50%.";
+            return View(field);
+        }
         field.OwnerId = CurrentUserId;
-
-        if (field.PeakPricePerHour <= 0)
-        {
-            field.PeakPricePerHour =
-                field.PricePerHour;
-        }
-
-        var imageResult =
-            await SaveImagesAsync(field, images);
-
-        if (!imageResult.Success)
-        {
-            ViewBag.FieldTypes =
-                await _fieldService.GetFieldTypesAsync();
-
-            ViewBag.Error = imageResult.Message;
-
-            return View(field);
-        }
-
         await _fieldService.CreateAsync(field);
 
-        TempData["Success"] =
-            "Tạo sân và tải ảnh thành công.";
+        var (urls, skipped) = await SaveImageFilesAsync(imageFiles);
+        await _fieldService.AddImagesAsync(field.FieldId, urls);
 
+        TempData["Success"] = "Tạo sân thành công (đã tự tạo khung giờ 06:00-22:00). Vào \"Giá & Khung giờ\" để cấu hình bảng giá chi tiết."
+            + (skipped > 0 ? $" Lưu ý: {skipped} ảnh bị bỏ qua (sai định dạng hoặc quá 5MB)." : "");
         return RedirectToAction(nameof(Index));
     }
-
-    // ==============================
-    // CHỈNH SỬA SÂN
-    // ==============================
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var field =
-            await _fieldService.GetDetailAsync(id);
-
-        if (field == null)
-            return NotFound();
-
-        if (!IsAdmin &&
-            field.OwnerId != CurrentUserId)
-        {
-            return Forbid();
-        }
-
-        ViewBag.FieldTypes =
-            await _fieldService.GetFieldTypesAsync();
-
+        var field = await _fieldService.GetDetailAsync(id);
+        if (field == null) return NotFound();
+        if (!IsAdmin && field.OwnerId != CurrentUserId) return Forbid();
+        ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
         return View(field);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(
-        Field field,
-        List<IFormFile> images)
+    public async Task<IActionResult> Edit(Field field, List<IFormFile> imageFiles)
     {
-        var existing =
-            await _fieldService.GetDetailAsync(
-                field.FieldId);
-
-        if (existing == null)
-            return NotFound();
-
-        if (!IsAdmin &&
-            existing.OwnerId != CurrentUserId)
+        var existing = await _fieldService.GetDetailAsync(field.FieldId);
+        if (existing == null) return NotFound();
+        if (!IsAdmin && existing.OwnerId != CurrentUserId) return Forbid();
+        if (field.CashbackPercent is < 0 or > 50)
         {
-            return Forbid();
+            ViewBag.FieldTypes = await _fieldService.GetFieldTypesAsync();
+            ViewBag.Error = "Cashback phải từ 0 đến 50%.";
+            return View(existing);
         }
 
         existing.FieldName = field.FieldName;
         existing.FieldTypeId = field.FieldTypeId;
         existing.Address = field.Address;
-        existing.District = field.District;
-        existing.City = field.City;
-        existing.PricePerHour =
-            field.PricePerHour;
-        existing.PeakPricePerHour =
-            field.PeakPricePerHour;
-        existing.Description =
-            field.Description;
+        existing.Ward = field.Ward;
+        existing.Province = field.Province;
+        existing.PricePerHour = field.PricePerHour;
+        existing.AcceptWalletPayment = field.AcceptWalletPayment;
+        existing.CashbackPercent = field.CashbackPercent;
+        existing.Description = field.Description;
         existing.Status = field.Status;
-
-        var imageResult =
-            await SaveImagesAsync(
-                existing,
-                images);
-
-        if (!imageResult.Success)
-        {
-            ViewBag.FieldTypes =
-                await _fieldService.GetFieldTypesAsync();
-
-            ViewBag.Error = imageResult.Message;
-
-            return View(existing);
-        }
 
         await _fieldService.UpdateAsync(existing);
 
-        TempData["Success"] =
-            "Cập nhật sân thành công.";
+        var (urls, skipped) = await SaveImageFilesAsync(imageFiles);
+        await _fieldService.AddImagesAsync(existing.FieldId, urls);
 
+        TempData["Success"] = "Cập nhật sân thành công."
+            + (skipped > 0 ? $" Lưu ý: {skipped} ảnh bị bỏ qua (sai định dạng hoặc quá 5MB)." : "");
         return RedirectToAction(nameof(Index));
     }
 
-    // ==============================
-    // XÓA HOẶC ĐÓNG SÂN
-    // ==============================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImage(int id)
+    {
+        var image = await _fieldService.GetImageAsync(id);
+        if (image == null) return NotFound();
+        if (!IsAdmin && image.Field.OwnerId != CurrentUserId) return Forbid();
+
+        var fieldId = image.FieldId;
+        var url = await _fieldService.DeleteImageAsync(id);
+        DeletePhysicalFile(url);
+
+        TempData["Success"] = "Đã xóa ảnh.";
+        return RedirectToAction(nameof(Edit), new { id = fieldId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPrimaryImage(int id)
+    {
+        var image = await _fieldService.GetImageAsync(id);
+        if (image == null) return NotFound();
+        if (!IsAdmin && image.Field.OwnerId != CurrentUserId) return Forbid();
+
+        await _fieldService.SetPrimaryImageAsync(image.FieldId, id);
+        TempData["Success"] = "Đã đổi ảnh đại diện.";
+        return RedirectToAction(nameof(Edit), new { id = image.FieldId });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var field =
-            await _fieldService.GetDetailAsync(id);
+        var field = await _fieldService.GetDetailAsync(id);
+        if (field == null) return NotFound();
+        if (!IsAdmin && field.OwnerId != CurrentUserId) return Forbid();
 
-        if (field == null)
-            return NotFound();
-
-        if (!IsAdmin &&
-            field.OwnerId != CurrentUserId)
-        {
-            return Forbid();
-        }
-
+        var imageUrls = field.FieldImages.Select(i => i.ImageUrl).ToList();
         await _fieldService.DeleteAsync(id);
 
-        TempData["Success"] =
-            "Đã xóa hoặc đóng sân.";
+        // Chi xoa file anh khi san bi xoa han (co booking thi san chi bi dong, giu lai anh)
+        if (await _fieldService.GetDetailAsync(id) == null)
+            imageUrls.ForEach(DeletePhysicalFile);
 
+        TempData["Success"] = "Đã xóa/đóng sân.";
         return RedirectToAction(nameof(Index));
     }
 
-    // ==============================
-    // LƯU ẢNH SÂN
-    // ==============================
-
-    private async Task<(bool Success, string Message)>
-     SaveImagesAsync(
-         Field field,
-         List<IFormFile>? images)
+    // Luu cac file anh hop le vao wwwroot/uploads/fields, tra ve URL + so file bi bo qua
+    private async Task<(List<string> Urls, int Skipped)> SaveImageFilesAsync(List<IFormFile>? files)
     {
-        if (images == null || images.Count == 0)
+        var urls = new List<string>();
+        var skipped = 0;
+        if (files == null || files.Count == 0) return (urls, skipped);
+
+        var folder = Path.Combine(_env.WebRootPath, "uploads", "fields");
+        Directory.CreateDirectory(folder);
+
+        foreach (var file in files)
         {
-            return (true, string.Empty);
-        }
-
-        var validImages = images
-            .Where(image => image.Length > 0)
-            .ToList();
-
-        if (validImages.Count == 0)
-        {
-            return (true, string.Empty);
-        }
-
-        // Mỗi sân có tối đa 10 ảnh
-        if (field.FieldImages.Count +
-            validImages.Count > 10)
-        {
-            return (
-                false,
-                "Mỗi sân chỉ được có tối đa 10 ảnh."
-            );
-        }
-
-        var allowedExtensions = new[]
-        {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
-
-        const long maxFileSize =
-            5 * 1024 * 1024;
-
-        // Kiểm tra tất cả ảnh trước khi lưu
-        foreach (var image in validImages)
-        {
-            var extension = Path
-                .GetExtension(image.FileName)
-                .ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(extension))
+            if (file.Length == 0) continue;
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (file.Length > MaxImageSizeBytes || !AllowedImageExtensions.Contains(ext))
             {
-                return (
-                    false,
-                    "Chỉ chấp nhận ảnh JPG, JPEG, PNG hoặc WEBP."
-                );
+                skipped++;
+                continue;
             }
 
-            if (image.Length > maxFileSize)
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            await using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
             {
-                return (
-                    false,
-                    "Mỗi ảnh không được vượt quá 5 MB."
-                );
+                await file.CopyToAsync(stream);
             }
-
-            if (string.IsNullOrWhiteSpace(image.ContentType) ||
-                !image.ContentType.StartsWith("image/"))
-            {
-                return (
-                    false,
-                    "Tệp được chọn không phải là hình ảnh."
-                );
-            }
+            urls.Add($"/uploads/fields/{fileName}");
         }
+        return (urls, skipped);
+    }
 
-        // Xác định đường dẫn wwwroot
-        var webRootPath = _environment.WebRootPath;
-
-        if (string.IsNullOrWhiteSpace(webRootPath))
-        {
-            webRootPath = Path.Combine(
-                _environment.ContentRootPath,
-                "wwwroot");
-        }
-
-        Directory.CreateDirectory(webRootPath);
-
-        var uploadFolder = Path.Combine(
-            webRootPath,
-            "uploads",
-            "fields");
-
-        Directory.CreateDirectory(uploadFolder);
-
-        // Bỏ trạng thái đại diện của tất cả ảnh cũ
-        foreach (var oldImage in field.FieldImages)
-        {
-            oldImage.IsPrimary = false;
-        }
-
-        // Ảnh mới đầu tiên sẽ là ảnh đại diện
-        var isFirstNewImage = true;
-
-        foreach (var image in validImages)
-        {
-            var extension = Path
-                .GetExtension(image.FileName)
-                .ToLowerInvariant();
-
-            var fileName =
-                $"{Guid.NewGuid():N}{extension}";
-
-            var physicalPath = Path.Combine(
-                uploadFolder,
-                fileName);
-
-            await using var stream = new FileStream(
-                physicalPath,
-                FileMode.Create);
-
-            await image.CopyToAsync(stream);
-
-            field.FieldImages.Add(new FieldImage
-            {
-                ImageUrl =
-                    $"/uploads/fields/{fileName}",
-
-                IsPrimary = isFirstNewImage
-            });
-
-            isFirstNewImage = false;
-        }
-
-        return (true, string.Empty);
+    private void DeletePhysicalFile(string? imageUrl)
+    {
+        // Chi xoa file do minh upload, khong dong den anh seed /images/...
+        if (imageUrl == null || !imageUrl.StartsWith("/uploads/")) return;
+        var path = Path.Combine(_env.WebRootPath, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
     }
 }

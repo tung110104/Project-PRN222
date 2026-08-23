@@ -1,0 +1,162 @@
+@model List<RefundRequest>
+@{
+    ViewData["Title"] = "Yêu cầu hoàn tiền";
+    var status = ViewBag.Status as string;
+    var pendingCount = Model.Count(r => r.Status == "Pending");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="mb-0"><i class="bi bi-arrow-return-left"></i> Yêu cầu hoàn tiền qua chuyển khoản</h3>
+    <form method="get">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Pending" selected="@(status == "Pending")">Chờ chuyển khoản</option>
+            <option value="Completed" selected="@(status == "Completed")">Đã chuyển</option>
+            <option value="Rejected" selected="@(status == "Rejected")">Từ chối</option>
+        </select>
+    </form>
+</div>
+
+<div class="alert alert-info py-2">
+    <i class="bi bi-info-circle"></i>
+    Danh sách này chỉ gồm booking bị hủy của <strong>sân không nhận thanh toán bằng ví</strong> — tiền phải chuyển khoản
+    thủ công về tài khoản ngân hàng của khách. Booking của sân có nhận ví đã được hoàn tự động vào ví, không xuất hiện ở đây.
+    @if (pendingCount > 0)
+    {
+        <br />
+        <strong>Đang có @pendingCount yêu cầu chờ xử lý.</strong>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Khách hàng</th>
+                    <th>Booking</th>
+                    <th class="text-end">Số tiền</th>
+                    <th>Tài khoản nhận</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.RefundRequestId</td>
+                        <td>
+                            @r.User.FullName<br />
+                            <small class="text-muted">@r.User.Email</small>
+                            @if (!string.IsNullOrWhiteSpace(r.User.Phone))
+                            {
+                                <br />
+                                <small class="text-muted">@r.User.Phone</small>
+                            }
+                        </td>
+                        <td>
+                            #@r.BookingId<br />
+                            <small class="text-muted">@r.Booking.Field.FieldName</small><br />
+                            <small class="text-muted">@r.Booking.BookingDate.ToString("dd/MM/yyyy")</small>
+                        </td>
+                        <td class="text-end fw-bold text-danger">@r.Amount.ToString("N0")đ</td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(r.BankAccountNumber))
+                            {
+                                <span class="badge bg-danger">Khách chưa cập nhật STK</span>
+                                @if (!string.IsNullOrWhiteSpace(r.User.BankAccountNumber))
+                                {
+                                    <br />
+                                    <small class="text-success">
+                                        Đã bổ sung sau: @r.User.BankName · @r.User.BankAccountNumber · @r.User.BankAccountHolder
+                                    </small>
+                                }
+                            }
+                            else
+                            {
+                                <small>
+                                    <strong>@r.BankName</strong><br />
+                                    <code>@r.BankAccountNumber</code><br />
+                                    @r.BankAccountHolder
+                                </small>
+                            }
+                        </td>
+                        <td><small>@r.Reason</small></td>
+                        <td>
+                            @switch (r.Status)
+                            {
+                                case "Pending":
+                                    <span class="badge bg-warning text-dark">Chờ chuyển khoản</span>
+                                    break;
+                                case "Completed":
+                                    <span class="badge bg-success">Đã chuyển</span>
+                                    <br />
+                                    <small class="text-muted">@r.ProcessedAt?.ToString("dd/MM HH:mm")</small>
+                                    break;
+                                case "Rejected":
+                                    <span class="badge bg-secondary">Từ chối</span>
+                                    break;
+                            }
+                            @if (!string.IsNullOrWhiteSpace(r.ProcessedNote))
+                            {
+                                <br />
+                                <small class="text-muted">@r.ProcessedNote</small>
+                            }
+                        </td>
+                        <td class="text-end" style="min-width:230px">
+                            @if (r.Status == "Pending")
+                            {
+                                <button class="btn btn-sm btn-success" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#done-@r.RefundRequestId">
+                                    <i class="bi bi-check2-circle"></i> Đã chuyển khoản
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#rej-@r.RefundRequestId">
+                                    Từ chối
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                    @if (r.Status == "Pending")
+                    {
+                        <tr class="collapse" id="done-@r.RefundRequestId">
+                            <td colspan="8" class="bg-light">
+                                <form method="post" asp-action="MarkTransferred" asp-route-id="@r.RefundRequestId"
+                                      class="d-flex gap-2 align-items-center"
+                                      onsubmit="return confirm('Xác nhận đã chuyển @r.Amount.ToString("N0")đ cho @r.User.FullName? Hệ thống sẽ gửi email báo khách.')">
+                                    @Html.AntiForgeryToken()
+                                    <span class="small text-nowrap">Mã giao dịch / ghi chú:</span>
+                                    <input name="note" class="form-control form-control-sm"
+                                           placeholder="VD: FT26073012345 - chuyển khoản Vietcombank" />
+                                    <button class="btn btn-sm btn-success text-nowrap">Xác nhận đã chuyển</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="rej-@r.RefundRequestId">
+                            <td colspan="8" class="bg-light">
+                                <form method="post" asp-action="Reject" asp-route-id="@r.RefundRequestId"
+                                      class="d-flex gap-2 align-items-center">
+                                    @Html.AntiForgeryToken()
+                                    <span class="small text-nowrap">Lý do từ chối:</span>
+                                    <input name="note" class="form-control form-control-sm" required
+                                           placeholder="VD: Sai thông tin tài khoản, khách đã nhận tiền mặt..." />
+                                    <button class="btn btn-sm btn-outline-danger text-nowrap">Từ chối hoàn tiền</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted py-4">
+            <i class="bi bi-check2-circle fs-3"></i>
+            <p class="mb-0 mt-2">Không có yêu cầu hoàn tiền nào.</p>
+        </div>
+    }
+</div>

@@ -1,0 +1,44 @@
+direction: right
+
+Guest: "Khách vãng lai" {
+  shape: person
+  style.fill: "#E8F0FE"
+}
+Customer: "Khách hàng" {
+  shape: person
+  style.fill: "#E8F0FE"
+}
+Staff: "Chủ sân (Staff)" {
+  shape: person
+  style.fill: "#E8F0FE"
+}
+Admin: "Quản trị viên" {
+  shape: person
+  style.fill: "#E8F0FE"
+}
+
+App: "SPORTS FIELD BOOKING (ASP.NET Core 8 MVC)" {
+  Web: "Tầng Web\n(Controllers + Views)"
+  Biz: "Tầng Business\n(Services + Patterns)" {
+    style.fill: "#FFF4E5"
+  }
+  Data: "Tầng DataAccess\n(UnitOfWork + Repository)"
+  DB: "SQL Server\n(SportsFieldBookingDB)" {
+    shape: cylinder
+    style.fill: "#E6F4EA"
+  }
+}
+
+External: "Dịch vụ ngoài" {
+  style.stroke-dash: 3
+  Mail: "Gmail SMTP"
+}
+
+Guest -> App.Web: "Tìm kiếm, xem sân, đăng ký"
+Customer -> App.Web: "Đặt sân, thanh toán, đánh giá"
+Staff -> App.Web: "Quản lý sân, duyệt đơn"
+Admin -> App.Web: "Quản trị, báo cáo"
+App.Web -> App.Biz: "Gọi qua interface (DI)"
+App.Biz -> App.Data: "UnitOfWork"
+App.Data -> App.DB: "EF Core / SQL"
+App.Biz -> External.Mail: "Gửi OTP, email xác nhận"

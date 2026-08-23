@@ -6,160 +6,68 @@ namespace SportsFieldBooking.Business.Services;
 
 public interface IReviewService
 {
-    Task<(bool Success, string Message)> AddReviewAsync(
-        int bookingId,
-        int userId,
-        int rating,
-        string? comment);
-
-    Task<(bool Success, string Message)> UpdateReviewAsync(
-        int bookingId,
-        int userId,
-        int rating,
-        string? comment);
-
-    Task<(bool Success, string Message)> DeleteReviewAsync(
-        int bookingId,
-        int userId);
+    Task<(bool Success, string Message)> AddReviewAsync(int bookingId, int userId, int rating, string? comment);
 }
 
 public class ReviewService : IReviewService
 {
     private readonly IUnitOfWork _uow;
+    private readonly IPointService _pointService;
+    private readonly INotificationService _notificationService;
 
-    public ReviewService(IUnitOfWork uow)
+    public ReviewService(IUnitOfWork uow, IPointService pointService, INotificationService notificationService)
     {
         _uow = uow;
+        _pointService = pointService;
+        _notificationService = notificationService;
     }
 
-    public async Task<(bool Success, string Message)>
-        AddReviewAsync(
-            int bookingId,
-            int userId,
-            int rating,
-            string? comment)
+    // View da an form khi chua du dieu kien, nhung o day van kiem tra lai toan bo
+    // (nguyen tac "khong tin client" - nguoi dung co the tu POST khong qua form).
+    public async Task<(bool Success, string Message)> AddReviewAsync(int bookingId, int userId, int rating, string? comment)
     {
-        var validation = ValidateReview(rating, comment);
+        if (rating is < 1 or > 5) return (false, "Điểm đánh giá phải từ 1 đến 5.");
 
-        if (!validation.Success)
-            return validation;
-
+        // UserId trong query -> khong danh gia ho booking cua nguoi khac duoc
         var booking = await _uow.Bookings.Query()
-            .Include(b => b.BookingDetails)
             .Include(b => b.Review)
-            .FirstOrDefaultAsync(b =>
-                b.BookingId == bookingId &&
-                b.UserId == userId);
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId && b.UserId == userId);
 
-        if (booking == null)
-            return (false, "Không tìm thấy booking.");
-
-        if (booking.Status != "Completed")
-        {
-            return (
-                false,
-                "Chỉ được đánh giá sau khi đã sử dụng sân."
-            );
-        }
-
-        if (booking.Review != null)
-        {
-            return (
-                false,
-                "Bạn đã đánh giá booking này rồi."
-            );
-        }
-
-        var detail = booking.BookingDetails.FirstOrDefault();
-
-        if (detail == null)
-            return (false, "Booking không có thông tin sân.");
+        if (booking == null) return (false, "Không tìm thấy booking.");
+        if (booking.Status != "Completed") return (false, "Chỉ đánh giá được sau khi đã sử dụng sân.");
+        if (booking.Review != null) return (false, "Bạn đã đánh giá booking này rồi.");
 
         await _uow.Reviews.AddAsync(new Review
         {
             BookingId = bookingId,
             UserId = userId,
-            FieldId = detail.FieldId,
+            FieldId = booking.FieldId, // Booking gan truc tiep FieldId (da bo BookingDetail)
             Rating = rating,
-            Comment = comment?.Trim(),
+            Comment = comment,
             CreatedAt = DateTime.Now
         });
-
         await _uow.SaveChangesAsync();
 
-        return (true, "Cảm ơn bạn đã đánh giá!");
-    }
+        // Thuong diem khuyen khich khach review
+        await _pointService.EarnForReviewAsync(userId, bookingId);
 
-    public async Task<(bool Success, string Message)>
-        UpdateReviewAsync(
-            int bookingId,
-            int userId,
-            int rating,
-            string? comment)
-    {
-        var validation = ValidateReview(rating, comment);
-
-        if (!validation.Success)
-            return validation;
-
-        var review = await _uow.Reviews.Query()
-            .FirstOrDefaultAsync(r =>
-                r.BookingId == bookingId &&
-                r.UserId == userId);
-
-        if (review == null)
-            return (false, "Không tìm thấy đánh giá.");
-
-        review.Rating = rating;
-        review.Comment = comment?.Trim();
-        review.CreatedAt = DateTime.Now;
-
-        _uow.Reviews.Update(review);
-        await _uow.SaveChangesAsync();
-
-        return (true, "Cập nhật đánh giá thành công.");
-    }
-
-    public async Task<(bool Success, string Message)>
-        DeleteReviewAsync(
-            int bookingId,
-            int userId)
-    {
-        var review = await _uow.Reviews.Query()
-            .FirstOrDefaultAsync(r =>
-                r.BookingId == bookingId &&
-                r.UserId == userId);
-
-        if (review == null)
-            return (false, "Không tìm thấy đánh giá.");
-
-        _uow.Reviews.Remove(review);
-        await _uow.SaveChangesAsync();
-
-        return (true, "Đã xóa đánh giá.");
-    }
-
-    private static (bool Success, string Message)
-        ValidateReview(
-            int rating,
-            string? comment)
-    {
-        if (rating is < 1 or > 5)
+        // Bao chu san: san vua nhan duoc danh gia moi
+        var field = await _uow.Fields.GetByIdAsync(booking.FieldId);
+        if (field != null && field.OwnerId != userId)
         {
-            return (
-                false,
-                "Điểm đánh giá phải từ 1 đến 5 sao."
-            );
+            var user = await _uow.Users.GetByIdAsync(userId);
+            var stars = string.Concat(Enumerable.Repeat("★", rating)) + string.Concat(Enumerable.Repeat("☆", 5 - rating));
+            var commentText = string.IsNullOrWhiteSpace(comment) ? "" : $" — \"{comment}\"";
+            try
+            {
+                await _notificationService.NotifyAsync(field.OwnerId,
+                    "Đánh giá mới",
+                    $"{user?.FullName ?? "Khách"} đánh giá sân {field.FieldName}: {stars} ({rating}/5){commentText}",
+                    $"/Field/Detail/{field.FieldId}");
+            }
+            catch { /* bo qua */ }
         }
 
-        if (comment?.Length > 1000)
-        {
-            return (
-                false,
-                "Bình luận không được vượt quá 1.000 ký tự."
-            );
-        }
-
-        return (true, string.Empty);
+        return (true, "Cảm ơn bạn đã đánh giá! Bạn được cộng điểm thưởng.");
     }
 }

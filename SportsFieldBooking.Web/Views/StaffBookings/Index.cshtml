@@ -5,52 +5,19 @@
 }
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0"><i class="bi bi-calendar-week"></i> Quản lý đặt lịch</h3>
-    <form method="get">
-        <select name="status" class="form-select" onchange="this.form.submit()">
-            <option value="">Tất cả trạng thái</option>
-            <option value="Pending" selected="@(status == "Pending")">Chờ xác nhận</option>
-            <option value="Confirmed" selected="@(status == "Confirmed")">Đã xác nhận</option>
-            <option value="Completed" selected="@(status == "Completed")">Hoàn thành</option>
-            <option value="Cancelled" selected="@(status == "Cancelled")">Đã hủy</option>
-        </select>
-    </form>
-</div>
-
-@if (User.IsInRole("Admin"))
-{
-    var qrPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "momo-qr.png");
-    var hasQr = System.IO.File.Exists(qrPath);
-    <div class="card shadow-sm mb-4 border-success">
-        <div class="card-header bg-white"><strong><i class="bi bi-qr-code"></i> Ảnh QR Momo thanh toán (chỉ Admin)</strong></div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-3 text-center mb-3 mb-md-0">
-                    @if (hasQr)
-                    {
-                        <img src="~/images/momo-qr.png?v=@DateTime.Now.Ticks" alt="QR Momo hiện tại" class="img-fluid border rounded" style="max-width: 160px;" />
-                        <div class="small text-muted mt-1">Ảnh QR hiện tại</div>
-                    }
-                    else
-                    {
-                        <div class="text-muted small">Chưa có ảnh QR nào.</div>
-                    }
-                </div>
-                <div class="col-md-9">
-                    <form method="post" asp-action="UploadQr" enctype="multipart/form-data" class="row g-2 align-items-center">
-                        @Html.AntiForgeryToken()
-                        <div class="col-sm-8">
-                            <input type="file" name="qrImage" class="form-control" accept=".png,.jpg,.jpeg" required />
-                        </div>
-                        <div class="col-sm-4">
-                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-upload"></i> Tải ảnh QR lên</button>
-                        </div>
-                        <div class="col-12"><small class="text-muted">Chọn ảnh QR Momo (PNG/JPG). Ảnh sẽ tự động hiển thị ở trang thanh toán của khách.</small></div>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> Đặt hộ khách</a>
+        <form method="get">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Pending" selected="@(status == "Pending")">Chờ xác nhận</option>
+                <option value="Confirmed" selected="@(status == "Confirmed")">Đã xác nhận</option>
+                <option value="Completed" selected="@(status == "Completed")">Hoàn thành</option>
+                <option value="Cancelled" selected="@(status == "Cancelled")">Đã hủy</option>
+            </select>
+        </form>
     </div>
-}
+</div>
 
 <div class="card shadow-sm">
     <div class="table-responsive">
@@ -71,27 +38,37 @@
             <tbody>
                 @foreach (var b in Model)
                 {
-                    var detail = b.BookingDetails.FirstOrDefault();
                     <tr>
                         <td>@b.BookingId</td>
-                        <td>@b.User.FullName<br /><small class="text-muted">@b.User.Email</small></td>
-                        <td>@detail?.Field.FieldName</td>
-                        <td>@detail?.BookingDate.ToString("dd/MM/yyyy")</td>
                         <td>
-                            @foreach (var d in b.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
+                            @b.User.FullName<br /><small class="text-muted">@b.User.Email</small>
+                            @if (b.CreatedById != null)
                             {
-                                <span class="badge bg-light text-dark border">@d.TimeSlot.StartTime.ToString("HH:mm")</span>
+                                <br /><span class="badge bg-info text-dark">Đặt hộ</span>
                             }
+                        </td>
+                        <td>@b.Field.FieldName</td>
+                        <td>@b.BookingDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @b.TimeSlot.StartTime.ToString("HH:mm") - @b.TimeSlot.EndTime.ToString("HH:mm")
+                            </span>
                         </td>
                         <td class="text-success fw-bold">@b.TotalAmount.ToString("N0")đ</td>
                         <td>
                             @if (b.Payments.Any(p => p.Status == "Paid"))
                             {
-                                <span class="badge bg-success">Đã TT</span>
+                                <span class="badge bg-success">Đã TT (@b.Payments.First(p => p.Status == "Paid").Method)</span>
                             }
-                            else if (b.Payments.Any(p => p.Status == "Pending"))
+                            else if (b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash"))
                             {
-                                <span class="badge bg-info text-dark" title="Khách báo đã chuyển khoản, chờ kiểm tra">Chờ xác nhận</span>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-cash-coin"></i> Chờ thu tiền mặt
+                                </span>
+                            }
+                            else if (b.Payments.Any(p => p.Status == "Refunded"))
+                            {
+                                <span class="badge bg-info">Hoàn tiền</span>
                             }
                             else
                             {
@@ -108,6 +85,38 @@
                             }
                         </td>
                         <td class="text-end">
+                            @{
+                                var cashPending = b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash");
+                                var paid = b.Payments.Any(p => p.Status == "Paid");
+                            }
+                            @* Khach dang ky tra tien mat -> chu san xac nhan da thu tien tai quay *@
+                            @if (cashPending && b.Status != "Cancelled")
+                            {
+                                <form method="post" asp-action="ConfirmCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Xác nhận đã thu @b.TotalAmount.ToString("N0")đ tiền mặt của khách @b.User.FullName?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-success" title="Khách đã trả tiền mặt tại sân">
+                                        <i class="bi bi-cash-coin"></i> Đã thu tiền
+                                    </button>
+                                </form>
+                                <form method="post" asp-action="RejectCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Từ chối yêu cầu trả tiền mặt này? Khách sẽ phải chọn phương thức thanh toán khác.')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-secondary" title="Khách không đến trả tiền">
+                                        Từ chối
+                                    </button>
+                                </form>
+                            }
+                            else if (!paid && b.Status is "Pending" or "Confirmed")
+                            {
+                                <form method="post" asp-action="ConfirmCash" asp-route-id="@b.BookingId" class="d-inline"
+                                      onsubmit="return confirm('Ghi nhận khách đã trả @b.TotalAmount.ToString("N0")đ tiền mặt tại quầy?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-success" title="Ghi nhận thu tiền mặt tại quầy">
+                                        <i class="bi bi-cash"></i> Thu tiền mặt
+                                    </button>
+                                </form>
+                            }
                             @if (b.Status == "Pending")
                             {
                                 <form method="post" asp-action="Confirm" asp-route-id="@b.BookingId" class="d-inline">
@@ -118,7 +127,7 @@
                             @if (b.Status is "Pending" or "Confirmed")
                             {
                                 <form method="post" asp-action="Cancel" asp-route-id="@b.BookingId" class="d-inline"
-                                      onsubmit="return confirm('Hủy booking này?')">
+                                      onsubmit="return confirm('Hủy booking này? Nếu đã trả bằng ví, tiền sẽ hoàn về ví khách.')">
                                     @Html.AntiForgeryToken()
                                     <button class="btn btn-sm btn-outline-danger">Hủy</button>
                                 </form>

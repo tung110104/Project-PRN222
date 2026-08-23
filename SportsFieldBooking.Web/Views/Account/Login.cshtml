@@ -20,22 +20,22 @@
                     <div class="mb-3">
                         <label class="form-label">Mật khẩu</label>
                         <input name="password" type="password" class="form-control" required />
-                        <div class="text-end mt-2">
-                            <span class="text-muted">Bạn quên mật khẩu? </span>
-                            <a asp-action="ForgotPassword" class="text-decoration-underline">
-                                Quên mật khẩu
-                            </a>
-                        </div>
                     </div>
                     <button class="btn btn-success w-100">Đăng nhập</button>
                 </form>
-                <hr />
-                <p class="text-center mb-2">Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a></p>
-                <p class="text-center mb-0">
-                    <a asp-action="AdminLogin" class="text-muted small">
-                        <i class="bi bi-shield-lock"></i> Đăng nhập dành cho quản trị viên
-                    </a>
+                <p class="text-end mb-0">
+                    <a asp-action="ForgotPassword" class="small">Quên mật khẩu?</a>
                 </p>
+                <hr />
+                <p class="text-center mb-0">Chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a></p>
+                <p class="text-center small mt-2 mb-0">
+                    <a asp-action="AdminLogin" class="text-muted"><i class="bi bi-shield-lock"></i> Đăng nhập quản trị hệ thống</a>
+                </p>
+                <div class="alert alert-info mt-3 small mb-0">
+                    <strong>Tài khoản demo</strong> (mật khẩu: 123456)<br />
+                    Chủ sân: owner@sfb.com<br />
+                    Khách: customer@sfb.com
+                </div>
             </div>
         </div>
     </div>

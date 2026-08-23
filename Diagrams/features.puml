@@ -1,0 +1,35 @@
+@startmindmap
+skinparam dpi 180
+!theme plain
+* SPORTS FIELD BOOKING
+** Xác thực
+*** Đăng ký
+*** Đăng nhập 2 trang riêng
+*** Quên mật khẩu bằng OTP
+*** Hồ sơ cá nhân
+** Quản lý sân
+*** CRUD sân
+*** Upload tối đa 10 ảnh
+*** Ảnh đại diện
+*** Tự sinh 16 khung giờ
+*** Đóng / xóa sân
+** Tìm kiếm - Đặt sân
+*** Lọc đa tiêu chí
+*** Slot trống theo ngày
+*** Đặt nhiều khung giờ
+*** Chống đặt trùng
+*** Hủy đơn, hoàn mã
+** Khuyến mãi
+*** CRUD mã giảm giá
+*** Phần trăm + trần giảm
+*** Hạn dùng, số lượng
+** Thanh toán - Đánh giá
+*** Momo QR / Tiền mặt
+*** Duyệt thủ công
+*** Hoàn tiền khi hủy
+*** 1 booking 1 đánh giá
+** Quản trị - Báo cáo
+*** Khóa / mở tài khoản
+*** Phân quyền Staff / Customer
+*** Báo cáo doanh thu
+@endmindmap

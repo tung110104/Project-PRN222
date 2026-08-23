@@ -4,158 +4,70 @@
     var selectedDate = (DateOnly)ViewBag.SelectedDate;
     var bookedIds = (List<int>)ViewBag.BookedSlotIds;
     var avg = (double)ViewBag.AvgRating;
+    var slotPrices = (Dictionary<int, decimal>)ViewBag.SlotPrices;
+    var goldenDay = ViewBag.GoldenDay as GoldenDay;
     var today = DateOnly.FromDateTime(DateTime.Now);
     var now = TimeOnly.FromDateTime(DateTime.Now);
+    var canBook = User.Identity?.IsAuthenticated == true && !User.IsInRole("SuperAdmin");
 }
 
 <div class="row g-4">
     <div class="col-md-5">
-        <!-- Gallery ảnh sân -->
-        <div class="card shadow-sm mb-4 overflow-hidden">
-            @if (Model.FieldImages.Any())
-            {
-                var images = Model.FieldImages
-                .OrderByDescending(x => x.IsPrimary)
-                .ThenBy(x => x.ImageId)
-                .ToList();
-
-                <div id="fieldImagesCarousel"
-                     class="carousel slide"
-                     data-bs-ride="carousel">
-
-                    @if (images.Count > 1)
+        @{
+            var images = Model.FieldImages.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.ImageId).ToList();
+        }
+        @if (images.Any())
+        {
+            <div id="fieldCarousel" class="carousel slide mb-4 shadow-sm rounded overflow-hidden">
+                <div class="carousel-inner">
+                    @for (var i = 0; i < images.Count; i++)
                     {
-                        <div class="carousel-indicators">
-                            @for (var index = 0;
-                                                index < images.Count;
-                                                index++)
-                            {
-                                <button type="button"
-                                        data-bs-target="#fieldImagesCarousel"
-                                        data-bs-slide-to="@index"
-                                        class="@(index == 0 ? "active" : "")"
-                                        aria-current="@(index == 0 ? "true" : "false")"
-                                        aria-label="Ảnh @(index + 1)">
-                                </button>
-                            }
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@images[i].ImageUrl" class="d-block w-100" alt="@Model.FieldName"
+                                 style="height:280px;object-fit:cover"
+                                 onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
                         </div>
                     }
-
-                    <div class="carousel-inner">
-                        @for (var index = 0;
-                                            index < images.Count;
-                                            index++)
-                        {
-                            var image = images[index];
-
-                            <div class="carousel-item
-                                        @(index == 0 ? "active" : "")">
-
-                                <img src="@image.ImageUrl"
-                                     class="d-block w-100 object-fit-cover"
-                                     style="height: 330px;"
-                                     alt="@Model.FieldName - ảnh @(index + 1)" />
-
-                                @if (image.IsPrimary)
-                                {
-                                    <div class="position-absolute
-                                                    top-0 start-0 m-3">
-
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-image"></i>
-                                            Ảnh đại diện
-                                        </span>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (images.Count > 1)
-                    {
-                        <button class="carousel-control-prev"
-                                type="button"
-                                data-bs-target="#fieldImagesCarousel"
-                                data-bs-slide="prev">
-
-                            <span class="carousel-control-prev-icon">
-                            </span>
-
-                            <span class="visually-hidden">
-                                Ảnh trước
-                            </span>
-                        </button>
-
-                        <button class="carousel-control-next"
-                                type="button"
-                                data-bs-target="#fieldImagesCarousel"
-                                data-bs-slide="next">
-
-                            <span class="carousel-control-next-icon">
-                            </span>
-
-                            <span class="visually-hidden">
-                                Ảnh tiếp theo
-                            </span>
-                        </button>
-                    }
                 </div>
-
-                <!-- Ảnh thu nhỏ -->
                 @if (images.Count > 1)
                 {
-                    <div class="card-body p-2">
-                        <div class="d-flex gap-2 overflow-auto">
-                            @for (var index = 0;
-                                                index < images.Count;
-                                                index++)
-                            {
-                                <button type="button"
-                                        class="btn p-0 border"
-                                        data-bs-target="#fieldImagesCarousel"
-                                        data-bs-slide-to="@index">
-
-                                    <img src="@images[index].ImageUrl"
-                                         class="object-fit-cover rounded"
-                                         style="width: 75px;
-                                                    height: 55px;"
-                                         alt="Ảnh nhỏ @(index + 1)" />
-                                </button>
-                            }
-                        </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#fieldCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#fieldCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                    <div class="carousel-indicators">
+                        @for (var i = 0; i < images.Count; i++)
+                        {
+                            <button type="button" data-bs-target="#fieldCarousel" data-bs-slide-to="@i"
+                                    class="@(i == 0 ? "active" : "")"></button>
+                        }
                     </div>
                 }
-            }
-            else
-            {
-                <div class="d-flex flex-column
-                        justify-content-center
-                        align-items-center
-                        bg-secondary-subtle text-muted"
-                     style="height: 280px;">
-
-                    <i class="bi bi-image"
-                       style="font-size: 60px;"></i>
-
-                    <p class="mt-2 mb-0">
-                        Sân chưa có hình ảnh
-                    </p>
-                </div>
-            }
-        </div>
+            </div>
+        }
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="badge bg-success mb-2">@Model.FieldType.TypeName</span>
+                @if (Model.AcceptWalletPayment)
+                {
+                    <span class="badge bg-primary mb-2"><i class="bi bi-wallet2"></i> Nhận ví tiền ảo</span>
+                    @if (Model.CashbackPercent > 0)
+                    {
+                        <span class="badge bg-info text-dark mb-2">Cashback @Model.CashbackPercent%</span>
+                    }
+                }
                 <h3>@Model.FieldName</h3>
                 @if (avg > 0)
                 {
                     <p class="text-warning mb-1"><i class="bi bi-star-fill"></i> @avg.ToString("0.0") / 5 (@Model.Reviews.Count đánh giá)</p>
                 }
-                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.District, @Model.City</p>
+                <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.Address, @Model.Ward, @Model.Province</p>
                 <p>@Model.Description</p>
                 <hr />
-                <p class="mb-1">Giờ thường: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@Model.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-1">Giá cơ bản: <strong class="text-success">@Model.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                <p class="mb-0 text-muted small">Giá từng khung giờ hiển thị bên phải - tính theo bảng giá chi tiết (giờ / ngày / mùa).</p>
             </div>
         </div>
 
@@ -196,6 +108,14 @@
                     </div>
                 </form>
 
+                @if (goldenDay != null)
+                {
+                    <div class="alert alert-warning py-2">
+                        <i class="bi bi-star-fill"></i> <strong>Ngày vàng: @goldenDay.Name</strong> -
+                        giá x@(goldenDay.PriceMultiplier.ToString("0.##")), tích điểm x@(goldenDay.PointsMultiplier)!
+                    </div>
+                }
+
                 @if (User.Identity?.IsAuthenticated != true)
                 {
                     <div class="alert alert-warning">
@@ -213,8 +133,8 @@
                         {
                             var isBooked = bookedIds.Contains(slot.TimeSlotId);
                             var isPast = selectedDate == today && slot.StartTime <= now;
-                            var isPeak = slot.StartTime >= new TimeOnly(17, 0) && slot.StartTime < new TimeOnly(21, 0);
-                            var price = isPeak ? Model.PeakPricePerHour : Model.PricePerHour;
+                            var price = slotPrices.TryGetValue(slot.TimeSlotId, out var p) ? p : Model.PricePerHour;
+                            var isSpecial = price != Model.PricePerHour;
                             <div class="col">
                                 @if (isBooked || isPast)
                                 {
@@ -229,7 +149,7 @@
                                         <input type="checkbox" name="timeSlotIds" value="@slot.TimeSlotId"
                                                class="form-check-input me-1" data-price="@price" />
                                         <span>@slot.StartTime.ToString("HH:mm") - @slot.EndTime.ToString("HH:mm")</span>
-                                        <div><small class="@(isPeak ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
+                                        <div><small class="@(isSpecial ? "text-danger" : "text-success")">@price.ToString("N0")đ</small></div>
                                     </label>
                                 }
                             </div>
@@ -247,10 +167,14 @@
 
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Tạm tính: <span id="total" class="text-success">0đ</span></h5>
-                        <button class="btn btn-success" @(User.Identity?.IsAuthenticated != true ? "disabled" : "")>
+                        <button class="btn btn-success" @(canBook ? "" : "disabled")>
                             <i class="bi bi-calendar-check"></i> Đặt sân
                         </button>
                     </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        * Giảm giá theo hạng thành viên và mã khuyến mãi sẽ được trừ khi tạo booking;
+                        điểm tích lũy có thể dùng ở bước thanh toán.
+                    </p>
                 </form>
             </div>
         </div>

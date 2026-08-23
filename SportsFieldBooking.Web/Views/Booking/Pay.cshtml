@@ -1,34 +1,86 @@
 @model Booking
 @{
     ViewData["Title"] = "Thanh toán";
+    var maxRedeem = (int)ViewBag.MaxRedeemPoints;
+    var pointValue = (decimal)ViewBag.PointValue;
+    var walletBalance = (decimal)ViewBag.WalletBalance;
+    var walletLocked = (bool)ViewBag.WalletLocked;
+    var acceptWallet = Model.Field.AcceptWalletPayment;
 }
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm">
             <div class="card-header bg-white"><strong><i class="bi bi-credit-card"></i> Thanh toán booking #@Model.BookingId</strong></div>
             <div class="card-body">
-                <h4 class="text-center mb-4">Số tiền: <span class="text-success">@Model.TotalAmount.ToString("N0")đ</span></h4>
+                <h4 class="text-center mb-1">Số tiền: <span class="text-success" id="amountDue" data-amount="@Model.TotalAmount">@Model.TotalAmount.ToString("N0")đ</span></h4>
+                <p class="text-center text-muted small mb-4">@Model.Field.FieldName - @Model.BookingDate.ToString("dd/MM/yyyy") @Model.TimeSlot.StartTime.ToString("HH:mm")</p>
+
                 <form method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.BookingId" />
+
+                    @if (maxRedeem > 0)
+                    {
+                        <div class="border rounded p-3 mb-3 bg-warning-subtle">
+                            <label class="form-label mb-1">
+                                <i class="bi bi-stars"></i> <strong>Dùng điểm tích lũy</strong>
+                                (tối đa @maxRedeem điểm, 1 điểm = @pointValue.ToString("N0")đ)
+                            </label>
+                            <input type="number" name="pointsToUse" id="pointsToUse" class="form-control"
+                                   value="0" min="0" max="@maxRedeem" data-value="@pointValue" />
+                            <small class="text-muted">Giảm thêm: <span id="pointDiscount">0đ</span></small>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" name="pointsToUse" value="0" />
+                    }
+
                     <div class="list-group mb-3">
+                        @if (acceptWallet)
+                        {
+                            <label class="list-group-item d-flex gap-2 @(walletLocked ? "text-muted" : "")">
+                                <input class="form-check-input" type="radio" name="method" value="Wallet"
+                                       @(walletLocked ? "disabled" : "checked") />
+                                <span>
+                                    <strong><i class="bi bi-wallet2"></i> Ví tiền ảo</strong> — Số dư: @walletBalance.ToString("N0")đ
+                                    @if (Model.Field.CashbackPercent > 0)
+                                    {
+                                        <span class="badge bg-info text-dark">Hoàn @Model.Field.CashbackPercent% vào ví</span>
+                                    }
+                                    @if (walletLocked)
+                                    {
+                                        <span class="badge bg-danger">Ví bị khóa</span>
+                                    }
+                                </span>
+                            </label>
+                        }
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input payment-method" type="radio" name="method" value="Momo" checked />
-                            <span><strong>Momo</strong> — Ví Momo (quét mã QR)</span>
+                            <input class="form-check-input" type="radio" name="method" value="VNPay" @(acceptWallet && !walletLocked ? "" : "checked") />
+                            <span><strong>VNPay</strong> — Chuyển đến cổng thanh toán VNPay (quét QR / thẻ ATM)</span>
                         </label>
                         <label class="list-group-item d-flex gap-2">
-                            <input class="form-check-input payment-method" type="radio" name="method" value="Cash" />
-                            <span><strong>Tiền mặt</strong> — Thanh toán tại sân</span>
+                            <input class="form-check-input" type="radio" name="method" value="Momo" />
+                            <span><strong>MoMo</strong> — Chuyển đến cổng thanh toán MoMo (quét QR)</span>
+                        </label>
+                        <label class="list-group-item d-flex gap-2">
+                            <input class="form-check-input" type="radio" name="method" value="Cash" id="methodCash" />
+                            <span>
+                                <strong>Tiền mặt</strong> — Trả trực tiếp tại sân
+                                <br /><small class="text-muted">
+                                    Booking chỉ được xác nhận sau khi chủ sân xác nhận đã thu tiền tại quầy.
+                                    Không áp dụng dùng điểm cho hình thức này.
+                                </small>
+                            </span>
                         </label>
                     </div>
-                    <div id="momo-qr" class="text-center mb-3">
-                        <p class="mb-2">Quét mã QR bằng ứng dụng Momo để thanh toán:</p>
-                        <img src="~/images/momo-qr.png" alt="Mã QR Momo" class="img-fluid border rounded" style="max-width: 260px;" />
-                        <p class="text-muted small mt-2 mb-0">NGUYỄN MẠNH TÙNG — STK: *******014</p>
-                    </div>
-                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> <span id="pay-btn-text">Tôi đã chuyển khoản</span></button>
+                    <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i> Xác nhận thanh toán</button>
                 </form>
-                <p class="text-muted small text-center mt-3 mb-0">* Bấm nút sau khi bạn đã chuyển khoản. Chủ sân sẽ kiểm tra và xác nhận đặt sân.</p>
+                @if (!acceptWallet)
+                {
+                    <p class="text-muted small text-center mt-2 mb-0">* Sân này không nhận thanh toán bằng ví tiền ảo.</p>
+                }
+                <p class="text-muted small text-center mt-2 mb-0">* Thanh toán mô phỏng phục vụ demo môn học.</p>
             </div>
         </div>
     </div>
@@ -36,14 +88,29 @@
 
 @section Scripts {
     <script>
-        // Chỉ hiện mã QR khi chọn Momo; đổi nhãn nút theo phương thức
-        function updatePayUi(method) {
-            document.getElementById('momo-qr').style.display = method === 'Momo' ? 'block' : 'none';
-            document.getElementById('pay-btn-text').textContent =
-                method === 'Momo' ? 'Tôi đã chuyển khoản' : 'Đặt sân, thanh toán tại sân';
+        // Tien mat khong dung duoc diem -> khoa o nhap diem khi chon Cash
+        const cashRadio = document.getElementById('methodCash');
+        const ptsBox = document.getElementById('pointsToUse');
+        function syncCash() {
+            if (!ptsBox) return;
+            const isCash = cashRadio && cashRadio.checked;
+            ptsBox.disabled = isCash;
+            if (isCash) { ptsBox.value = 0; ptsBox.dispatchEvent(new Event('input')); }
         }
-        document.querySelectorAll('.payment-method').forEach(function (r) {
-            r.addEventListener('change', function () { updatePayUi(this.value); });
-        });
+        document.querySelectorAll('input[name=method]').forEach(r => r.addEventListener('change', syncCash));
+
+        const pointsInput = document.getElementById('pointsToUse');
+        if (pointsInput) {
+            const amountEl = document.getElementById('amountDue');
+            const baseAmount = parseFloat(amountEl.dataset.amount);
+            const pointValue = parseFloat(pointsInput.dataset.value);
+            pointsInput.addEventListener('input', () => {
+                let pts = Math.min(parseInt(pointsInput.value || 0), parseInt(pointsInput.max));
+                if (pts < 0) pts = 0;
+                const discount = pts * pointValue;
+                document.getElementById('pointDiscount').textContent = discount.toLocaleString('vi-VN') + 'đ';
+                amountEl.textContent = (baseAmount - discount).toLocaleString('vi-VN') + 'đ';
+            });
+        }
     </script>
 }

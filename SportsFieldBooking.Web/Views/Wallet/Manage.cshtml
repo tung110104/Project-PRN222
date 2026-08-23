@@ -1,0 +1,57 @@
+@model List<Wallet>
+@{
+    ViewData["Title"] = "Quản lý ví";
+}
+<h3 class="mb-4"><i class="bi bi-safe"></i> Quản lý ví toàn hệ thống</h3>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Người dùng</th>
+                    <th class="text-end">Số dư</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in Model)
+                {
+                    <tr>
+                        <td>@w.WalletId</td>
+                        <td>@w.User.FullName<br /><small class="text-muted">@w.User.Email</small></td>
+                        <td class="text-end fw-bold text-success">@w.Balance.ToString("N0")đ</td>
+                        <td>
+                            @if (w.IsLocked)
+                            {
+                                <span class="badge bg-danger">Bị khóa</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                        </td>
+                        <td>@w.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-end">
+                            <form method="post" asp-action="ToggleLock" asp-route-id="@w.WalletId" class="d-inline"
+                                  onsubmit="return confirm('@(w.IsLocked ? "Mở khóa" : "Khóa") ví này?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm @(w.IsLocked ? "btn-outline-success" : "btn-outline-danger")">
+                                    @(w.IsLocked ? "Mở khóa" : "Khóa ví")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có ví nào (ví được tạo tự động khi người dùng mở trang Ví &amp; Điểm hoặc nạp tiền).</div>
+    }
+</div>
+<p class="text-muted small mt-2">Cộng/trừ số dư thủ công (kèm lý do) thực hiện ở trang <a asp-controller="Users" asp-action="Index">Người dùng</a>.</p>

@@ -1,0 +1,86 @@
+erDiagram
+    ROLES ||--o{ USERS : "phân vai trò"
+    USERS ||--o{ BOOKINGS : "đặt"
+    USERS ||--o{ FIELDS : "sở hữu"
+    USERS ||--o{ REVIEWS : "viết"
+    FIELDTYPES ||--o{ FIELDS : "phân loại"
+    FIELDS ||--o{ FIELDIMAGES : "có ảnh"
+    FIELDS ||--o{ TIMESLOTS : "có khung giờ"
+    FIELDS ||--o{ BOOKINGDETAILS : "được đặt"
+    TIMESLOTS ||--o{ BOOKINGDETAILS : "dùng slot"
+    BOOKINGS ||--|{ BOOKINGDETAILS : "gồm"
+    BOOKINGS ||--o{ PAYMENTS : "thanh toán"
+    BOOKINGS ||--o| REVIEWS : "được đánh giá 1 lần"
+    PROMOTIONS ||--o{ BOOKINGS : "áp dụng"
+
+    ROLES {
+        int RoleId PK
+        string RoleName "Admin | Staff | Customer"
+    }
+    USERS {
+        int UserId PK
+        string Email "duy nhất, dùng đăng nhập"
+        string PasswordHash "SHA256"
+        int RoleId FK
+        boolean IsActive "false = bị khóa"
+    }
+    FIELDTYPES {
+        int FieldTypeId PK
+        string TypeName "loại sân"
+    }
+    FIELDS {
+        int FieldId PK
+        int FieldTypeId FK
+        int OwnerId FK "chủ sân (Users)"
+        decimal PricePerHour "giá giờ thường"
+        decimal PeakPricePerHour "giá cao điểm 17-21h"
+        string Status "Active | Maintenance | Closed"
+    }
+    FIELDIMAGES {
+        int ImageId PK
+        int FieldId FK
+        string ImageUrl "đường dẫn trong wwwroot"
+        boolean IsPrimary "ảnh đại diện"
+    }
+    TIMESLOTS {
+        int TimeSlotId PK
+        int FieldId FK
+        string StartTime "06:00 - 21:00"
+        string EndTime "mỗi slot 1 giờ"
+    }
+    PROMOTIONS {
+        int PromotionId PK
+        string Code "mã nhập khi đặt"
+        int DiscountPercent "phần trăm giảm"
+        decimal MaxDiscount "trần giảm"
+        int Quantity "số lượt còn lại"
+    }
+    BOOKINGS {
+        int BookingId PK
+        int UserId FK
+        int PromotionId FK "có thể rỗng"
+        string Status "Pending | Confirmed | Completed | Cancelled"
+        decimal TotalAmount "tổng sau giảm"
+    }
+    BOOKINGDETAILS {
+        int BookingDetailId PK
+        int BookingId FK
+        int FieldId FK
+        int TimeSlotId FK
+        date BookingDate "ngày sử dụng sân"
+        string Status "Active | Cancelled - chống đặt trùng"
+    }
+    PAYMENTS {
+        int PaymentId PK
+        int BookingId FK
+        string Method "Momo | Cash"
+        string Status "Pending | Paid | Refunded"
+        datetime PaidAt "thời điểm duyệt"
+    }
+    REVIEWS {
+        int ReviewId PK
+        int FieldId FK
+        int UserId FK
+        int BookingId FK "UNIQUE - 1 booking 1 review"
+        int Rating "1 đến 5 sao"
+    }

@@ -15,11 +15,19 @@ public class SportsFieldBookingDbContext : DbContext
     public DbSet<Field> Fields => Set<Field>();
     public DbSet<FieldImage> FieldImages => Set<FieldImage>();
     public DbSet<TimeSlot> TimeSlots => Set<TimeSlot>();
+    public DbSet<FieldPricingRule> FieldPricingRules => Set<FieldPricingRule>();
+    public DbSet<GoldenDay> GoldenDays => Set<GoldenDay>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
     public DbSet<Booking> Bookings => Set<Booking>();
-    public DbSet<BookingDetail> BookingDetails => Set<BookingDetail>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+    public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
+    public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
+    public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
+    public DbSet<AppNotification> Notifications => Set<AppNotification>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -50,12 +58,13 @@ public class SportsFieldBookingDbContext : DbContext
             e.Property(x => x.Email).HasMaxLength(100);
             e.Property(x => x.PasswordHash).HasMaxLength(256);
             e.Property(x => x.Phone).HasMaxLength(20);
+            e.Property(x => x.BankAccountNumber).HasMaxLength(50);
+            e.Property(x => x.BankName).HasMaxLength(100);
+            e.Property(x => x.BankAccountHolder).HasMaxLength(150);
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             e.HasIndex(x => x.Email).IsUnique();
             e.HasOne(x => x.Role).WithMany(r => r.Users).HasForeignKey(x => x.RoleId);
         });
-
-    
 
         modelBuilder.Entity<FieldType>(e =>
         {
@@ -69,12 +78,11 @@ public class SportsFieldBookingDbContext : DbContext
             e.ToTable("Fields");
             e.Property(x => x.FieldName).HasMaxLength(100);
             e.Property(x => x.Address).HasMaxLength(200);
-            e.Property(x => x.District).HasMaxLength(50);
-            e.Property(x => x.City).HasMaxLength(50);
+            e.Property(x => x.Ward).HasMaxLength(100);
+            e.Property(x => x.Province).HasMaxLength(100);
             e.Property(x => x.Description).HasMaxLength(1000);
             e.Property(x => x.Status).HasMaxLength(20);
             e.Property(x => x.PricePerHour).HasColumnType("decimal(12,0)");
-            e.Property(x => x.PeakPricePerHour).HasColumnType("decimal(12,0)");
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             e.HasOne(x => x.FieldType).WithMany(t => t.Fields).HasForeignKey(x => x.FieldTypeId);
             e.HasOne(x => x.Owner).WithMany(u => u.OwnedFields).HasForeignKey(x => x.OwnerId)
@@ -96,6 +104,23 @@ public class SportsFieldBookingDbContext : DbContext
             e.HasOne(x => x.Field).WithMany(f => f.TimeSlots).HasForeignKey(x => x.FieldId);
         });
 
+        modelBuilder.Entity<FieldPricingRule>(e =>
+        {
+            e.ToTable("FieldPricingRules");
+            e.HasKey(x => x.PricingRuleId); // ten khoa khong theo convention <EntityName>Id
+            e.Property(x => x.RuleName).HasMaxLength(100);
+            e.Property(x => x.DayType).HasMaxLength(10);
+            e.Property(x => x.Price).HasColumnType("decimal(12,0)");
+            e.HasOne(x => x.Field).WithMany(f => f.PricingRules).HasForeignKey(x => x.FieldId);
+        });
+
+        modelBuilder.Entity<GoldenDay>(e =>
+        {
+            e.ToTable("GoldenDays");
+            e.Property(x => x.Name).HasMaxLength(100);
+            e.HasOne(x => x.Field).WithMany(f => f.GoldenDays).HasForeignKey(x => x.FieldId);
+        });
+
         modelBuilder.Entity<Promotion>(e =>
         {
             e.ToTable("Promotions");
@@ -103,6 +128,8 @@ public class SportsFieldBookingDbContext : DbContext
             e.Property(x => x.Description).HasMaxLength(200);
             e.Property(x => x.MaxDiscount).HasColumnType("decimal(12,0)");
             e.HasIndex(x => x.Code).IsUnique();
+            e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Booking>(e =>
@@ -110,25 +137,22 @@ public class SportsFieldBookingDbContext : DbContext
             e.ToTable("Bookings");
             e.Property(x => x.Status).HasMaxLength(20);
             e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.UnitPrice).HasColumnType("decimal(12,0)");
+            e.Property(x => x.DiscountAmount).HasColumnType("decimal(12,0)");
             e.Property(x => x.TotalAmount).HasColumnType("decimal(12,0)");
             e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
             e.HasOne(x => x.User).WithMany(u => u.Bookings).HasForeignKey(x => x.UserId);
             e.HasOne(x => x.Promotion).WithMany(p => p.Bookings).HasForeignKey(x => x.PromotionId);
-        });
-
-        modelBuilder.Entity<BookingDetail>(e =>
-        {
-            e.ToTable("BookingDetails");
-            e.Property(x => x.Status).HasMaxLength(20);
-            e.Property(x => x.Price).HasColumnType("decimal(12,0)");
+            e.HasOne(x => x.Field).WithMany(f => f.Bookings).HasForeignKey(x => x.FieldId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.TimeSlot).WithMany(t => t.Bookings).HasForeignKey(x => x.TimeSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Chong trung lich: 1 san + 1 khung gio + 1 ngay chi co 1 booking chua bi huy
             e.HasIndex(x => new { x.FieldId, x.TimeSlotId, x.BookingDate })
                 .IsUnique()
-                .HasFilter("[Status] = 'Active'");
-            e.HasOne(x => x.Booking).WithMany(b => b.BookingDetails).HasForeignKey(x => x.BookingId);
-            e.HasOne(x => x.Field).WithMany(f => f.BookingDetails).HasForeignKey(x => x.FieldId)
-                .OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(x => x.TimeSlot).WithMany(t => t.BookingDetails).HasForeignKey(x => x.TimeSlotId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasFilter("[Status] <> 'Cancelled'");
         });
 
         modelBuilder.Entity<Payment>(e =>
@@ -152,6 +176,88 @@ public class SportsFieldBookingDbContext : DbContext
             e.HasOne(x => x.User).WithMany(u => u.Reviews).HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Booking).WithOne(b => b.Review).HasForeignKey<Review>(x => x.BookingId);
+        });
+
+        modelBuilder.Entity<Wallet>(e =>
+        {
+            e.ToTable("Wallets");
+            e.Property(x => x.Balance).HasColumnType("decimal(12,0)");
+            e.Property(x => x.UpdatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => x.UserId).IsUnique();
+            e.HasOne(x => x.User).WithOne(u => u.Wallet).HasForeignKey<Wallet>(x => x.UserId);
+        });
+
+        modelBuilder.Entity<WalletTransaction>(e =>
+        {
+            e.ToTable("WalletTransactions");
+            e.Property(x => x.Type).HasMaxLength(20);
+            e.Property(x => x.Description).HasMaxLength(300);
+            e.Property(x => x.Amount).HasColumnType("decimal(12,0)");
+            e.Property(x => x.BalanceAfter).HasColumnType("decimal(12,0)");
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasOne(x => x.Wallet).WithMany(w => w.Transactions).HasForeignKey(x => x.WalletId);
+        });
+
+        modelBuilder.Entity<PointTransaction>(e =>
+        {
+            e.ToTable("PointTransactions");
+            e.Property(x => x.Type).HasMaxLength(20);
+            e.Property(x => x.Description).HasMaxLength(300);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasOne(x => x.User).WithMany(u => u.PointTransactions).HasForeignKey(x => x.UserId);
+        });
+
+        modelBuilder.Entity<MaintenanceRequest>(e =>
+        {
+            e.ToTable("MaintenanceRequests");
+            e.Property(x => x.Reason).HasMaxLength(500);
+            e.Property(x => x.Status).HasMaxLength(20);
+            e.Property(x => x.AdminNote).HasMaxLength(500);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasOne(x => x.Field).WithMany(f => f.MaintenanceRequests).HasForeignKey(x => x.FieldId);
+            e.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RefundRequest>(e =>
+        {
+            e.ToTable("RefundRequests");
+            e.Property(x => x.Amount).HasColumnType("decimal(12,0)");
+            e.Property(x => x.Reason).HasMaxLength(300);
+            e.Property(x => x.Status).HasMaxLength(20);
+            e.Property(x => x.BankAccountNumber).HasMaxLength(50);
+            e.Property(x => x.BankName).HasMaxLength(100);
+            e.Property(x => x.BankAccountHolder).HasMaxLength(150);
+            e.Property(x => x.ProcessedNote).HasMaxLength(300);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => x.Status);
+            e.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AppNotification>(e =>
+        {
+            e.ToTable("Notifications");
+            e.HasKey(x => x.NotificationId);
+            e.Property(x => x.Title).HasMaxLength(200);
+            e.Property(x => x.Message).HasMaxLength(500);
+            e.Property(x => x.Url).HasMaxLength(300);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => new { x.UserId, x.IsRead });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PasswordResetOtp>(e =>
+        {
+            e.ToTable("PasswordResetOtps");
+            e.Property(x => x.OtpCode).HasMaxLength(10);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => new { x.UserId, x.IsUsed });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

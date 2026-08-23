@@ -9,10 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SportsFieldBooking.Business\SportsFieldBooking.Business.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\uploads\fields\" />
-  </ItemGroup>
   
 	
 

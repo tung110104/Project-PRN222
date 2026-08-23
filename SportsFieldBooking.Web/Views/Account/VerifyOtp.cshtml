@@ -1,47 +1,39 @@
-@model SportsFieldBooking.Web.Models.VerifyOtpViewModel
 @{
-    ViewData["Title"] = "Xác thực OTP";
+    ViewData["Title"] = "Nhập mã xác thực";
+    var email = (string?)ViewBag.Email;
 }
-
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="bi bi-shield-check fs-1 text-success"></i>
-                    <h4 class="mt-2">Xác thực OTP</h4>
-                    <p class="text-muted mb-1">Nhập mã 6 số đã gửi đến</p>
-                    <strong>@Model.Email</strong>
-                </div>
-
-                <form asp-action="VerifyOtp" method="post">
-                    <input asp-for="Email" type="hidden" />
-                    <div asp-validation-summary="ModelOnly"
-                         class="text-danger mb-3"></div>
+                <h4 class="card-title text-center mb-3"><i class="bi bi-shield-check"></i> Nhập mã xác thực</h4>
+                <p class="text-muted small text-center">
+                    Mã gồm 6 chữ số đã được gửi tới <strong>@email</strong>. Mã có hiệu lực trong 10 phút.
+                </p>
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="email" value="@email" />
                     <div class="mb-3">
-                        <label asp-for="Otp" class="form-label">Mã OTP</label>
-                        <input asp-for="Otp" class="form-control form-control-lg
-                               text-center font-monospace"
-                               inputmode="numeric" maxlength="6"
-                               autocomplete="one-time-code"
-                               placeholder="000000" autofocus />
-                        <span asp-validation-for="Otp" class="text-danger"></span>
-                        <div class="form-text">
-                            Mã có hiệu lực trong 5 phút và tối đa 5 lần nhập.
-                        </div>
+                        <label class="form-label">Mã xác thực (OTP)</label>
+                        <input name="otp" class="form-control form-control-lg text-center"
+                               style="letter-spacing:8px;" maxlength="6" pattern="[0-9]{6}"
+                               inputmode="numeric" placeholder="000000" required autofocus />
                     </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        Xác nhận
-                    </button>
+                    <button class="btn btn-success w-100">Xác nhận</button>
                 </form>
-
-                <form asp-action="ResendOtp" method="post" class="text-center mt-3">
-                    <input type="hidden" name="email" value="@Model.Email" />
-                    <span class="text-muted">Chưa nhận được mã?</span>
-                    <button type="submit" class="btn btn-link p-0 align-baseline">
-                        Gửi lại OTP
-                    </button>
+                <hr />
+                <form method="post" asp-action="ForgotPassword" class="text-center">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="email" value="@email" />
+                    <button class="btn btn-link btn-sm p-0">Không nhận được mã? Gửi lại</button>
                 </form>
+                <p class="text-center small mt-2 mb-0">
+                    <a asp-action="Login" class="text-muted">&larr; Quay lại đăng nhập</a>
+                </p>
             </div>
         </div>
     </div>
