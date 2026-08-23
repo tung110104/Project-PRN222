@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor KH as Khách hàng
+    participant WEB as Web App (MVC)
+    participant SVC as BookingService
+    participant DB as SQL Server
+    participant MAIL as Gmail SMTP
+    actor CS as Chủ sân / Admin
+
+    KH->>WEB: Chọn ngày + khung giờ, bấm Đặt sân
+    WEB->>SVC: CreateBookingAsync(userId, fieldId, date, slots, promoCode)
+    SVC->>DB: Kiểm tra sân Active + slot trống (BookingDetails Active)
+    DB-->>SVC: Kết quả kiểm tra
+    alt Slot đã có người đặt
+        SVC-->>WEB: Thất bại
+        WEB-->>KH: Khung giờ vừa được người khác đặt trước
+    else Slot hợp lệ
+        opt Có mã khuyến mãi
+            SVC->>DB: Kiểm tra mã (IsActive, Quantity, hạn dùng)
+            DB-->>SVC: Mã hợp lệ, trừ 1 lượt
+            Note over SVC: Giảm DiscountPercent phần trăm, chặn trần MaxDiscount
+        end
+        SVC->>DB: Ghi Booking (Pending) + BookingDetails (Active)
+        SVC->>MAIL: Gửi email xác nhận đặt sân
+        SVC-->>WEB: Thành công, trả bookingId
+        WEB-->>KH: Chuyển sang trang thanh toán
+        KH->>WEB: Chọn Momo QR hoặc tiền mặt
+        WEB->>DB: Tạo Payment (Pending) + TransactionCode
+        CS->>WEB: Xác nhận đã nhận tiền
+        WEB->>DB: Payment = Paid (PaidAt), Booking = Confirmed
+        WEB-->>KH: Đơn đã được xác nhận
+    end

@@ -30,14 +30,23 @@ public class PaymentService : IPaymentService
     private readonly IPointService _pointService;
     private readonly IWalletService _walletService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
     public PaymentService(IUnitOfWork uow, IPointService pointService, IWalletService walletService,
-        IEmailService emailService)
+        IEmailService emailService, INotificationService notificationService)
     {
         _uow = uow;
         _pointService = pointService;
         _walletService = walletService;
         _emailService = emailService;
+        _notificationService = notificationService;
+    }
+
+    /// <summary>Goi NotifyAsync nhung nuot loi - thong bao hong khong duoc lam hong giao dich.</summary>
+    private async Task TryNotifyAsync(int userId, string title, string message, string? url = null)
+    {
+        try { await _notificationService.NotifyAsync(userId, title, message, url); }
+        catch { /* bo qua */ }
     }
 
     /// <summary>Email xac nhan thanh toan - goi sau khi da ghi nhan Paid thanh cong.</summary>
@@ -118,6 +127,15 @@ public class PaymentService : IPaymentService
                 PaidAt = null
             });
             await _uow.SaveChangesAsync();
+
+            // Bao chu san: co khach dang ky tra tien mat, cho xac nhan thu tien tai quay
+            if (booking.Field.OwnerId != userId)
+                await TryNotifyAsync(booking.Field.OwnerId,
+                    "Yêu cầu trả tiền mặt",
+                    $"Khách đăng ký trả tiền mặt {booking.TotalAmount:N0}đ cho booking #{bookingId} " +
+                    $"({booking.Field.FieldName}, ngày {booking.BookingDate:dd/MM/yyyy}) — chờ bạn xác nhận đã thu tiền.",
+                    "/StaffBookings/Index?status=Pending");
+
             return (true, $"Đã ghi nhận yêu cầu thanh toán tiền mặt {booking.TotalAmount:N0}đ. " +
                           "Vui lòng đến sân thanh toán - booking được xác nhận sau khi chủ sân xác nhận đã thu tiền.");
         }
@@ -191,6 +209,14 @@ public class PaymentService : IPaymentService
                 ? Math.Round(booking.TotalAmount * booking.Field.CashbackPercent / 100m) : 0m;
             await SendPaymentEmailAsync(booking, method, booking.TotalAmount, pointsToUse, cashbackAmount);
 
+            // Bao chu san: booking da duoc thanh toan (khep kin vong dat -> tra tien)
+            if (booking.Field.OwnerId != userId)
+                await TryNotifyAsync(booking.Field.OwnerId,
+                    "Booking đã thanh toán",
+                    $"Booking #{bookingId} ({booking.Field.FieldName}, ngày {booking.BookingDate:dd/MM/yyyy}) " +
+                    $"đã được thanh toán {booking.TotalAmount:N0}đ qua {method}.",
+                    "/StaffBookings/Index?status=Confirmed");
+
             var pointsNote = pointsToUse > 0 ? $" (đã dùng {pointsToUse} điểm)" : "";
             return (true, $"Thanh toán {method} thành công{pointsNote}! Booking đã được xác nhận.{cashbackNote}");
         }
@@ -240,6 +266,14 @@ public class PaymentService : IPaymentService
         // Email bao khach da thu tien mat thanh cong
         await SendPaymentEmailAsync(booking, "Cash", booking.TotalAmount, booking.PointsUsed, 0m);
 
+        // Bao khach: chu san da xac nhan thu tien mat, booking chot xong
+        if (booking.UserId != confirmedById)
+            await TryNotifyAsync(booking.UserId,
+                "Đã xác nhận thanh toán tiền mặt",
+                $"Chủ sân đã xác nhận thu {booking.TotalAmount:N0}đ tiền mặt cho booking #{bookingId} " +
+                $"({booking.Field?.FieldName}, ngày {booking.BookingDate:dd/MM/yyyy}). Booking đã được xác nhận.",
+                $"/Booking/Detail/{bookingId}");
+
         return (true, $"Đã xác nhận thu {booking.TotalAmount:N0}đ tiền mặt. Booking #{bookingId} được xác nhận.");
     }
 
@@ -257,6 +291,14 @@ public class PaymentService : IPaymentService
         cash.TransactionCode = $"CASH-REJECTED-{DateTime.Now:yyyyMMddHHmmss}-BY{rejectedById}";
         _uow.Payments.Update(cash);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: yeu cau tra tien mat bi tu choi -> chon phuong thuc khac
+        if (booking.UserId != rejectedById)
+            await TryNotifyAsync(booking.UserId,
+                "Yêu cầu trả tiền mặt bị từ chối",
+                $"Chủ sân đã từ chối yêu cầu trả tiền mặt cho booking #{bookingId}. " +
+                "Vui lòng chọn phương thức thanh toán khác để giữ chỗ.",
+                $"/Booking/Pay/{bookingId}");
 
         return (true, $"Đã từ chối yêu cầu trả tiền mặt của booking #{bookingId}. Khách có thể chọn phương thức khác.");
     }

@@ -304,3 +304,19 @@ public class MaintenanceRequest
     public virtual Field Field { get; set; } = null!;
     public virtual User Owner { get; set; } = null!;
 }
+
+/// <summary>
+/// Thong bao trong ung dung (chuong tren navbar). Vi du: bao cho chu san khi co khach dat san moi.
+/// Duoc day real-time qua SignalR va luu DB de xem lai lich su.
+/// </summary>
+public class AppNotification
+{
+    public int NotificationId { get; set; }
+    public int UserId { get; set; }               // nguoi NHAN thong bao
+    public string Title { get; set; } = null!;
+    public string Message { get; set; } = null!;
+    public string? Url { get; set; }              // link mo khi bam vao thong bao
+    public bool IsRead { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public virtual User User { get; set; } = null!;
+}

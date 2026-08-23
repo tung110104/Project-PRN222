@@ -13,11 +13,13 @@ public class ReviewService : IReviewService
 {
     private readonly IUnitOfWork _uow;
     private readonly IPointService _pointService;
+    private readonly INotificationService _notificationService;
 
-    public ReviewService(IUnitOfWork uow, IPointService pointService)
+    public ReviewService(IUnitOfWork uow, IPointService pointService, INotificationService notificationService)
     {
         _uow = uow;
         _pointService = pointService;
+        _notificationService = notificationService;
     }
 
     // View da an form khi chua du dieu kien, nhung o day van kiem tra lai toan bo
@@ -48,6 +50,23 @@ public class ReviewService : IReviewService
 
         // Thuong diem khuyen khich khach review
         await _pointService.EarnForReviewAsync(userId, bookingId);
+
+        // Bao chu san: san vua nhan duoc danh gia moi
+        var field = await _uow.Fields.GetByIdAsync(booking.FieldId);
+        if (field != null && field.OwnerId != userId)
+        {
+            var user = await _uow.Users.GetByIdAsync(userId);
+            var stars = string.Concat(Enumerable.Repeat("★", rating)) + string.Concat(Enumerable.Repeat("☆", 5 - rating));
+            var commentText = string.IsNullOrWhiteSpace(comment) ? "" : $" — \"{comment}\"";
+            try
+            {
+                await _notificationService.NotifyAsync(field.OwnerId,
+                    "Đánh giá mới",
+                    $"{user?.FullName ?? "Khách"} đánh giá sân {field.FieldName}: {stars} ({rating}/5){commentText}",
+                    $"/Field/Detail/{field.FieldId}");
+            }
+            catch { /* bo qua */ }
+        }
 
         return (true, "Cảm ơn bạn đã đánh giá! Bạn được cộng điểm thưởng.");
     }

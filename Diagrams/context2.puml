@@ -1,0 +1,30 @@
+@startuml
+skinparam dpi 180
+!theme plain
+left to right direction
+skinparam rectangleBorderColor #1F3864
+skinparam actorBorderColor #1F3864
+
+actor "Khách vãng lai" as Guest
+actor "Khách hàng" as Customer
+actor "Chủ sân (Staff)" as Staff
+actor "Quản trị viên" as Admin
+
+rectangle "SPORTS FIELD BOOKING (ASP.NET Core 8 MVC)" as App #F4F8FD {
+  rectangle "Tầng Web\n(Controllers + Views)" as Web #FFFFFF
+  rectangle "Tầng Business\n(Services + Patterns)" as Biz #FFF4E5
+  rectangle "Tầng DataAccess\n(UnitOfWork + Repository)" as Data #FFFFFF
+  database "SQL Server\n(SportsFieldBookingDB)" as DB #E6F4EA
+}
+
+cloud "Gmail SMTP" as Mail #FFFFFF
+
+Guest --> Web : Tìm kiếm, xem sân, đăng ký
+Customer --> Web : Đặt sân, thanh toán, đánh giá
+Staff --> Web : Quản lý sân, duyệt đơn
+Admin --> Web : Quản trị, báo cáo
+Web --> Biz : Gọi qua interface (DI)
+Biz --> Data : UnitOfWork
+Data --> DB : EF Core / SQL
+Biz --> Mail : Gửi OTP, email xác nhận
+@enduml

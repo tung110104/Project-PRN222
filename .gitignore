@@ -8,5 +8,5 @@ appsettings.Development.json
 .$*.bkp
 *.bkp
 
-# Anh nguoi dung upload - khong commit
+# Anh san demo trong uploads/ duoc commit de demo chay ngay
 SportsFieldBooking.Web/wwwroot/uploads/

@@ -1,0 +1,50 @@
+@startuml
+skinparam dpi 180
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Khách vãng lai" as Guest
+actor "Khách hàng" as Customer
+actor "Chủ sân (Staff)" as Staff
+actor "Quản trị viên" as Admin
+
+rectangle "System: Sports Field Booking" {
+  package "Nghiệp vụ khách hàng" {
+    usecase "Đăng ký tài khoản" as UC1
+    usecase "Đăng nhập" as UC2
+    usecase "Quên mật khẩu (OTP)" as UC3
+    usecase "Tìm kiếm - xem sân" as UC4
+    usecase "Đặt sân (nhiều khung giờ)" as UC5
+    usecase "Thanh toán Momo / Tiền mặt" as UC6
+    usecase "Hủy đơn đặt sân" as UC7
+    usecase "Đánh giá sân" as UC8
+  }
+
+  package "Quản trị - vận hành" {
+    usecase "Quản lý sân + ảnh sân" as UC9
+    usecase "Duyệt booking / thanh toán" as UC10
+    usecase "Báo cáo doanh thu" as UC11
+    usecase "Quản lý người dùng" as UC12
+    usecase "Quản lý khuyến mãi" as UC13
+    usecase "Đăng nhập quản trị" as UC14
+  }
+}
+
+Guest -- UC1
+Guest -- UC2
+Guest -- UC3
+Guest -- UC4
+Customer -- UC4
+Customer -- UC5
+Customer -- UC6
+Customer -- UC7
+Customer -- UC8
+Staff -- UC9
+Staff -- UC10
+Staff -- UC11
+Admin -- UC9
+Admin -- UC11
+Admin -- UC12
+Admin -- UC13
+Admin -- UC14
+@enduml

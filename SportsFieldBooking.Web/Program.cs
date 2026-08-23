@@ -4,11 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using SportsFieldBooking.Business.Services;
 using SportsFieldBooking.DataAccess;
 using SportsFieldBooking.DataAccess.Repositories;
+using SportsFieldBooking.Web.Hubs;
 using SportsFieldBooking.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
+// SignalR: day thong bao real-time (chuong tren navbar - vd bao chu san khi co khach dat san)
+builder.Services.AddSignalR();
 
 builder.Services.AddDbContext<SportsFieldBookingDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -31,6 +35,10 @@ builder.Services.AddScoped<IPointService, PointService>();
 builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
 builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Business day thong bao real-time qua abstraction IRealtimeNotifier -> Web implement bang SignalR
+builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
 
 // Cong thanh toan VNPay sandbox (chua cau hinh TmnCode -> tu fallback sang cong demo noi bo)
 builder.Services.AddScoped<IVnPayService, VnPayService>();
@@ -82,6 +90,9 @@ app.UseAuthorization();
 
 // API JSON (ApiFieldsController dung attribute routing: /api/fields/...)
 app.MapControllers();
+
+// Hub SignalR cho thong bao real-time
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.MapControllerRoute(
     name: "default",

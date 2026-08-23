@@ -36,12 +36,22 @@ public class RefundService : IRefundService
     private readonly IUnitOfWork _uow;
     private readonly IWalletService _walletService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
-    public RefundService(IUnitOfWork uow, IWalletService walletService, IEmailService emailService)
+    public RefundService(IUnitOfWork uow, IWalletService walletService, IEmailService emailService,
+        INotificationService notificationService)
     {
         _uow = uow;
         _walletService = walletService;
         _emailService = emailService;
+        _notificationService = notificationService;
+    }
+
+    /// <summary>Goi NotifyAsync nhung nuot loi - thong bao hong khong duoc lam hong nghiep vu hoan tien.</summary>
+    private async Task TryNotifyAsync(int userId, string title, string message, string? url = null)
+    {
+        try { await _notificationService.NotifyAsync(userId, title, message, url); }
+        catch { /* bo qua */ }
     }
 
     public async Task<(RefundDestination Destination, decimal Amount, string Note)> RefundBookingAsync(Booking booking, string reason)
@@ -95,6 +105,23 @@ public class RefundService : IRefundService
             await _emailService.SendAsync(user.Email,
                 $"[SportBooking] Yêu cầu hoàn {amount:N0}đ - booking #{booking.BookingId}",
                 RefundToBankEmail(user, booking, fieldName, amount, reason, hasBank));
+
+        // Bao chu san + moi Admin: co yeu cau hoan tien chuyen khoan moi can xu ly thu cong
+        var notifyIds = await _uow.Users.Query()
+            .Where(u => u.IsActive && u.Role.RoleName == "Admin")
+            .Select(u => u.UserId)
+            .ToListAsync();
+        var fieldOwnerId = booking.Field?.OwnerId;
+        if (fieldOwnerId.HasValue && !notifyIds.Contains(fieldOwnerId.Value))
+            notifyIds.Add(fieldOwnerId.Value);
+        foreach (var id in notifyIds)
+        {
+            await TryNotifyAsync(id,
+                "Yêu cầu hoàn tiền mới",
+                $"Cần chuyển khoản hoàn {amount:N0}đ cho {user?.FullName ?? "khách"} " +
+                $"(booking #{booking.BookingId}, {fieldName} — {reason}).",
+                "/Refunds/Index?status=Pending");
+        }
 
         return (RefundDestination.BankTransfer, amount, hasBank
             ? $" {amount:N0}đ sẽ được chuyển khoản về tài khoản ngân hàng của bạn trong 1-3 ngày làm việc."
@@ -206,6 +233,13 @@ public class RefundService : IRefundService
             <p>SportBooking - Hệ thống đặt sân thể thao</p>
             """);
 
+        // Bao khach: tien hoan da duoc chuyen khoan
+        await TryNotifyAsync(request.UserId,
+            "Đã chuyển khoản hoàn tiền",
+            $"Số tiền hoàn {request.Amount:N0}đ cho booking #{request.BookingId} đã được chuyển khoản " +
+            $"về {request.BankName} · {request.BankAccountNumber}. Tiền có thể mất vài phút đến vài giờ để về tài khoản.",
+            $"/Booking/Detail/{request.BookingId}");
+
         return (true, $"Đã ghi nhận chuyển khoản {request.Amount:N0}đ cho {request.User.FullName} và gửi email xác nhận.");
     }
 
@@ -237,6 +271,13 @@ public class RefundService : IRefundService
             <p>Vui lòng liên hệ với chúng tôi nếu bạn cần hỗ trợ thêm.</p>
             <p>SportBooking - Hệ thống đặt sân thể thao</p>
             """);
+
+        // Bao khach: yeu cau hoan tien bi tu choi (kem ly do)
+        await TryNotifyAsync(request.UserId,
+            "Yêu cầu hoàn tiền bị từ chối",
+            $"Yêu cầu hoàn {request.Amount:N0}đ cho booking #{request.BookingId} chưa được xử lý — lý do: {note}. " +
+            "Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.",
+            $"/Booking/Detail/{request.BookingId}");
 
         return (true, "Đã từ chối yêu cầu hoàn tiền và gửi email thông báo cho khách.");
     }

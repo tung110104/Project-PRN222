@@ -28,11 +28,20 @@ public class PointService : IPointService
 {
     private readonly IUnitOfWork _uow;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
-    public PointService(IUnitOfWork uow, IEmailService emailService)
+    public PointService(IUnitOfWork uow, IEmailService emailService, INotificationService notificationService)
     {
         _uow = uow;
         _emailService = emailService;
+        _notificationService = notificationService;
+    }
+
+    /// <summary>Goi NotifyAsync nhung nuot loi - thong bao hong khong duoc lam hong nghiep vu diem.</summary>
+    private async Task TryNotifyAsync(int userId, string title, string message, string? url = null)
+    {
+        try { await _notificationService.NotifyAsync(userId, title, message, url); }
+        catch { /* bo qua */ }
     }
 
     public Task<List<PointTransaction>> GetHistoryAsync(int userId) =>
@@ -78,6 +87,8 @@ public class PointService : IPointService
 
         var note = $"Tích điểm booking #{booking.BookingId}" + (golden != null ? $" (x{golden.PointsMultiplier} {golden.Name})" : "");
         await AddTransactionAsync(user, "Earn", points, note, booking.BookingId);
+        var totalEarned = points;
+        var bonusNotes = "";
 
         // Su kien: thuong lan dat dau tien (chi 1 lan duy nhat, kiem tra lich su de khong cong trung)
         var firstBonusNote = "Thưởng hoàn thành booking đầu tiên";
@@ -88,7 +99,11 @@ public class PointService : IPointService
             var completedCount = await _uow.Bookings.Query()
                 .CountAsync(b => b.UserId == user.UserId && b.Status == "Completed");
             if (completedCount <= 1)
+            {
                 await AddTransactionAsync(user, "Earn", config.FirstBookingBonusPoints, firstBonusNote, booking.BookingId);
+                totalEarned += config.FirstBookingBonusPoints;
+                bonusNotes += $" +{config.FirstBookingBonusPoints} điểm thưởng booking đầu tiên.";
+            }
         }
 
         // Su kien: hoan thanh du N booking trong thang duong lich -> thuong (moi thang toi da 1 lan)
@@ -103,10 +118,22 @@ public class PointService : IPointService
                 .CountAsync(b => b.UserId == user.UserId && b.Status == "Completed" &&
                                  b.BookingDate >= monthStart && b.BookingDate < monthEnd);
             if (monthCount >= config.MonthlyBookingTarget)
+            {
                 await AddTransactionAsync(user, "Earn", config.MonthlyBookingBonusPoints, monthlyNote, booking.BookingId);
+                totalEarned += config.MonthlyBookingBonusPoints;
+                bonusNotes += $" +{config.MonthlyBookingBonusPoints} điểm thưởng đủ {config.MonthlyBookingTarget} booking/tháng.";
+            }
         }
 
         await _uow.SaveChangesAsync();
+
+        // Bao khach: booking hoan thanh va so diem vua duoc cong
+        var goldenText = golden != null ? $" (x{golden.PointsMultiplier} ngày vàng {golden.Name})" : "";
+        await TryNotifyAsync(user.UserId,
+            "Booking hoàn thành — tích điểm",
+            $"Booking #{booking.BookingId} đã hoàn thành. Bạn được cộng {totalEarned} điểm{goldenText}.{bonusNotes} " +
+            $"Số dư điểm hiện tại: {user.Points}.",
+            "/Wallet/Index");
     }
 
     public async Task EarnForReviewAsync(int userId, int bookingId)
@@ -227,6 +254,14 @@ public class PointService : IPointService
 
         await AddTransactionAsync(user, "Adjust", points, $"Admin điều chỉnh: {reason}", null);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: admin vua cong/tru diem (thao tac don phuong thi nguoi bi anh huong phai duoc bao)
+        await TryNotifyAsync(userId,
+            "Điều chỉnh điểm tích lũy",
+            $"Quản trị viên đã {(points >= 0 ? "cộng" : "trừ")} {Math.Abs(points)} điểm của bạn — lý do: {reason}. " +
+            $"Số dư điểm hiện tại: {user.Points}.",
+            "/Wallet/Index");
+
         return (true, "Đã điều chỉnh điểm.");
     }
 }

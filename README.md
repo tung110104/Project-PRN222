@@ -27,7 +27,7 @@ Database/SportsFieldBookingDB.sql   → Script tạo DB + seed data (DB-First)
 
 | Vai trò | Email | Ghi chú |
 |---|---|---|
-| Admin | admin@sfb.com | Duyệt bảo trì, quản lý user/ví/điểm, ngày vàng hệ thống |
+| Admin | admin@sfb.com | Duyệt bảo trì, quản lý user/ví/điểm, ngày vàng hệ thống. **Cấu hình trong `appsettings.json` (`AdminAccount:Email` + `AdminAccount:Password`)** — đổi tại đó rồi restart app; lần đăng nhập đầu hệ thống tự tạo/gắn user Admin tương ứng trong DB |
 | Owner (chủ sân) | owner@sfb.com | Quản lý sân, bảng giá, khuyến mãi, request bảo trì, quản lý đặt lịch + đặt hộ khách (role Staff đã gộp vào Owner) |
 | Owner 2 | staff@sfb.com | Chủ sân thứ hai (chưa có sân) — dùng test phân quyền theo chủ sân |
 | Customer | customer@sfb.com | Ví có sẵn 500.000đ để demo |
@@ -41,13 +41,15 @@ Mã giảm giá mẫu: `SUMMER26` (-20%, hệ thống), `NEWBIE10` (-10%, hệ t
 2. **Ngày vàng** — `GoldenDays`: ngày lễ/sự kiện nhân hệ số giá + hệ số tích điểm; Admin tạo toàn hệ thống, Owner tạo riêng cho sân.
 3. **Ví tiền ảo** — `Wallets` + `WalletTransactions`: nạp qua cổng thanh toán, thanh toán, hoàn tiền khi hủy/bảo trì, cashback (chủ sân cấu hình %), admin khóa/điều chỉnh có lý do. **Chủ sân bật/tắt nhận ví theo từng sân** (`AcceptWalletPayment`). Tiền ví không rút được. **Khuyến mãi nạp**: nạp từ 200k tặng 15k, từ 500k tặng 50k (giao dịch `Bonus` riêng, cấu hình trong `AppConfigSingleton.DepositBonusTiers`).
 4. **Tích điểm + hạng thành viên** — `PointTransactions`: 10.000đ = 1 điểm khi booking hoàn thành (nhân hệ số ngày vàng), thưởng điểm khi review; **thưởng sự kiện**: +20 điểm hoàn thành booking đầu tiên, +50 điểm khi hoàn thành đủ 5 booking trong tháng (chống cộng trùng theo lịch sử điểm); dùng điểm trừ tiền khi thanh toán (1 điểm = 100đ, tối đa 50% booking). **Đổi điểm lấy voucher** tại trang Ví & Điểm (100đ→5%/tối đa 20k, 200đ→10%/50k, 500đ→15%/150k) — voucher là mã `Promotion` dùng 1 lần, **gửi về email** của khách. Hạng Thường/Bạc/Vàng/Kim cương theo điểm trọn đời → giảm 0/3/5/10% mọi booking.
-5. **Super account** — ẩn hoàn toàn: chỉ là SHA-256 hash trong `AccountController`, kiểm tra trước khi query DB, role `SuperAdmin`, chỉ vào trang Người dùng để cấp/thu hồi Admin (cứu hộ). Đăng nhập tại `/Account/AdminLogin` (trang riêng cho quản trị).
+5. **Super account** — ẩn hoàn toàn: chỉ là SHA-256 hash trong `AccountController`, kiểm tra trước khi query DB, role `SuperAdmin`, chỉ vào trang Người dùng để cấp/thu hồi Admin (cứu hộ). Đăng nhập tại `/Account/AdminLogin`. **Tài khoản Admin** thì cấu hình trong `appsettings.json` (`AdminAccount:*`): đăng nhập đối chiếu với cấu hình, tự tạo/gắn user Admin trong DB để nghiệp vụ đầy đủ.
 6. **Role nhiều luồng** — Customer / Owner / Admin / SuperAdmin, mỗi role menu + trang chủ riêng. **Owner = chủ sân kiêm người trực quầy** (đã gộp role Staff vào Owner).
 7. **Địa chỉ chi tiết + API** — Fields tách `Province`/`Ward`/`Address`; form thêm/sửa sân đổ dropdown từ `provinces.open-api.vn` (v2, 2 cấp sau sáp nhập); bộ lọc tìm sân theo Tỉnh/Thành.
 8. **Bảo trì** — Owner gửi `MaintenanceRequest`, Admin duyệt → sân khóa đặt trong khoảng bảo trì, booking trùng lịch **tự hủy + hoàn tiền (về ví nếu trả bằng ví) + email thông báo** (không hỏi ý kiến — tránh booking treo).
 9. **Bỏ BookingDetail** — 1 booking = 1 sân + 1 khung giờ + 1 ngày; chọn nhiều khung giờ tạo nhiều booking.
 10. **Mọi role đặt được sân** — Admin/Owner đặt cho mình như khách, và **đặt hộ khách** (walk-in/điện thoại) tại Quản lý đặt lịch → Đặt hộ khách, kèm tùy chọn thu tiền mặt ngay; booking ghi `CreatedById` để truy vết.
 11. **Khuyến mãi gửi email** — `Promotions.OwnerId`: mã của chủ sân chỉ áp dụng cho sân của họ, **gửi qua email** cho khách từng đặt sân đó (Admin gửi mã hệ thống cho mọi khách). SMTP cấu hình trong `appsettings.json` (`Smtp:*`); để trống → in email ra console (demo).
+
+12. **Thông báo real-time (SignalR)** — khi khách đặt sân, **chủ sân nhận thông báo ngay** (chuông trên navbar + toast, không cần F5): lưu bảng `Notifications`, đẩy qua hub `/notificationHub` theo group `user_{userId}`. Business chỉ gọi abstraction `IRealtimeNotifier` (Web implement bằng SignalR — giữ đúng 3 lớp). DB cũ đang chạy thì chỉ cần chạy thêm `Database/AddNotifications.sql` (không mất dữ liệu).
 
 **Thứ tự áp giảm giá:** giá theo rule/ngày vàng → mã khuyến mãi → giảm theo hạng → điểm quy đổi → trả phần còn lại bằng ví/VNPay/Momo/Cash.
 

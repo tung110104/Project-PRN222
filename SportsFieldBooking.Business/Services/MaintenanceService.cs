@@ -24,15 +24,24 @@ public class MaintenanceService : IMaintenanceService
     private readonly IPointService _pointService;
     private readonly IEmailService _emailService;
     private readonly IRefundService _refundService;
+    private readonly INotificationService _notificationService;
 
     public MaintenanceService(IUnitOfWork uow, IWalletService walletService, IPointService pointService,
-        IEmailService emailService, IRefundService refundService)
+        IEmailService emailService, IRefundService refundService, INotificationService notificationService)
     {
         _uow = uow;
         _walletService = walletService;
         _pointService = pointService;
         _emailService = emailService;
         _refundService = refundService;
+        _notificationService = notificationService;
+    }
+
+    /// <summary>Goi NotifyAsync nhung nuot loi - thong bao hong khong duoc lam hong nghiep vu chinh.</summary>
+    private async Task TryNotifyAsync(int userId, string title, string message, string? url = null)
+    {
+        try { await _notificationService.NotifyAsync(userId, title, message, url); }
+        catch { /* bo qua */ }
     }
 
     public Task<List<MaintenanceRequest>> GetByOwnerAsync(int ownerId) =>
@@ -80,6 +89,22 @@ public class MaintenanceService : IMaintenanceService
             CreatedAt = DateTime.Now
         });
         await _uow.SaveChangesAsync();
+
+        // Bao real-time cho MOI Admin: co yeu cau bao tri moi cho duyet
+        var owner = await _uow.Users.GetByIdAsync(ownerId);
+        var adminIds = await _uow.Users.Query()
+            .Where(u => u.IsActive && u.Role.RoleName == "Admin")
+            .Select(u => u.UserId)
+            .ToListAsync();
+        foreach (var adminId in adminIds)
+        {
+            await TryNotifyAsync(adminId,
+                "Yêu cầu bảo trì mới",
+                $"{owner?.FullName ?? "Chủ sân"} gửi yêu cầu bảo trì sân {field.FieldName} " +
+                $"từ {start:dd/MM/yyyy} đến {end:dd/MM/yyyy} — lý do: {reason}.",
+                "/Maintenance/Index?status=Pending");
+        }
+
         return (true, "Đã gửi yêu cầu bảo trì, chờ Admin duyệt.");
     }
 
@@ -151,7 +176,22 @@ public class MaintenanceService : IMaintenanceService
                 $"(lý do: {request.Reason}) nên booking ngày {booking.BookingDate:dd/MM/yyyy} lúc {booking.TimeSlot.StartTime:HH\\:mm} của bạn đã được hủy tự động.<br/>" +
                 $"{refundText}<br/>" +
                 $"Bạn có thể đặt lại khung giờ khác sau ngày bảo trì - rất mong được phục vụ bạn lần sau!");
+
+            // Bao real-time (chuong navbar) cho khach co booking bi huy do bao tri
+            await TryNotifyAsync(booking.UserId,
+                "Booking bị hủy do sân bảo trì",
+                $"Sân {request.Field.FieldName} bảo trì {request.StartDate:dd/MM/yyyy}–{request.EndDate:dd/MM/yyyy} " +
+                $"nên booking ngày {booking.BookingDate:dd/MM/yyyy} ({booking.TimeSlot.StartTime:HH\\:mm}) của bạn đã bị hủy. {refundText}",
+                $"/Booking/Detail/{booking.BookingId}");
         }
+
+        // Bao cho chu san: yeu cau da duoc duyet
+        await TryNotifyAsync(request.OwnerId,
+            "Yêu cầu bảo trì được duyệt",
+            $"Admin đã duyệt bảo trì sân {request.Field.FieldName} " +
+            $"({request.StartDate:dd/MM/yyyy}–{request.EndDate:dd/MM/yyyy}). " +
+            $"{affected.Count} booking trùng lịch đã được hủy và hoàn tiền tự động.",
+            "/Maintenance/Index");
 
         return (true, $"Đã duyệt bảo trì. {affected.Count} booking trùng lịch đã được hủy, hoàn tiền và gửi email thông báo.");
     }
@@ -167,6 +207,16 @@ public class MaintenanceService : IMaintenanceService
         request.ProcessedAt = DateTime.Now;
         _uow.MaintenanceRequests.Update(request);
         await _uow.SaveChangesAsync();
+
+        // Bao cho chu san: yeu cau bi tu choi (kem ly do cua Admin neu co)
+        var field = await _uow.Fields.GetByIdAsync(request.FieldId);
+        var noteText = string.IsNullOrWhiteSpace(adminNote) ? "" : $" Lý do: {adminNote}";
+        await TryNotifyAsync(request.OwnerId,
+            "Yêu cầu bảo trì bị từ chối",
+            $"Admin đã từ chối yêu cầu bảo trì sân {field?.FieldName} " +
+            $"({request.StartDate:dd/MM/yyyy}–{request.EndDate:dd/MM/yyyy}).{noteText}",
+            "/Maintenance/Index");
+
         return (true, "Đã từ chối yêu cầu bảo trì.");
     }
 }

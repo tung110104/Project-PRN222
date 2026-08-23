@@ -13,12 +13,18 @@ public class AccountController : Controller
     // [SUPER ACCOUNT] Tai khoan cuu ho KHONG ton tai trong database lan appsettings.json.
     // Chi luu SHA-256 hash mot chieu trong code -> doc source cung khong suy nguoc ra email/mat khau,
     // khong the bi khoa/xoa/sua qua bat ky giao dien nao. Doi mat khau = thay 2 hang so nay va build lai.
+    // (Tai khoan ADMIN thi nguoc lai: cau hinh trong appsettings.json - xem AdminLogin ben duoi.)
     private const string SuperEmailHash = "27cbfffc12a8cf6ebfeb875859ef17e04feb0965cd208affff7d2de2b43a9292";
     private const string SuperPasswordHash = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
 
     private readonly IAuthService _authService;
+    private readonly IConfiguration _config;
 
-    public AccountController(IAuthService authService) => _authService = authService;
+    public AccountController(IAuthService authService, IConfiguration config)
+    {
+        _authService = authService;
+        _config = config;
+    }
 
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
@@ -96,6 +102,30 @@ public class AccountController : Controller
                 new ClaimsPrincipal(superIdentity));
             TempData["Success"] = "Đăng nhập Super Account (tài khoản cứu hộ). Bạn có thể cấp/thu hồi quyền Admin.";
             return RedirectToAction("Index", "Users");
+        }
+
+        // [ADMIN TU APPSETTINGS] Tai khoan Admin cau hinh trong appsettings.json (AdminAccount:Email/Password).
+        // Khop cau hinh -> gan voi user Admin tuong ung trong DB (tu tao neu chua co) de moi nghiep vu
+        // can UserId (dat ho, xu ly hoan tien, nhan thong bao...) van hoat dong day du.
+        var cfgEmail = _config["AdminAccount:Email"];
+        var cfgPassword = _config["AdminAccount:Password"];
+        if (!string.IsNullOrWhiteSpace(cfgEmail) && !string.IsNullOrWhiteSpace(cfgPassword)
+            && email.Trim().Equals(cfgEmail.Trim(), StringComparison.OrdinalIgnoreCase)
+            && password == cfgPassword)
+        {
+            var admin = await _authService.GetOrCreateConfiguredAdminAsync(cfgEmail.Trim(), cfgPassword);
+            if (admin == null)
+            {
+                ViewBag.Error = "Email trong cấu hình AdminAccount đang thuộc về một tài khoản không phải Admin.";
+                return View();
+            }
+            if (!admin.IsActive)
+            {
+                ViewBag.Error = "Tài khoản Admin đã bị khóa. Dùng Super Account để mở khóa.";
+                return View();
+            }
+            await SignInUserAsync(admin);
+            return RedirectToAction("Index", "Reports");
         }
 
         var user = await _authService.LoginAsync(email, password);

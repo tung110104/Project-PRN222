@@ -27,6 +27,7 @@ public class SportsFieldBookingDbContext : DbContext
     public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
     public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
     public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
+    public DbSet<AppNotification> Notifications => Set<AppNotification>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -234,6 +235,19 @@ public class SportsFieldBookingDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AppNotification>(e =>
+        {
+            e.ToTable("Notifications");
+            e.HasKey(x => x.NotificationId);
+            e.Property(x => x.Title).HasMaxLength(200);
+            e.Property(x => x.Message).HasMaxLength(500);
+            e.Property(x => x.Url).HasMaxLength(300);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+            e.HasIndex(x => new { x.UserId, x.IsRead });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PasswordResetOtp>(e =>

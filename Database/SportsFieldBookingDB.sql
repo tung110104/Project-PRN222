@@ -257,6 +257,21 @@ GO
 CREATE INDEX IX_PasswordResetOtps_User ON PasswordResetOtps(UserId, IsUsed);
 GO
 
+-- Thong bao trong ung dung (chuong tren navbar) - vd: bao chu san khi co khach dat san moi.
+-- Day real-time qua SignalR, luu DB de xem lai lich su.
+CREATE TABLE Notifications (
+    NotificationId INT IDENTITY(1,1) PRIMARY KEY,
+    UserId    INT NOT NULL REFERENCES Users(UserId) ON DELETE CASCADE,  -- nguoi NHAN
+    Title     NVARCHAR(200) NOT NULL,
+    Message   NVARCHAR(500) NOT NULL,
+    Url       NVARCHAR(300) NULL,           -- link mo khi bam vao thong bao
+    IsRead    BIT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE()
+);
+GO
+CREATE INDEX IX_Notifications_User ON Notifications(UserId, IsRead);
+GO
+
 /* =============================================================
    SEED DATA  (mat khau tat ca tai khoan: 123456)
    Super account cuu ho: khong nam trong DB/appsettings - chi luu SHA-256 hash trong AccountController

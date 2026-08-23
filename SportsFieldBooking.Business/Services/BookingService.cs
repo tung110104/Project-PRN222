@@ -31,6 +31,7 @@ public class BookingService : IBookingService
     private readonly IWalletService _walletService;
     private readonly IEmailService _emailService;
     private readonly IRefundService _refundService;
+    private readonly INotificationService _notificationService;
 
     public BookingService(IUnitOfWork uow, IPricingService pricingService, IPointService pointService,
         IWalletService walletService, IEmailService emailService, IRefundService refundService,
@@ -42,6 +43,7 @@ public class BookingService : IBookingService
         _walletService = walletService;
         _emailService = emailService;
         _refundService = refundService;
+        _notificationService = notificationService;
     }
 
     public async Task<List<int>> GetBookedSlotIdsAsync(int fieldId, DateOnly date)
@@ -175,6 +177,24 @@ public class BookingService : IBookingService
 
             var goldenNote = golden != null ? $" (Ngày vàng: {golden.Name})" : "";
             var tierNote = tier.DiscountPercent > 0 ? $" Hạng {tier.Name} được giảm {tier.DiscountPercent}%." : "";
+
+            // Thong bao real-time (chuong navbar) cho CHU SAN khi co khach dat san moi.
+            // Bo qua khi chinh chu san tu dat/dat ho tren san cua minh (khong can tu bao cho minh).
+            if (field.OwnerId != userId && field.OwnerId != createdById)
+            {
+                var slotTimes = string.Join(", ", slots.OrderBy(s => s.StartTime)
+                    .Select(s => $"{s.StartTime:HH\\:mm}-{s.EndTime:HH\\:mm}"));
+                try
+                {
+                    await _notificationService.NotifyAsync(field.OwnerId,
+                        "Đặt sân mới",
+                        $"{customer.FullName} vừa đặt sân {field.FieldName} ngày {date:dd/MM/yyyy} " +
+                        $"({slotTimes}), tổng {grandTotal:N0}đ.",
+                        "/StaffBookings/Index?status=Pending");
+                }
+                catch { /* loi thong bao khong duoc lam hong nghiep vu dat san */ }
+            }
+
             await _emailService.SendAsync(customer.Email, "Xác nhận đặt sân",
                 $"Bạn đã đặt {slots.Count} khung giờ tại {field.FieldName} ngày {date:dd/MM/yyyy}{goldenNote}. " +
                 $"Tổng tiền: {grandTotal:N0}đ.{tierNote} Vui lòng thanh toán để xác nhận.");
@@ -247,6 +267,42 @@ public class BookingService : IBookingService
         var cancelReason = isStaff ? "chủ sân/quản trị viên hủy" : "khách hàng tự hủy";
         var (destination, refundAmount, refundNote) = await _refundService.RefundBookingAsync(booking, cancelReason);
 
+        // Chu san/Admin huy -> bao real-time (chuong navbar) cho KHACH; khach tu huy thi khong can tu bao minh
+        if (isStaff && booking.UserId != userId)
+        {
+            var refundText = destination switch
+            {
+                RefundDestination.Wallet => $" Đã hoàn {refundAmount:N0}đ vào ví của bạn.",
+                RefundDestination.BankTransfer => $" Số tiền {refundAmount:N0}đ sẽ được chuyển khoản về tài khoản ngân hàng của bạn.",
+                _ => ""
+            };
+            try
+            {
+                await _notificationService.NotifyAsync(booking.UserId,
+                    "Booking bị hủy",
+                    $"Booking sân {booking.Field?.FieldName} ngày {booking.BookingDate:dd/MM/yyyy} " +
+                    $"({booking.TimeSlot?.StartTime:HH\\:mm}-{booking.TimeSlot?.EndTime:HH\\:mm}) " +
+                    $"đã bị chủ sân/quản trị viên hủy.{refundText}",
+                    $"/Booking/Detail/{booking.BookingId}");
+            }
+            catch { /* loi thong bao khong duoc lam hong nghiep vu huy */ }
+        }
+
+        // Khach tu huy -> bao cho CHU SAN biet khung gio da trong lai
+        if (!isStaff && booking.Field != null && booking.Field.OwnerId != userId)
+        {
+            try
+            {
+                await _notificationService.NotifyAsync(booking.Field.OwnerId,
+                    "Khách hủy booking",
+                    $"{booking.User?.FullName ?? "Khách"} đã hủy booking #{booking.BookingId} " +
+                    $"sân {booking.Field.FieldName} ngày {booking.BookingDate:dd/MM/yyyy} " +
+                    $"({booking.TimeSlot?.StartTime:HH\\:mm}-{booking.TimeSlot?.EndTime:HH\\:mm}). Khung giờ đã trống trở lại.",
+                    "/StaffBookings/Index?status=Cancelled");
+            }
+            catch { /* bo qua */ }
+        }
+
         // Email thong bao huy booking (rieng email hoan tien do RefundService gui)
         await SendCancelEmailAsync(booking, cancelReason, destination, refundAmount);
 
@@ -311,12 +367,27 @@ public class BookingService : IBookingService
 
     public async Task<(bool Success, string Message)> ConfirmAsync(int bookingId)
     {
-        var booking = await _uow.Bookings.GetByIdAsync(bookingId);
+        var booking = await _uow.Bookings.Query()
+            .Include(b => b.Field)
+            .Include(b => b.TimeSlot)
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId);
         if (booking == null) return (false, "Không tìm thấy booking.");
         if (booking.Status != "Pending") return (false, "Chỉ xác nhận được booking đang chờ.");
         booking.Status = "Confirmed";
         _uow.Bookings.Update(booking);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: booking da duoc chu san xac nhan
+        try
+        {
+            await _notificationService.NotifyAsync(booking.UserId,
+                "Booking được xác nhận",
+                $"Booking #{booking.BookingId} sân {booking.Field?.FieldName} ngày {booking.BookingDate:dd/MM/yyyy} " +
+                $"({booking.TimeSlot?.StartTime:HH\\:mm}-{booking.TimeSlot?.EndTime:HH\\:mm}) đã được chủ sân xác nhận.",
+                $"/Booking/Detail/{booking.BookingId}");
+        }
+        catch { /* bo qua */ }
+
         return (true, "Đã xác nhận booking.");
     }
 

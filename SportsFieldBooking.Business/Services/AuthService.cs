@@ -12,6 +12,13 @@ public interface IAuthService
     Task<(bool Success, string Message)> RegisterAsync(string fullName, string email, string password, string? phone);
     string HashPassword(string password);
 
+    /// <summary>
+    /// [ADMIN TU APPSETTINGS] Lay user Admin ung voi email cau hinh trong AdminAccount cua appsettings.json;
+    /// chua co thi tu tao (role Admin). Tra ve null neu email da thuoc mot tai khoan KHONG phai Admin.
+    /// Mat khau da duoc doi chieu voi appsettings truoc khi goi ham nay.
+    /// </summary>
+    Task<User?> GetOrCreateConfiguredAdminAsync(string email, string configuredPassword);
+
     // ----- Quen mat khau (chi Customer/Owner - Admin dung Super Account de cuu ho) -----
     /// <summary>Tao ma OTP 6 so, luu DB va gui qua email. Luon tra ve thong bao chung de khong lo email nao ton tai.</summary>
     Task<(bool Success, string Message)> RequestPasswordResetAsync(string email);
@@ -54,6 +61,30 @@ public class AuthService : IAuthService
         return await _uow.Users.Query()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == hash);
+    }
+
+    public async Task<User?> GetOrCreateConfiguredAdminAsync(string email, string configuredPassword)
+    {
+        var user = await _uow.Users.Query()
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Email == email);
+        if (user != null)
+            return user.Role.RoleName == "Admin" ? user : null; // email dang thuoc tai khoan thuong -> tu choi
+
+        var adminRole = await _uow.Roles.Query().FirstAsync(r => r.RoleName == "Admin");
+        user = new User
+        {
+            FullName = "Quản trị viên",
+            Email = email,
+            PasswordHash = HashPassword(configuredPassword), // dong bo DB voi mat khau cau hinh
+            RoleId = adminRole.RoleId,
+            IsActive = true,
+            CreatedAt = DateTime.Now,
+            Role = adminRole
+        };
+        await _uow.Users.AddAsync(user);
+        await _uow.SaveChangesAsync();
+        return user;
     }
 
     public async Task<(bool Success, string Message)> RegisterAsync(string fullName, string email, string password, string? phone)

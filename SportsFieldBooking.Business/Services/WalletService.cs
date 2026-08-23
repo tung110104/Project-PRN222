@@ -26,11 +26,20 @@ public class WalletService : IWalletService
 {
     private readonly IUnitOfWork _uow;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
-    public WalletService(IUnitOfWork uow, IEmailService emailService)
+    public WalletService(IUnitOfWork uow, IEmailService emailService, INotificationService notificationService)
     {
         _uow = uow;
         _emailService = emailService;
+        _notificationService = notificationService;
+    }
+
+    /// <summary>Goi NotifyAsync nhung nuot loi - thong bao hong khong duoc lam hong giao dich vi.</summary>
+    private async Task TryNotifyAsync(int userId, string title, string message, string? url = null)
+    {
+        try { await _notificationService.NotifyAsync(userId, title, message, url); }
+        catch { /* bo qua */ }
     }
 
     public async Task<Wallet> GetOrCreateAsync(int userId)
@@ -115,6 +124,13 @@ public class WalletService : IWalletService
             catch { /* loi gui mail khong duoc lam hong giao dich nap tien */ }
         }
 
+        // Bao khach: bien lai nap tien tren chuong thong bao (huu ich khi quay ve tu cong thanh toan)
+        var bonusText = bonusTier == null ? "" : $" + tặng {bonusTier.BonusAmount:N0}đ khuyến mãi nạp";
+        await TryNotifyAsync(userId,
+            "Nạp ví thành công",
+            $"Đã nạp {amount:N0}đ vào ví{bonusText}. Số dư hiện tại: {wallet.Balance:N0}đ.",
+            "/Wallet/Index");
+
         return (true, bonusTier == null
             ? $"Đã nạp {amount:N0}đ vào ví."
             : $"Đã nạp {amount:N0}đ vào ví + tặng {bonusTier.BonusAmount:N0}đ khuyến mãi nạp.");
@@ -146,6 +162,12 @@ public class WalletService : IWalletService
         var wallet = await GetOrCreateAsync(userId);
         await AddTransactionAsync(wallet, "Cashback", amount, description, bookingId);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: tien cashback da ve vi
+        await TryNotifyAsync(userId,
+            "Nhận cashback",
+            $"Bạn được hoàn {amount:N0}đ vào ví ({description}). Số dư hiện tại: {wallet.Balance:N0}đ.",
+            "/Wallet/Index");
     }
 
     public Task<List<Wallet>> GetAllForAdminAsync() =>
@@ -161,6 +183,14 @@ public class WalletService : IWalletService
 
         await AddTransactionAsync(wallet, "Adjust", amount, $"Admin điều chỉnh: {reason}", null);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: admin vua cong/tru tien vi (thao tac don phuong thi nguoi bi anh huong phai duoc bao)
+        await TryNotifyAsync(userId,
+            "Điều chỉnh số dư ví",
+            $"Quản trị viên đã {(amount >= 0 ? "cộng" : "trừ")} {Math.Abs(amount):N0}đ " +
+            $"{(amount >= 0 ? "vào" : "khỏi")} ví của bạn — lý do: {reason}. Số dư hiện tại: {wallet.Balance:N0}đ.",
+            "/Wallet/Index");
+
         return (true, "Đã điều chỉnh số dư ví.");
     }
 
@@ -171,5 +201,13 @@ public class WalletService : IWalletService
         wallet.IsLocked = !wallet.IsLocked;
         _uow.Wallets.Update(wallet);
         await _uow.SaveChangesAsync();
+
+        // Bao khach: trang thai vi thay doi (khoa -> khong nap/thanh toan bang vi duoc)
+        await TryNotifyAsync(wallet.UserId,
+            wallet.IsLocked ? "Ví đã bị khóa" : "Ví đã được mở khóa",
+            wallet.IsLocked
+                ? "Ví của bạn đã bị quản trị viên khóa — không thể nạp tiền hoặc thanh toán bằng ví. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ."
+                : "Ví của bạn đã được mở khóa, có thể nạp tiền và thanh toán bằng ví bình thường.",
+            "/Wallet/Index");
     }
 }
