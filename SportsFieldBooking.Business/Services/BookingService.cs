@@ -33,7 +33,8 @@ public class BookingService : IBookingService
     private readonly IRefundService _refundService;
 
     public BookingService(IUnitOfWork uow, IPricingService pricingService, IPointService pointService,
-        IWalletService walletService, IEmailService emailService, IRefundService refundService)
+        IWalletService walletService, IEmailService emailService, IRefundService refundService,
+        INotificationService notificationService)
     {
         _uow = uow;
         _pricingService = pricingService;
