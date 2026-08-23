@@ -1,0 +1,215 @@
+@model User
+@{
+    ViewData["Title"] = "Ví & Điểm";
+    var wallet = (Wallet)ViewBag.Wallet;
+    var walletTxs = (List<WalletTransaction>)ViewBag.WalletTransactions;
+    var pointTxs = (List<PointTransaction>)ViewBag.PointTransactions;
+    var tier = (SportsFieldBooking.Business.Patterns.MembershipTier)ViewBag.Tier;
+    var allTiers = (IReadOnlyList<SportsFieldBooking.Business.Patterns.MembershipTier>)ViewBag.AllTiers;
+    var bonusTiers = (IReadOnlyList<SportsFieldBooking.Business.Patterns.DepositBonusTier>)ViewBag.DepositBonusTiers;
+    var voucherOptions = (IReadOnlyList<SportsFieldBooking.Business.Patterns.VoucherOption>)ViewBag.VoucherOptions;
+    string TxLabel(string type) => type switch
+    {
+        "Deposit" => "Nạp tiền",
+        "Payment" => "Thanh toán",
+        "Refund" => "Hoàn tiền",
+        "Cashback" => "Cashback",
+        "Bonus" => "Thưởng",
+        "Adjust" => "Điều chỉnh",
+        "Earn" => "Tích điểm",
+        "Redeem" => "Đổi điểm",
+        "ReviewBonus" => "Thưởng review",
+        "Revoke" => "Hoàn điểm",
+        _ => type
+    };
+}
+<h3 class="mb-4"><i class="bi bi-wallet2"></i> Ví &amp; Điểm của tôi</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card text-bg-success shadow-sm h-100">
+            <div class="card-body">
+                <h6><i class="bi bi-wallet2"></i> Số dư ví @(wallet.IsLocked ? "(BỊ KHÓA)" : "")</h6>
+                <h3>@wallet.Balance.ToString("N0")đ</h3>
+                <small>Chỉ dùng để đặt sân, không rút ra được.</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-bg-warning shadow-sm h-100">
+            <div class="card-body">
+                <h6><i class="bi bi-stars"></i> Điểm tích lũy</h6>
+                <h3>@Model.Points điểm</h3>
+                <small>Tổng tích lũy trọn đời: @Model.LifetimePoints điểm (dùng xét hạng)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h6>Hạng thành viên</h6>
+                <h3><span class="badge @tier.BadgeCss">@tier.Name</span></h3>
+                <small>
+                    @if (tier.DiscountPercent > 0)
+                    {
+                        <span>Giảm @tier.DiscountPercent% mọi booking.</span>
+                    }
+                    @{
+                        var next = allTiers.Reverse().FirstOrDefault(t => t.MinLifetimePoints > Model.LifetimePoints);
+                    }
+                    @if (next != null)
+                    {
+                        <span>Cần thêm @(next.MinLifetimePoints - Model.LifetimePoints) điểm để lên hạng @next.Name.</span>
+                    }
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong><i class="bi bi-plus-circle"></i> Nạp tiền vào ví</strong></div>
+            <div class="card-body">
+                <form method="post" asp-action="Deposit" class="row g-2">
+                    @Html.AntiForgeryToken()
+                    <div class="col-5">
+                        <input name="amount" type="number" min="10000" step="10000" value="100000" class="form-control" required />
+                    </div>
+                    <div class="col-4">
+                        <select name="method" class="form-select">
+                            <option value="VNPay">VNPay</option>
+                            <option value="Momo">MoMo</option>
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-success w-100" @(wallet.IsLocked ? "disabled" : "")>Nạp tiền</button>
+                    </div>
+                    <small class="text-muted">
+                        Tối thiểu 10.000đ. Bạn sẽ được chuyển đến cổng thanh toán để xác nhận -
+                        tiền chỉ vào ví khi cổng báo giao dịch thành công.
+                    </small>
+                </form>
+                @if (bonusTiers.Any())
+                {
+                    <div class="alert alert-warning py-2 mt-3 mb-0">
+                        <i class="bi bi-gift"></i> <strong>Khuyến mãi nạp:</strong>
+                        @string.Join(" · ", bonusTiers.OrderBy(t => t.MinAmount)
+                            .Select(t => $"nạp từ {t.MinAmount:N0}đ tặng {t.BonusAmount:N0}đ"))
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Lịch sử giao dịch ví</strong></div>
+            <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Thời gian</th><th>Loại</th><th class="text-end">Số tiền</th><th class="text-end">Số dư sau</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in walletTxs)
+                        {
+                            <tr>
+                                <td><small>@t.CreatedAt.ToString("dd/MM HH:mm")</small><br /><small class="text-muted">@t.Description</small></td>
+                                <td><span class="badge bg-light text-dark border">@TxLabel(t.Type)</span></td>
+                                <td class="text-end @(t.Amount >= 0 ? "text-success" : "text-danger")">
+                                    @(t.Amount >= 0 ? "+" : "")@t.Amount.ToString("N0")đ
+                                </td>
+                                <td class="text-end">@t.BalanceAfter.ToString("N0")đ</td>
+                            </tr>
+                        }
+                        @if (!walletTxs.Any())
+                        {
+                            <tr><td colspan="4" class="text-center text-muted">Chưa có giao dịch nào.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong>Các hạng thành viên</strong></div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Hạng</th><th>Điều kiện (điểm trọn đời)</th><th>Ưu đãi</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in allTiers.Reverse())
+                        {
+                            <tr class="@(t.Name == tier.Name ? "table-success" : "")">
+                                <td><span class="badge @t.BadgeCss">@t.Name</span></td>
+                                <td>≥ @t.MinLifetimePoints</td>
+                                <td>@(t.DiscountPercent > 0 ? $"Giảm {t.DiscountPercent}% mọi booking" : "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong><i class="bi bi-ticket-perforated"></i> Đổi điểm lấy voucher</strong></div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">
+                    Voucher là mã giảm giá dùng 1 lần cho mọi sân, được gửi về email <strong>@Model.Email</strong>.
+                </p>
+                <div class="list-group">
+                    @for (var i = 0; i < voucherOptions.Count; i++)
+                    {
+                        var opt = voucherOptions[i];
+                        var enough = Model.Points >= opt.PointCost;
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@opt.PointCost điểm</strong> →
+                                giảm <strong>@opt.DiscountPercent%</strong> (tối đa @opt.MaxDiscount.ToString("N0")đ)
+                                <br /><small class="text-muted">Hạn dùng @opt.ValidityDays ngày kể từ khi đổi</small>
+                            </div>
+                            <form method="post" asp-action="RedeemVoucher">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="option" value="@i" />
+                                <button class="btn btn-sm @(enough ? "btn-outline-success" : "btn-outline-secondary")"
+                                        @(enough ? "" : "disabled")
+                                        onclick="return confirm('Đổi @opt.PointCost điểm lấy voucher giảm @opt.DiscountPercent%?');">
+                                    Đổi ngay
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Lịch sử điểm</strong></div>
+            <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Thời gian</th><th>Loại</th><th class="text-end">Điểm</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in pointTxs)
+                        {
+                            <tr>
+                                <td><small>@t.CreatedAt.ToString("dd/MM HH:mm")</small><br /><small class="text-muted">@t.Description</small></td>
+                                <td><span class="badge bg-light text-dark border">@TxLabel(t.Type)</span></td>
+                                <td class="text-end @(t.Points >= 0 ? "text-success" : "text-danger")">
+                                    @(t.Points >= 0 ? "+" : "")@t.Points
+                                </td>
+                            </tr>
+                        }
+                        @if (!pointTxs.Any())
+                        {
+                            <tr><td colspan="3" class="text-center text-muted">Chưa có giao dịch điểm. Hoàn thành booking để tích điểm!</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

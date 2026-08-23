@@ -22,23 +22,28 @@
             <tbody>
                 @foreach (var b in Model)
                 {
-                    var detail = b.BookingDetails.FirstOrDefault();
                     var paid = b.Payments.Any(p => p.Status == "Paid");
                     <tr>
                         <td>@b.BookingId</td>
-                        <td>@detail?.Field.FieldName</td>
-                        <td>@detail?.BookingDate.ToString("dd/MM/yyyy")</td>
+                        <td>@b.Field.FieldName</td>
+                        <td>@b.BookingDate.ToString("dd/MM/yyyy")</td>
                         <td>
-                            @foreach (var d in b.BookingDetails.OrderBy(x => x.TimeSlot.StartTime))
-                            {
-                                <span class="badge bg-light text-dark border">@d.TimeSlot.StartTime.ToString("HH:mm")</span>
-                            }
+                            <span class="badge bg-light text-dark border">
+                                @b.TimeSlot.StartTime.ToString("HH:mm") - @b.TimeSlot.EndTime.ToString("HH:mm")
+                            </span>
                         </td>
                         <td class="text-success fw-bold">@b.TotalAmount.ToString("N0")đ</td>
                         <td>
                             @if (paid)
                             {
-                                <span class="badge bg-success">Đã thanh toán</span>
+                                var method = b.Payments.First(p => p.Status == "Paid").Method;
+                                <span class="badge bg-success">Đã TT (@method)</span>
+                            }
+                            else if (b.Payments.Any(p => p.Status == "Pending" && p.Method == "Cash"))
+                            {
+                                <span class="badge bg-warning text-dark" title="Đến sân thanh toán, chủ sân sẽ xác nhận">
+                                    <i class="bi bi-cash-coin"></i> Chờ thu tiền mặt
+                                </span>
                             }
                             else if (b.Payments.Any(p => p.Status == "Refunded"))
                             {

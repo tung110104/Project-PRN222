@@ -13,11 +13,12 @@
             <thead class="table-light">
                 <tr>
                     <th>#</th>
+                    <th>Ảnh</th>
                     <th>Tên sân</th>
                     <th>Loại</th>
                     <th>Khu vực</th>
-                    <th>Giá thường</th>
-                    <th>Giá cao điểm</th>
+                    <th>Giá cơ bản</th>
+                    <th>Ví tiền ảo</th>
                     <th>Trạng thái</th>
                     <th></th>
                 </tr>
@@ -25,13 +26,33 @@
             <tbody>
                 @foreach (var f in Model)
                 {
+                    var thumb = f.FieldImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                                ?? f.FieldImages.FirstOrDefault()?.ImageUrl
+                                ?? "/images/field-placeholder.svg";
                     <tr>
                         <td>@f.FieldId</td>
+                        <td>
+                            <img src="@thumb" class="rounded" style="width:64px;height:48px;object-fit:cover"
+                                 alt="@f.FieldName" onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
+                        </td>
                         <td>@f.FieldName</td>
                         <td>@f.FieldType.TypeName</td>
-                        <td>@f.District, @f.City</td>
+                        <td>@f.Ward, @f.Province</td>
                         <td>@f.PricePerHour.ToString("N0")đ</td>
-                        <td>@f.PeakPricePerHour.ToString("N0")đ</td>
+                        <td>
+                            @if (f.AcceptWalletPayment)
+                            {
+                                <span class="badge bg-primary">Bật</span>
+                                @if (f.CashbackPercent > 0)
+                                {
+                                    <span class="badge bg-info text-dark">CB @f.CashbackPercent%</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Tắt</span>
+                            }
+                        </td>
                         <td>
                             @switch (f.Status)
                             {
@@ -41,6 +62,8 @@
                             }
                         </td>
                         <td class="text-end">
+                            <a asp-controller="FieldPricing" asp-action="Index" asp-route-id="@f.FieldId"
+                               class="btn btn-sm btn-outline-success">Giá &amp; Khung giờ</a>
                             <a asp-action="Edit" asp-route-id="@f.FieldId" class="btn btn-sm btn-outline-primary">Sửa</a>
                             <form method="post" asp-action="Delete" asp-route-id="@f.FieldId" class="d-inline"
                                   onsubmit="return confirm('Xóa/đóng sân này?')">

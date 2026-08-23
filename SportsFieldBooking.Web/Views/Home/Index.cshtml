@@ -2,14 +2,19 @@
 @{
     ViewData["Title"] = "Tìm sân";
     var fieldTypes = (List<FieldType>)ViewBag.FieldTypes;
-    var cities = (List<string>)ViewBag.Cities;
+    var provinces = (List<string>)ViewBag.Provinces;
 }
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
-        <form method="get" class="row g-2">
-            <div class="col-md-3">
-                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tên sân, địa chỉ..." />
+        @* Bo loc goi API /api/fields/search bang AJAX - khong tai lai trang.
+           Van giu method="get" de hoat dong binh thuong khi tat JavaScript. *@
+        <form method="get" class="row g-2" id="searchForm">
+            <div class="col-md-3 position-relative">
+                <input name="keyword" id="keyword" value="@ViewBag.Keyword" class="form-control"
+                       placeholder="Tên sân, địa chỉ..." autocomplete="off" />
+                <div id="suggestBox" class="list-group position-absolute w-100 shadow"
+                     style="z-index:1000; display:none; max-height:260px; overflow-y:auto;"></div>
             </div>
             <div class="col-md-2">
                 <select name="fieldTypeId" class="form-select">
@@ -21,11 +26,11 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="city" class="form-select">
-                    <option value="">-- Khu vực --</option>
-                    @foreach (var c in cities)
+                <select name="province" class="form-select">
+                    <option value="">-- Tỉnh/Thành --</option>
+                    @foreach (var c in provinces)
                     {
-                        <option value="@c" selected="@(ViewBag.City as string == c)">@c</option>
+                        <option value="@c" selected="@(ViewBag.Province as string == c)">@c</option>
                     }
                 </select>
             </div>
@@ -48,12 +53,23 @@
     </div>
 </div>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <span class="text-muted small" id="resultCount">Tìm thấy @Model.Count sân</span>
+    <span class="text-muted small d-none" id="loading"><span class="spinner-border spinner-border-sm"></span> Đang tìm...</span>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4" id="fieldList">
     @foreach (var f in Model)
     {
         var avg = f.Reviews.Any() ? f.Reviews.Average(r => r.Rating) : 0;
+        var imgUrl = f.FieldImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                     ?? f.FieldImages.FirstOrDefault()?.ImageUrl
+                     ?? "/images/field-placeholder.svg";
         <div class="col">
             <div class="card h-100 shadow-sm">
+                <img src="@imgUrl" class="card-img-top" alt="@f.FieldName"
+                     style="height:180px;object-fit:cover"
+                     onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <span class="badge bg-success mb-2">@f.FieldType.TypeName</span>
@@ -64,10 +80,19 @@
                     </div>
                     <h5 class="card-title">@f.FieldName</h5>
                     <p class="card-text text-muted mb-1">
-                        <i class="bi bi-geo-alt"></i> @f.Address, @f.District, @f.City
+                        <i class="bi bi-geo-alt"></i> @f.Address, @f.Ward, @f.Province
                     </p>
-                    <p class="mb-1">Giờ thường: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
-                    <p class="mb-0">Giờ cao điểm (17-21h): <strong class="text-danger">@f.PeakPricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-1">Giá từ: <strong class="text-success">@f.PricePerHour.ToString("N0")đ/giờ</strong></p>
+                    <p class="mb-0">
+                        @if (f.AcceptWalletPayment)
+                        {
+                            <span class="badge bg-primary"><i class="bi bi-wallet2"></i> Nhận ví</span>
+                            @if (f.CashbackPercent > 0)
+                            {
+                                <span class="badge bg-info text-dark">Cashback @f.CashbackPercent%</span>
+                            }
+                        }
+                    </p>
                 </div>
                 <div class="card-footer bg-white">
                     <a asp-controller="Field" asp-action="Detail" asp-route-id="@f.FieldId" class="btn btn-success w-100">
@@ -79,10 +104,98 @@
     }
 </div>
 
-@if (!Model.Any())
-{
-    <div class="text-center text-muted py-5">
-        <i class="bi bi-emoji-frown fs-1"></i>
-        <p class="mt-2">Không tìm thấy sân phù hợp.</p>
-    </div>
+<div class="text-center text-muted py-5 @(Model.Any() ? "d-none" : "")" id="emptyBox">
+    <i class="bi bi-emoji-frown fs-1"></i>
+    <p class="mt-2">Không tìm thấy sân phù hợp.</p>
+</div>
+
+@section Scripts {
+<script>
+    const form = document.getElementById('searchForm');
+    const list = document.getElementById('fieldList');
+    const emptyBox = document.getElementById('emptyBox');
+    const countLabel = document.getElementById('resultCount');
+    const loading = document.getElementById('loading');
+    const keywordInput = document.getElementById('keyword');
+    const suggestBox = document.getElementById('suggestBox');
+    let timer = null;
+
+    function cardHtml(f) {
+        const rating = f.rating > 0
+            ? `<span class="text-warning"><i class="bi bi-star-fill"></i> ${f.rating.toFixed(1)} (${f.reviewCount})</span>` : '';
+        let badges = '';
+        if (f.acceptWallet) {
+            badges = '<span class="badge bg-primary"><i class="bi bi-wallet2"></i> Nhận ví</span>';
+            if (f.cashbackPercent > 0)
+                badges += ` <span class="badge bg-info text-dark">Cashback ${f.cashbackPercent}%</span>`;
+        }
+        const imgUrl = f.imageUrl || '/images/field-placeholder.svg';
+        return `<div class="col"><div class="card h-100 shadow-sm">
+            <img src="${imgUrl}" class="card-img-top" alt="${f.fieldName}"
+                 style="height:180px;object-fit:cover"
+                 onerror="this.onerror=null;this.src='/images/field-placeholder.svg'">
+            <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <span class="badge bg-success mb-2">${f.fieldType}</span>${rating}
+            </div>
+            <h5 class="card-title">${f.fieldName}</h5>
+            <p class="card-text text-muted mb-1"><i class="bi bi-geo-alt"></i> ${f.address}</p>
+            <p class="mb-1">Giá từ: <strong class="text-success">${f.priceText}</strong></p>
+            <p class="mb-0">${badges}</p>
+          </div><div class="card-footer bg-white">
+            <a href="${f.detailUrl}" class="btn btn-success w-100"><i class="bi bi-calendar-check"></i> Xem &amp; Đặt sân</a>
+          </div></div></div>`;
+    }
+
+    async function search() {
+        const params = new URLSearchParams(new FormData(form));
+        loading.classList.remove('d-none');
+        try {
+            const res = await fetch('/api/fields/search?' + params.toString());
+            const json = await res.json();
+            list.innerHTML = json.data.map(cardHtml).join('');
+            countLabel.textContent = `Tìm thấy ${json.total} sân`;
+            emptyBox.classList.toggle('d-none', json.total > 0);
+            // Cap nhat thanh dia chi de co the chia se / bam Back
+            history.replaceState(null, '', params.toString() ? '/?' + params.toString() : '/');
+        } catch (e) {
+            form.submit(); // API loi -> quay ve tim kiem truyen thong
+        } finally {
+            loading.classList.add('d-none');
+        }
+    }
+
+    form.addEventListener('submit', e => { e.preventDefault(); suggestBox.style.display = 'none'; search(); });
+    form.querySelectorAll('select').forEach(el => el.addEventListener('change', search));
+    form.querySelector('[name=maxPrice]').addEventListener('change', search);
+
+    // Goi y ten san khi go tu 2 ky tu
+    keywordInput.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = keywordInput.value.trim();
+        if (q.length < 2) { suggestBox.style.display = 'none'; return; }
+        timer = setTimeout(async () => {
+            const res = await fetch('/api/fields/suggest?q=' + encodeURIComponent(q));
+            const items = await res.json();
+            if (!items.length) { suggestBox.style.display = 'none'; return; }
+            suggestBox.innerHTML = items.map(i =>
+                `<button type="button" class="list-group-item list-group-item-action" data-name="${i.fieldName}">
+                   <strong>${i.fieldName}</strong><br><small class="text-muted">${i.area} · ${i.priceText}</small>
+                 </button>`).join('');
+            suggestBox.style.display = 'block';
+        }, 250);
+    });
+
+    suggestBox.addEventListener('click', e => {
+        const btn = e.target.closest('button[data-name]');
+        if (!btn) return;
+        keywordInput.value = btn.dataset.name;
+        suggestBox.style.display = 'none';
+        search();
+    });
+
+    document.addEventListener('click', e => {
+        if (!suggestBox.contains(e.target) && e.target !== keywordInput) suggestBox.style.display = 'none';
+    });
+</script>
 }

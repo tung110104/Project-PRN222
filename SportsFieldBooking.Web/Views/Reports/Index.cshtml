@@ -4,8 +4,16 @@
     var from = (DateOnly)ViewBag.From;
     var to = (DateOnly)ViewBag.To;
 }
+@* [LUỒNG BÁO CÁO - Bước 1 & 4] Form lọc method="get" đẩy from/to lên query string (Bước 1);
+   phần dưới render ReportSummary: 4 thẻ số + bảng Top 5 + biểu đồ Chart.js (Bước 4). *@
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0"><i class="bi bi-bar-chart"></i> Báo cáo thống kê</h3>
+    <h3 class="mb-0">
+        <i class="bi bi-bar-chart"></i> Báo cáo thống kê
+        @if (ViewBag.IsOwnerScope == true)
+        {
+            <span class="badge bg-success fs-6">Sân của tôi</span>
+        }
+    </h3>
     <form method="get" class="d-flex gap-2">
         <input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control" />
         <input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control" />
@@ -85,6 +93,77 @@
     </div>
 </div>
 
+@* Doanh thu theo TỪNG sân trong khoảng lọc: liệt kê đủ mọi sân (kể cả 0đ) + biểu đồ ngang so sánh *@
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white">
+        <strong>Doanh thu theo từng sân</strong>
+        <span class="text-muted small ms-1">@from.ToString("dd/MM/yyyy") – @to.ToString("dd/MM/yyyy")</span>
+    </div>
+    @if (!Model.FieldRevenues.Any())
+    {
+        <div class="card-body text-center text-muted">Chưa có sân nào.</div>
+    }
+    else
+    {
+        <div class="row g-0">
+            <div class="col-lg-5 border-end">
+                <div class="card-body">
+                    <canvas id="fieldRevenueChart" height="@(Math.Max(200, Model.FieldRevenues.Count * 44))"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Sân</th>
+                                <th class="text-center">Lượt đặt</th>
+                                <th class="text-end">Doanh thu</th>
+                                <th style="min-width:140px;">Tỷ trọng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ var stt = 0; }
+                            @foreach (var f in Model.FieldRevenues)
+                            {
+                                stt++;
+                                var pct = Model.TotalRevenue > 0 ? (double)(f.Revenue / Model.TotalRevenue * 100) : 0;
+                                <tr>
+                                    <td class="text-muted">@stt</td>
+                                    <td>@f.FieldName</td>
+                                    <td class="text-center">@f.BookingCount</td>
+                                    <td class="text-end @(f.Revenue > 0 ? "text-success fw-semibold" : "text-muted")">
+                                        @f.Revenue.ToString("N0")đ
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height:8px;">
+                                                <div class="progress-bar bg-success" style="width:@pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                                            </div>
+                                            <small class="text-muted" style="min-width:42px;">@pct.ToString("0.#")%</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="2">Tổng</th>
+                                <th class="text-center">@Model.FieldRevenues.Sum(f => f.BookingCount)</th>
+                                <th class="text-end text-success">@Model.TotalRevenue.ToString("N0")đ</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Điểm giao giữa C# và JS: Razor serialize RevenueByDays thành 2 mảng labels/data
+   ngay trong trang, rồi Chart.js vẽ biểu đồ cột phía client. *@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -102,5 +181,27 @@
             },
             options: { scales: { y: { beginAtZero: true } } }
         });
+
+        // Bieu do ngang: doanh thu tung san (Json.Serialize de escape ten san an toan)
+        const fieldLabels = @Html.Raw(Json.Serialize(Model.FieldRevenues.Select(f => f.FieldName)));
+        const fieldData = @Html.Raw(Json.Serialize(Model.FieldRevenues.Select(f => f.Revenue)));
+        if (fieldLabels.length > 0) {
+            new Chart(document.getElementById('fieldRevenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: fieldLabels,
+                    datasets: [{
+                        label: 'Doanh thu (đ)',
+                        data: fieldData,
+                        backgroundColor: 'rgba(13, 110, 253, 0.7)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: { x: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     </script>
 }

@@ -1,0 +1,53 @@
+@startuml
+skinparam dpi 180
+!theme plain
+title Quy trình đặt sân và thanh toán
+
+|Khách hàng|
+start
+:Tìm kiếm và chọn sân;
+:Chọn ngày + khung giờ;
+|Hệ thống|
+if (Slot còn trống và hợp lệ?) then (không)
+  |Khách hàng|
+  :Nhận thông báo, chọn lại khung giờ;
+  stop
+else (có)
+endif
+if (Có nhập mã khuyến mãi?) then (có)
+  if (Mã hợp lệ, còn lượt, trong hạn?) then (không)
+    |Khách hàng|
+    :Nhận báo mã không hợp lệ;
+    stop
+  else (có)
+    :Giảm tiền theo phần trăm, trừ 1 lượt mã;
+  endif
+else (không)
+endif
+:Tạo Booking Pending + BookingDetails Active;
+:Gửi email xác nhận đặt sân;
+|Khách hàng|
+:Chọn thanh toán Momo QR hoặc tiền mặt;
+|Hệ thống|
+:Tạo Payment Pending + TransactionCode;
+|Chủ sân / Admin|
+if (Xác nhận đã nhận tiền?) then (có)
+  |Hệ thống|
+  :Payment = Paid, Booking = Confirmed;
+  :Sau ngày sử dụng chuyển Completed;
+  |Khách hàng|
+  :Đánh giá sân (1 lần cho mỗi đơn);
+  stop
+else (chưa)
+  |Khách hàng|
+  if (Hủy đơn trước giờ tối thiểu?) then (có)
+    |Hệ thống|
+    :Booking + Details chuyển Cancelled;
+    :Hoàn lượt mã KM, hoàn tiền nếu đã trả;
+    stop
+  else (không)
+    :Tiếp tục chờ xác nhận;
+    stop
+  endif
+endif
+@enduml

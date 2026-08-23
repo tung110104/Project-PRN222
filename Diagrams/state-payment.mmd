@@ -1,0 +1,11 @@
+stateDiagram-v2
+    [*] --> Pending: Khách chọn Momo / tiền mặt (sinh TransactionCode)
+    Pending --> Paid: Chủ sân / Admin xác nhận (ghi PaidAt)
+    Paid --> Refunded: Booking bị hủy sau khi đã trả tiền
+    Paid --> [*]
+    Refunded --> [*]
+
+    note right of Pending
+        Mỗi booking chỉ có 1 thanh toán hiệu lực,
+        chặn khi đã Paid hoặc đang Pending.
+    end note

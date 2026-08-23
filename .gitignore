@@ -3,3 +3,10 @@ obj/
 .vs/
 *.user
 appsettings.Development.json
+.claude/settings.local.json
+.claude/
+.$*.bkp
+*.bkp
+
+# Anh san demo trong uploads/ duoc commit de demo chay ngay
+SportsFieldBooking.Web/wwwroot/uploads/

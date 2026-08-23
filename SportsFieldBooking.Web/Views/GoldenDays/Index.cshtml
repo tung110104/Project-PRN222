@@ -1,0 +1,90 @@
+@model List<GoldenDay>
+@{
+    ViewData["Title"] = "Ngày vàng";
+}
+<h3 class="mb-4"><i class="bi bi-star-fill text-warning"></i> Ngày vàng (lễ / Tết / sự kiện)</h3>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Danh sách ngày vàng</strong></div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Ngày</th><th>Tên</th><th>Hệ số giá</th><th>Hệ số điểm</th><th>Phạm vi</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model)
+                        {
+                            <tr>
+                                <td>@g.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@g.Name</td>
+                                <td>x@(g.PriceMultiplier)</td>
+                                <td>x@(g.PointsMultiplier)</td>
+                                <td>
+                                    @if (g.FieldId == null)
+                                    {
+                                        <span class="badge bg-warning text-dark">Hệ thống</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark border">@g.Field?.FieldName</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" asp-action="Delete" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@g.GoldenDayId" />
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Xóa ngày vàng @g.Name (@g.Date.ToString("dd/MM/yyyy"))?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted">Chưa có ngày vàng nào.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong><i class="bi bi-plus-circle"></i> Thêm ngày vàng hệ thống</strong></div>
+            <div class="card-body">
+                <form method="post" asp-action="Add" class="row g-2">
+                    @Html.AntiForgeryToken()
+                    <div class="col-12">
+                        <label class="form-label">Ngày</label>
+                        <input name="date" type="date" class="form-control" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Tên sự kiện</label>
+                        <input name="name" class="form-control" placeholder="VD: Quốc khánh 2/9" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Hệ số giá (1 - 5)</label>
+                        <input name="priceMultiplier" type="number" step="0.1" min="1" max="5" value="1.5" class="form-control" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Hệ số điểm (1 - 10)</label>
+                        <input name="pointsMultiplier" type="number" min="1" max="10" value="2" class="form-control" required />
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-success w-100 mt-2">Thêm ngày vàng</button>
+                    </div>
+                    <small class="text-muted">
+                        Ngày vàng hệ thống áp dụng cho <strong>mọi sân</strong>: giá nhân hệ số giá,
+                        điểm tích lũy nhân hệ số điểm. Ngày vàng riêng từng sân do chủ sân thêm ở trang
+                        Giá &amp; Khung giờ (ưu tiên hơn ngày vàng hệ thống nếu trùng ngày).
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

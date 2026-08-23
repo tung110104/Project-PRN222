@@ -5,9 +5,14 @@
 }
 <h3 class="mb-4"><i class="bi bi-pencil-square"></i> Sửa sân: @Model.FieldName</h3>
 
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
 <div class="card shadow-sm">
     <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
             @Html.AntiForgeryToken()
             <input type="hidden" name="FieldId" value="@Model.FieldId" />
             <div class="col-md-6">
@@ -23,27 +28,57 @@
                     }
                 </select>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Địa chỉ *</label>
+
+            <div class="col-md-4">
+                <label class="form-label">Tỉnh/Thành phố *</label>
+                <select id="provinceSelect" class="form-select" required>
+                    @if (!string.IsNullOrWhiteSpace(Model.Province))
+                    {
+                        <option value="@Model.Province" data-name="@Model.Province" selected>@Model.Province</option>
+                    }
+                    else
+                    {
+                        <option value="">-- Đang tải... --</option>
+                    }
+                </select>
+                <input type="hidden" name="Province" id="provinceInput" value="@Model.Province" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Phường/Xã *</label>
+                <select id="wardSelect" class="form-select" required @(string.IsNullOrWhiteSpace(Model.Province) ? "disabled" : "")>
+                    @if (!string.IsNullOrWhiteSpace(Model.Ward))
+                    {
+                        <option value="@Model.Ward" data-name="@Model.Ward" selected>@Model.Ward</option>
+                    }
+                    else
+                    {
+                        <option value="">-- Chọn Tỉnh/Thành trước --</option>
+                    }
+                </select>
+                <input type="hidden" name="Ward" id="wardInput" value="@Model.Ward" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Số nhà, tên đường *</label>
                 <input name="Address" value="@Model.Address" class="form-control" required />
             </div>
+
             <div class="col-md-3">
-                <label class="form-label">Quận/Huyện *</label>
-                <input name="District" value="@Model.District" class="form-control" required />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Thành phố *</label>
-                <input name="City" value="@Model.City" class="form-control" required />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Giá giờ thường (đ) *</label>
+                <label class="form-label">Giá cơ bản (đ/giờ) *</label>
                 <input name="PricePerHour" value="@Model.PricePerHour" type="number" min="1000" class="form-control" required />
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Giá giờ cao điểm (đ)</label>
-                <input name="PeakPricePerHour" value="@Model.PeakPricePerHour" type="number" min="0" class="form-control" />
+            <div class="col-md-3">
+                <label class="form-label">Ví tiền ảo</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="AcceptWalletPayment" value="true"
+                           checked="@Model.AcceptWalletPayment" />
+                    <label class="form-check-label">Nhận thanh toán ví</label>
+                </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label class="form-label">Cashback ví (%)</label>
+                <input name="CashbackPercent" value="@Model.CashbackPercent" type="number" min="0" max="50" class="form-control" />
+            </div>
+            <div class="col-md-3">
                 <label class="form-label">Trạng thái</label>
                 <select name="Status" class="form-select">
                     <option value="Active" selected="@(Model.Status == "Active")">Hoạt động</option>
@@ -51,14 +86,101 @@
                     <option value="Closed" selected="@(Model.Status == "Closed")">Đóng</option>
                 </select>
             </div>
+
             <div class="col-12">
                 <label class="form-label">Mô tả</label>
                 <textarea name="Description" class="form-control" rows="3">@Model.Description</textarea>
             </div>
+
+            <div class="col-12">
+                <label class="form-label"><i class="bi bi-images"></i> Thêm ảnh mới</label>
+                <input type="file" name="imageFiles" id="imageInput" class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp" multiple />
+                <small class="text-muted">Chọn được nhiều ảnh (JPG/PNG/WEBP, tối đa 5MB/ảnh). Ảnh mới sẽ được thêm khi bấm "Cập nhật".</small>
+                <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            </div>
             <div class="col-12">
                 <button class="btn btn-success">Cập nhật</button>
+                <a asp-controller="FieldPricing" asp-action="Index" asp-route-id="@Model.FieldId" class="btn btn-outline-primary">
+                    <i class="bi bi-cash-stack"></i> Giá &amp; Khung giờ
+                </a>
                 <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>
     </div>
 </div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white">
+        <strong><i class="bi bi-images"></i> Ảnh hiện tại (@Model.FieldImages.Count)</strong>
+    </div>
+    <div class="card-body">
+        @if (!Model.FieldImages.Any())
+        {
+            <p class="text-muted mb-0">Chưa có ảnh nào. Chọn ảnh ở ô "Thêm ảnh mới" phía trên rồi bấm "Cập nhật".</p>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-3">
+                @foreach (var img in Model.FieldImages.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.ImageId))
+                {
+                    <div class="border rounded p-2 text-center" style="width:180px;">
+                        <div class="position-relative">
+                            <img src="@img.ImageUrl" class="rounded w-100" style="height:110px;object-fit:cover"
+                                 alt="Ảnh sân" onerror="this.onerror=null;this.src='/images/field-placeholder.svg'" />
+                            @if (img.IsPrimary)
+                            {
+                                <span class="badge bg-success position-absolute top-0 start-0 m-1">
+                                    <i class="bi bi-star-fill"></i> Đại diện
+                                </span>
+                            }
+                        </div>
+                        <div class="d-flex gap-1 justify-content-center mt-2">
+                            @if (!img.IsPrimary)
+                            {
+                                <form method="post" asp-action="SetPrimaryImage" asp-route-id="@img.ImageId">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-success" title="Đặt làm ảnh đại diện">
+                                        <i class="bi bi-star"></i> Đại diện
+                                    </button>
+                                </form>
+                            }
+                            <form method="post" asp-action="DeleteImage" asp-route-id="@img.ImageId"
+                                  onsubmit="return confirm('Xóa ảnh này?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger" title="Xóa ảnh">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/address-select.js" asp-append-version="true"></script>
+    <script>
+        initAddressSelect(
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Province ?? "")),
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Ward ?? ""))
+        );
+    </script>
+    <script>
+        // Xem truoc anh vua chon
+        document.getElementById('imageInput').addEventListener('change', function () {
+            const box = document.getElementById('imagePreview');
+            box.innerHTML = '';
+            [...this.files].forEach(f => {
+                if (!f.type.startsWith('image/')) return;
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                img.className = 'rounded border';
+                img.style.cssText = 'width:120px;height:85px;object-fit:cover';
+                box.appendChild(img);
+            });
+        });
+    </script>
+}

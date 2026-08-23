@@ -19,27 +19,78 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Tìm sân</a></li>
-                    @if (User.IsInRole("Customer"))
+                    @* Moi role deu dat duoc san -> ai dang nhap (tru SuperAdmin) cung co lich su & vi *@
+                    @if (User.IsInRole("Customer") || User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Index">Lịch sử đặt sân</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Index">Ví &amp; Điểm</a></li>
                     }
-                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="FieldsManage" asp-action="Index">Quản lý sân</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Maintenance" asp-action="Index">Bảo trì</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                    {
                         <li class="nav-item"><a class="nav-link" asp-controller="StaffBookings" asp-action="Index">Quản lý đặt lịch</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Refunds" asp-action="Index">Hoàn tiền</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Báo cáo</a></li>
                     }
                     @if (User.IsInRole("Admin"))
                     {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Wallet" asp-action="Manage">Quản lý ví</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="GoldenDays" asp-action="Index">Ngày vàng</a></li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                    {
                         <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Người dùng</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Promotions" asp-action="Index">Khuyến mãi</a></li>
                     }
                 </ul>
-                <ul class="navbar-nav">
+                <ul class="navbar-nav align-items-lg-center">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        @* Chuong thong bao real-time (SignalR) - vd: chu san nhan bao khi co khach dat san *@
+                        @if (!User.IsInRole("SuperAdmin"))
+                        {
+                            <li class="nav-item dropdown me-lg-2">
+                                <a class="nav-link position-relative" href="#" id="notifDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                                    <i class="bi bi-bell-fill fs-5"></i>
+                                    <span id="notifBadge"
+                                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"
+                                          style="font-size:.65rem;">0</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end shadow-lg p-2 mt-2"
+                                     aria-labelledby="notifDropdown"
+                                     style="width:330px; max-height:420px; overflow-y:auto;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 px-2 pb-2 border-bottom">
+                                        <span class="fw-bold text-dark"><i class="bi bi-bell me-1"></i>Thông báo</span>
+                                        <button class="btn btn-sm btn-link text-decoration-none p-0 text-success fw-semibold"
+                                                style="font-size:.8rem;" onclick="markAllNotificationsAsRead(event)">
+                                            Đánh dấu đã đọc
+                                        </button>
+                                    </div>
+                                    <div id="notifList">
+                                        <div class="text-center text-muted py-3"><small>Đang tải thông báo...</small></div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
                         <li class="nav-item">
-                            <span class="navbar-text me-3"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
+                            @if (User.IsInRole("SuperAdmin"))
+                            {
+                                <span class="navbar-text me-3">
+                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                    <span class="badge bg-danger ms-1">SUPER</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Profile" asp-action="Index" title="Hồ sơ cá nhân">
+                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                </a>
+                            }
                         </li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Logout">Đăng xuất</a></li>
                     }
@@ -52,6 +103,9 @@
             </div>
         </div>
     </nav>
+
+    @* Toast noi thong bao real-time hien len goc phai man hinh *@
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090;"></div>
 
     <main class="container pb-5">
         @if (TempData["Success"] != null)
@@ -76,6 +130,115 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("SuperAdmin"))
+    {
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                loadNotifications();
+                setupSignalR();
+            });
+
+            function loadNotifications() {
+                fetch('/Notifications/GetLatest')
+                    .then(res => res.json())
+                    .then(data => {
+                        updateBadge(data.unreadCount);
+                        renderNotifList(data.notifications);
+                    })
+                    .catch(err => console.error('Lỗi tải thông báo:', err));
+            }
+
+            function updateBadge(count) {
+                const badge = document.getElementById('notifBadge');
+                if (!badge) return;
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.classList.add('d-none');
+                }
+            }
+
+            function renderNotifList(items) {
+                const list = document.getElementById('notifList');
+                if (!list) return;
+                if (!items || items.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-3"><small>Chưa có thông báo nào</small></div>';
+                    return;
+                }
+                list.innerHTML = items.map(n => `
+                    <a href="${n.url || '#'}" onclick="handleNotifClick(event, ${n.notificationId}, '${n.url || ''}')"
+                       class="dropdown-item p-2 mb-1 rounded text-wrap ${n.isRead
+                           ? 'bg-light text-muted'
+                           : 'bg-white fw-semibold text-dark border-start border-3 border-success shadow-sm'}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <small class="fw-bold text-success">${escapeHtml(n.title)}</small>
+                            <small class="text-muted ms-2" style="font-size:.7rem;">${n.createdAt}</small>
+                        </div>
+                        <div class="small text-secondary mt-1">${escapeHtml(n.message)}</div>
+                    </a>`).join('');
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                           .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            function handleNotifClick(event, id, url) {
+                event.preventDefault();
+                fetch('/Notifications/MarkAsRead?id=' + id, { method: 'POST' })
+                    .finally(() => {
+                        if (url) window.location.href = url;
+                        else loadNotifications();
+                    });
+            }
+
+            function markAllNotificationsAsRead(event) {
+                event.stopPropagation();
+                fetch('/Notifications/MarkAllAsRead', { method: 'POST' })
+                    .then(() => loadNotifications());
+            }
+
+            function setupSignalR() {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl('/notificationHub')
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('ReceiveNotification', function (n) {
+                    loadNotifications();
+                    showToastNotification(n.title, n.message, n.url);
+                });
+
+                connection.start().catch(err => console.error('SignalR:', err));
+            }
+
+            function showToastNotification(title, message, url) {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                const toastId = 'toast-' + Date.now();
+                container.insertAdjacentHTML('beforeend', `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-success border-0 shadow-lg"
+                         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="7000">
+                        <div class="d-flex">
+                            <div class="toast-body" style="cursor:pointer;"
+                                 onclick="if ('${url || ''}') window.location.href = '${url || ''}'">
+                                <div class="fw-bold mb-1"><i class="bi bi-bell-fill me-1"></i>${escapeHtml(title)}</div>
+                                <div>${escapeHtml(message)}</div>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                    data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>`);
+                const toast = new bootstrap.Toast(document.getElementById(toastId));
+                toast.show();
+            }
+        </script>
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

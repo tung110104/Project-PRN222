@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> Pending: Đặt sân thành công
+    Pending --> Confirmed: Chủ sân / Admin xác nhận thanh toán
+    Pending --> Cancelled: Khách hủy trước giờ tối thiểu (hoàn lượt mã KM)
+    Confirmed --> Completed: Qua ngày sử dụng sân
+    Confirmed --> Cancelled: Hủy trước giờ tối thiểu (hoàn tiền Refunded)
+    Completed --> [*]: Khách được đánh giá 1 lần
+    Cancelled --> [*]
+
+    note right of Pending
+        Chờ thanh toán và duyệt.
+        Staff hủy không bị giới hạn giờ.
+    end note
+    note right of Completed
+        Không thể hủy từ Completed
+        hoặc Cancelled.
+    end note

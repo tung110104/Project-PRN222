@@ -1,0 +1,22 @@
+@startuml
+skinparam dpi 180
+!theme plain
+title Sơ đồ ngữ cảnh hệ thống Sports Field Booking
+left to right direction
+
+actor "Khách vãng lai" as Guest
+actor "Khách hàng" as Customer
+actor "Chủ sân (Staff)" as Staff
+actor "Quản trị viên" as Admin
+
+rectangle "HỆ THỐNG\nSPORTS FIELD BOOKING" as SYS
+database "SQL Server\n(SportsFieldBookingDB)" as DB
+cloud "Gmail SMTP" as MAIL
+
+Guest --> SYS : Tìm kiếm, xem sân, đăng ký
+Customer --> SYS : Đặt sân, thanh toán, đánh giá
+Staff --> SYS : Quản lý sân, duyệt đơn
+Admin --> SYS : Quản trị, báo cáo
+SYS --> MAIL : Gửi OTP, email xác nhận
+SYS --> DB : Đọc / ghi dữ liệu
+@enduml
