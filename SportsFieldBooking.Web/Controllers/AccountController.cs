@@ -1,10 +1,11 @@
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using SportsFieldBooking.Business.Services;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Unicode;
 
 namespace SportsFieldBooking.Web.Controllers;
 
@@ -16,7 +17,7 @@ public class AccountController : Controller
     // (Tai khoan ADMIN thi nguoc lai: cau hinh trong appsettings.json - xem AdminLogin ben duoi.)
     private const string SuperEmailHash = "27cbfffc12a8cf6ebfeb875859ef17e04feb0965cd208affff7d2de2b43a9292";
     private const string SuperPasswordHash = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
-
+    //$s=[System.Security.Cryptography.SHA256]::Create(); ([BitConverter]::ToString($s.ComputeHash([Text.Encoding]::UTF8.GetBytes('superac@sfb.com'))) -replace '-','').ToLower()
     private readonly IAuthService _authService;
     private readonly IConfiguration _config;
 
